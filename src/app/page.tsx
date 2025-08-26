@@ -1,10 +1,12 @@
 import Image from "next/image";
 import styles from "./page.module.css";
+import { Navbar } from "./componets/navbar/navbar";
 
 export default function Home() {
   return (
     <div className={styles.page}>
       <main className={styles.main}>
+        <Navbar />
         <Image
           className={styles.logo}
           src="/next.svg"
