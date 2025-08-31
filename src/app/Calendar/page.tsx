@@ -1,4 +1,4 @@
-import { Navbar } from "../componets/navbar/navbar";
+import { Navbar } from "../Componets/navbar/navbar";
 import styles from "./calender.module.css";
 
 export default function Calender() {

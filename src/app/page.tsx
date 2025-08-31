@@ -1,6 +1,6 @@
 import Image from "next/image";
 import styles from "./page.module.css";
-import { Navbar } from "./componets/navbar/navbar";
+import { Navbar } from "./Componets/navbar/navbar";
 
 export default function Home() {
   return (
