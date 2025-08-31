@@ -51,7 +51,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const checkAuthStatus = async () => {
     try {
       const user = await authHelpers.getUser();
-      setUser(user);
+      // setUser(user);
     } catch (error) {
       console.error("Auth check failed:", error);
       setUser(null);
@@ -64,7 +64,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setIsLoading(true);
     try {
       const { user } = await authHelpers.signInWithPassword(email, password);
-      setUser(user);
+      // setUser(user);
     } catch (error) {
       console.error("Sign in failed:", error);
       throw error;
@@ -79,7 +79,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const { user } = await authHelpers.signUp(email, password, {
         data: { name },
       });
-      setUser(user);
+      // setUser(user);
     } catch (error) {
       console.error("Sign up failed:", error);
       throw error;
