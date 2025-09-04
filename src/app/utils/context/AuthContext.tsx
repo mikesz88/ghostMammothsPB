@@ -8,16 +8,17 @@ import React, {
   ReactNode,
 } from "react";
 import { authHelpers } from "../supabase";
+import type { User as SupabaseUser } from "@supabase/supabase-js";
 
-interface User {
-  id: string;
-  email: string;
-  name?: string;
-  // Add other user properties as needed
-}
+// interface User {
+//   id: string;
+//   email: string;
+//   name?: string;
+//   // Add other user properties as needed
+// }
 
 interface AuthContextType {
-  user: User | null;
+  user: SupabaseUser | null;
   isLoading: boolean;
   signIn: (email: string, password: string) => Promise<void>;
   signUp: (email: string, password: string, name?: string) => Promise<void>;
@@ -27,7 +28,7 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<SupabaseUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -51,7 +52,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const checkAuthStatus = async () => {
     try {
       const user = await authHelpers.getUser();
-      // setUser(user);
+      setUser(user);
     } catch (error) {
       console.error("Auth check failed:", error);
       setUser(null);
@@ -64,7 +65,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setIsLoading(true);
     try {
       const { user } = await authHelpers.signInWithPassword(email, password);
-      // setUser(user);
+      setUser(user);
     } catch (error) {
       console.error("Sign in failed:", error);
       throw error;
@@ -79,7 +80,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const { user } = await authHelpers.signUp(email, password, {
         data: { name },
       });
-      // setUser(user);
+      setUser(user);
     } catch (error) {
       console.error("Sign up failed:", error);
       throw error;
