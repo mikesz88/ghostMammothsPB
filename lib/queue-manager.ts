@@ -1,0 +1,207 @@
+import type { QueueEntry, CourtAssignment, RotationType, User } from "./types"
+
+export class QueueManager {
+  /**
+   * Assigns next players from queue to available courts
+   */
+  static assignNextPlayers(
+    queue: QueueEntry[],
+    courtCount: number,
+    currentAssignments: CourtAssignment[],
+    rotationType: RotationType,
+  ): { courtNumber: number; playerIds: string[] }[] {
+    const availableCourts = this.getAvailableCourts(courtCount, currentAssignments)
+    const waitingPlayers = queue.filter((entry) => entry.status === "waiting").sort((a, b) => a.position - b.position)
+
+    const assignments: { courtNumber: number; playerIds: string[] }[] = []
+
+    for (const courtNumber of availableCourts) {
+      const players = this.getNextPlayers(waitingPlayers, 4)
+      if (players.length === 4) {
+        assignments.push({
+          courtNumber,
+          playerIds: players.map((p) => p.userId),
+        })
+        // Remove assigned players from waiting list
+        players.forEach((player) => {
+          const index = waitingPlayers.findIndex((p) => p.id === player.id)
+          if (index > -1) waitingPlayers.splice(index, 1)
+        })
+      }
+    }
+
+    return assignments
+  }
+
+  /**
+   * Gets available court numbers
+   */
+  private static getAvailableCourts(courtCount: number, currentAssignments: CourtAssignment[]): number[] {
+    const occupiedCourts = new Set(currentAssignments.filter((a) => !a.endedAt).map((a) => a.courtNumber))
+
+    const available: number[] = []
+    for (let i = 1; i <= courtCount; i++) {
+      if (!occupiedCourts.has(i)) {
+        available.push(i)
+      }
+    }
+    return available
+  }
+
+  /**
+   * Gets next N players from queue, respecting groups
+   */
+  private static getNextPlayers(queue: QueueEntry[], count: number): QueueEntry[] {
+    const selected: QueueEntry[] = []
+    const processedGroups = new Set<string>()
+
+    for (const entry of queue) {
+      if (selected.length >= count) break
+
+      // If part of a group, get all group members
+      if (entry.groupId && !processedGroups.has(entry.groupId)) {
+        const groupMembers = queue.filter((e) => e.groupId === entry.groupId)
+        if (selected.length + groupMembers.length <= count) {
+          selected.push(...groupMembers)
+          processedGroups.add(entry.groupId)
+        }
+      } else if (!entry.groupId) {
+        // Solo player
+        selected.push(entry)
+      }
+    }
+
+    return selected.slice(0, count)
+  }
+
+  /**
+   * Reorders queue positions after changes
+   */
+  static reorderQueue(queue: QueueEntry[]): QueueEntry[] {
+    return queue
+      .filter((entry) => entry.status === "waiting")
+      .sort((a, b) => a.position - b.position)
+      .map((entry, index) => ({
+        ...entry,
+        position: index + 1,
+      }))
+  }
+
+  /**
+   * Calculates estimated wait time based on queue position
+   */
+  static estimateWaitTime(position: number, courtCount: number, avgGameMinutes = 15): number {
+    const playersPerRound = courtCount * 4
+    const roundsToWait = Math.ceil(position / playersPerRound)
+    return roundsToWait * avgGameMinutes
+  }
+
+  /**
+   * Handles game completion based on rotation type
+   * Returns updated queue entries and which players should stay on court
+   */
+  static handleGameCompletion(
+    assignment: CourtAssignment,
+    rotationType: RotationType,
+    winningTeam: "team1" | "team2",
+    queue: QueueEntry[],
+  ): {
+    playersToQueue: string[]
+    playersToStay: string[]
+  } {
+    const team1 = [assignment.player1Id, assignment.player2Id].filter(Boolean) as string[]
+    const team2 = [assignment.player3Id, assignment.player4Id].filter(Boolean) as string[]
+    const winners = winningTeam === "team1" ? team1 : team2
+    const losers = winningTeam === "team1" ? team2 : team1
+
+    switch (rotationType) {
+      case "2-stay-4-off":
+        // Winners stay, losers go to back of queue
+        return {
+          playersToStay: winners,
+          playersToQueue: losers,
+        }
+
+      case "winners-stay":
+        // All winners stay, all losers go to queue
+        return {
+          playersToStay: winners,
+          playersToQueue: losers,
+        }
+
+      case "rotate-all":
+        // Everyone goes back to queue
+        return {
+          playersToStay: [],
+          playersToQueue: [...team1, ...team2],
+        }
+
+      default:
+        return {
+          playersToStay: [],
+          playersToQueue: [...team1, ...team2],
+        }
+    }
+  }
+
+  /**
+   * Creates new court assignment with staying players + new players from queue
+   */
+  static createNextAssignment(
+    courtNumber: number,
+    stayingPlayerIds: string[],
+    queue: QueueEntry[],
+    eventId: string,
+  ): {
+    assignment: Partial<CourtAssignment>
+    assignedQueueEntries: QueueEntry[]
+  } | null {
+    const playersNeeded = 4 - stayingPlayerIds.length
+    const waitingPlayers = queue.filter((e) => e.status === "waiting").sort((a, b) => a.position - b.position)
+
+    const newPlayers = this.getNextPlayers(waitingPlayers, playersNeeded)
+
+    if (stayingPlayerIds.length + newPlayers.length < 4) {
+      // Not enough players to fill the court
+      return null
+    }
+
+    const allPlayerIds = [...stayingPlayerIds, ...newPlayers.map((p) => p.userId)]
+
+    return {
+      assignment: {
+        eventId,
+        courtNumber,
+        player1Id: allPlayerIds[0],
+        player2Id: allPlayerIds[1],
+        player3Id: allPlayerIds[2],
+        player4Id: allPlayerIds[3],
+        startedAt: new Date(),
+      },
+      assignedQueueEntries: newPlayers,
+    }
+  }
+
+  /**
+   * Adds players back to queue
+   */
+  static addPlayersToQueue(playerIds: string[], queue: QueueEntry[], eventId: string, users: User[]): QueueEntry[] {
+    const maxPosition = Math.max(0, ...queue.map((e) => e.position))
+
+    const newEntries: QueueEntry[] = playerIds.map((playerId, index) => {
+      const user = users.find((u) => u.id === playerId)
+      return {
+        id: Math.random().toString(),
+        eventId,
+        userId: playerId,
+        groupSize: 1,
+        position: maxPosition + index + 1,
+        status: "waiting" as const,
+        joinedAt: new Date(),
+        user,
+      }
+    })
+
+    return [...queue, ...newEntries]
+  }
+}
