@@ -1,7 +1,13 @@
-import Link from "next/link"
-import { Users, Calendar, Trophy, Zap } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import Link from "next/link";
+import { Users, Calendar, Trophy, Zap } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 
 export default function HomePage() {
   return (
@@ -10,16 +16,30 @@ export default function HomePage() {
       <header className="border-b border-border">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
-              <Trophy className="w-6 h-6 text-primary-foreground" />
-            </div>
-            <span className="text-xl font-bold text-foreground">Ghost Mammoths PB</span>
+            <img
+              src="/icon-32x32.png"
+              alt="Ghost Mammoths PB"
+              width={32}
+              height={32}
+            />
+            {/* <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center"> */}
+            {/* <Trophy className="w-6 h-6 text-primary-foreground" /> */}
+            {/* </div> */}
+            <span className="text-xl font-bold text-foreground">
+              Ghost Mammoths PB
+            </span>
           </div>
           <nav className="flex items-center gap-4">
-            <Link href="/events" className="text-muted-foreground hover:text-foreground transition-colors">
+            <Link
+              href="/events"
+              className="text-muted-foreground hover:text-foreground transition-colors"
+            >
               Events
             </Link>
-            <Link href="/about" className="text-muted-foreground hover:text-foreground transition-colors">
+            <Link
+              href="/about"
+              className="text-muted-foreground hover:text-foreground transition-colors"
+            >
               About
             </Link>
             <Button variant="outline" asChild>
@@ -38,8 +58,9 @@ export default function HomePage() {
           Smart Queue Management for Pickleball Events
         </h1>
         <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto text-pretty">
-          Join the queue, track your position, and get notified when it's your turn to play. Real-time court assignments
-          and seamless rotation management.
+          Join the queue, track your position, and get notified when it's your
+          turn to play. Real-time court assignments and seamless rotation
+          management.
         </p>
         <div className="flex items-center justify-center gap-4">
           <Button size="lg" asChild>
@@ -61,7 +82,8 @@ export default function HomePage() {
               </div>
               <CardTitle className="text-foreground">Real-time Queue</CardTitle>
               <CardDescription>
-                Join the queue and see your position update in real-time as games progress
+                Join the queue and see your position update in real-time as
+                games progress
               </CardDescription>
             </CardHeader>
           </Card>
@@ -71,9 +93,12 @@ export default function HomePage() {
               <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-4">
                 <Zap className="w-6 h-6 text-primary" />
               </div>
-              <CardTitle className="text-foreground">Smart Assignments</CardTitle>
+              <CardTitle className="text-foreground">
+                Smart Assignments
+              </CardTitle>
               <CardDescription>
-                Automatic court assignments with configurable rotation logic for fair play
+                Automatic court assignments with configurable rotation logic for
+                fair play
               </CardDescription>
             </CardHeader>
           </Card>
@@ -83,8 +108,13 @@ export default function HomePage() {
               <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-4">
                 <Calendar className="w-6 h-6 text-primary" />
               </div>
-              <CardTitle className="text-foreground">Event Management</CardTitle>
-              <CardDescription>Create and manage multiple events with custom court counts and rules</CardDescription>
+              <CardTitle className="text-foreground">
+                Event Management
+              </CardTitle>
+              <CardDescription>
+                Create and manage multiple events with custom court counts and
+                rules
+              </CardDescription>
             </CardHeader>
           </Card>
 
@@ -94,7 +124,9 @@ export default function HomePage() {
                 <Trophy className="w-6 h-6 text-primary" />
               </div>
               <CardTitle className="text-foreground">Group Support</CardTitle>
-              <CardDescription>Join as singles, duos, triples, or full quads with your friends</CardDescription>
+              <CardDescription>
+                Join as singles, duos, triples, or full quads with your friends
+              </CardDescription>
             </CardHeader>
           </Card>
         </div>
@@ -104,9 +136,12 @@ export default function HomePage() {
       <section className="container mx-auto px-4 py-20">
         <Card className="border-border bg-card">
           <CardContent className="p-12 text-center">
-            <h2 className="text-3xl font-bold text-foreground mb-4">Ready to streamline your pickleball events?</h2>
+            <h2 className="text-3xl font-bold text-foreground mb-4">
+              Ready to streamline your pickleball events?
+            </h2>
             <p className="text-muted-foreground mb-8 max-w-xl mx-auto">
-              Get started today and experience hassle-free queue management with real-time updates
+              Get started today and experience hassle-free queue management with
+              real-time updates
             </p>
             <Button size="lg" asChild>
               <Link href="/events">Browse Events</Link>
@@ -122,5 +157,5 @@ export default function HomePage() {
         </div>
       </footer>
     </div>
-  )
+  );
 }
