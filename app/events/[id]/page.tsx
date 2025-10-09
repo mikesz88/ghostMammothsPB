@@ -25,6 +25,7 @@ import { QueueManager } from "@/lib/queue-manager";
 import { useQueuePolling } from "@/lib/use-queue-polling";
 import { useNotifications } from "@/lib/use-notifications";
 import type { Event, QueueEntry, CourtAssignment } from "@/lib/types";
+import Image from "next/image";
 
 // Mock data
 const mockEvent: Event = {
@@ -313,9 +314,12 @@ export default function EventDetailPage({
       <header className="border-b border-border">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2">
-            <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
-              <Trophy className="w-6 h-6 text-primary-foreground" />
-            </div>
+            <Image
+              src="/icon-32x32.png"
+              alt="Ghost Mammoths PB"
+              width={38}
+              height={38}
+            />
             <span className="text-xl font-bold text-foreground">
               Ghost Mammoths PB
             </span>
