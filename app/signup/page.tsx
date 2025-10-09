@@ -1,10 +1,23 @@
-import Link from "next/link"
-import { Trophy } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import Link from "next/link";
+import { Trophy } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import Image from "next/image";
 
 export default function SignupPage() {
   return (
@@ -12,17 +25,27 @@ export default function SignupPage() {
       <div className="w-full max-w-md">
         <div className="flex items-center justify-center mb-8">
           <Link href="/" className="flex items-center gap-2">
-            <div className="w-12 h-12 bg-primary rounded-lg flex items-center justify-center">
+            <Image
+              src="/icon-32x32.png"
+              alt="Ghost Mammoths PB"
+              width={38}
+              height={38}
+            />
+            {/* <div className="w-12 h-12 bg-primary rounded-lg flex items-center justify-center">
               <Trophy className="w-7 h-7 text-primary-foreground" />
-            </div>
-            <span className="text-2xl font-bold text-foreground">Ghost Mammoths PB</span>
+            </div> */}
+            <span className="text-2xl font-bold text-foreground">
+              Ghost Mammoths PB
+            </span>
           </Link>
         </div>
 
         <Card className="border-border bg-card">
           <CardHeader>
             <CardTitle className="text-foreground">Create Account</CardTitle>
-            <CardDescription>Join the Ghost Mammoths pickleball community</CardDescription>
+            <CardDescription>
+              Join the Ghost Mammoths pickleball community
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <form className="space-y-4">
@@ -32,7 +55,12 @@ export default function SignupPage() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
-                <Input id="email" type="email" placeholder="you@example.com" required />
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="you@example.com"
+                  required
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="phone">Phone (Optional)</Label>
@@ -70,5 +98,5 @@ export default function SignupPage() {
         </Card>
       </div>
     </div>
-  )
+  );
 }

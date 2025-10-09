@@ -1,11 +1,18 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import Link from "next/link"
-import { Calendar, MapPin, Users, Trophy, ArrowRight } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
+import { useState } from "react";
+import Link from "next/link";
+import { Calendar, MapPin, Users, Trophy, ArrowRight } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Header } from "@/components/ui/header";
 
 // Mock data - will be replaced with real data from Supabase
 const mockEvents = [
@@ -42,15 +49,16 @@ const mockEvents = [
     queueCount: 24,
     playingCount: 24,
   },
-]
+];
 
 export default function EventsPage() {
-  const [events] = useState(mockEvents)
+  const [events] = useState(mockEvents);
 
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="border-b border-border">
+      <Header />
+      {/* <header className="border-b border-border">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2">
             <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
@@ -70,21 +78,34 @@ export default function EventsPage() {
             </Button>
           </nav>
         </div>
-      </header>
+      </header> */}
 
       {/* Page Content */}
       <div className="container mx-auto px-4 py-12">
         <div className="mb-8">
-          <h1 className="text-4xl font-bold text-foreground mb-2">Active Events</h1>
-          <p className="text-muted-foreground">Join a queue and start playing</p>
+          <h1 className="text-4xl font-bold text-foreground mb-2">
+            Active Events
+          </h1>
+          <p className="text-muted-foreground">
+            Join a queue and start playing
+          </p>
         </div>
 
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
           {events.map((event) => (
-            <Card key={event.id} className="border-border bg-card hover:border-primary/50 transition-colors">
+            <Card
+              key={event.id}
+              className="border-border bg-card hover:border-primary/50 transition-colors"
+            >
               <CardHeader>
                 <div className="flex items-start justify-between mb-2">
-                  <Badge variant={event.status === "active" ? "default" : "secondary"}>{event.status}</Badge>
+                  <Badge
+                    variant={
+                      event.status === "active" ? "default" : "secondary"
+                    }
+                  >
+                    {event.status}
+                  </Badge>
                   <Badge variant="outline" className="text-xs">
                     {event.courtCount} courts
                   </Badge>
@@ -98,7 +119,10 @@ export default function EventsPage() {
                   <div className="flex items-center gap-2 text-sm">
                     <Calendar className="w-4 h-4" />
                     {event.date.toLocaleDateString()} at{" "}
-                    {event.date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                    {event.date.toLocaleTimeString([], {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
                   </div>
                 </CardDescription>
               </CardHeader>
@@ -108,7 +132,9 @@ export default function EventsPage() {
                     <Users className="w-4 h-4" />
                     <span>{event.playingCount} playing</span>
                   </div>
-                  <div className="text-sm text-muted-foreground">{event.queueCount} in queue</div>
+                  <div className="text-sm text-muted-foreground">
+                    {event.queueCount} in queue
+                  </div>
                 </div>
                 <Button className="w-full" asChild>
                   <Link href={`/events/${event.id}`}>
@@ -124,7 +150,9 @@ export default function EventsPage() {
         {events.length === 0 && (
           <Card className="border-border bg-card">
             <CardContent className="p-12 text-center">
-              <p className="text-muted-foreground mb-4">No active events at the moment</p>
+              <p className="text-muted-foreground mb-4">
+                No active events at the moment
+              </p>
               <Button variant="outline" asChild>
                 <Link href="/">Back to Home</Link>
               </Button>
@@ -133,5 +161,5 @@ export default function EventsPage() {
         )}
       </div>
     </div>
-  )
+  );
 }

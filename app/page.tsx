@@ -8,49 +8,13 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Header } from "@/components/ui/header";
 
 export default function HomePage() {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="border-b border-border">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <img
-              src="/icon-32x32.png"
-              alt="Ghost Mammoths PB"
-              width={32}
-              height={32}
-            />
-            {/* <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center"> */}
-            {/* <Trophy className="w-6 h-6 text-primary-foreground" /> */}
-            {/* </div> */}
-            <span className="text-xl font-bold text-foreground">
-              Ghost Mammoths PB
-            </span>
-          </div>
-          <nav className="flex items-center gap-4">
-            <Link
-              href="/events"
-              className="text-muted-foreground hover:text-foreground transition-colors"
-            >
-              Events
-            </Link>
-            <Link
-              href="/about"
-              className="text-muted-foreground hover:text-foreground transition-colors"
-            >
-              About
-            </Link>
-            <Button variant="outline" asChild>
-              <Link href="/login">Login</Link>
-            </Button>
-            <Button asChild>
-              <Link href="/signup">Sign Up</Link>
-            </Button>
-          </nav>
-        </div>
-      </header>
+      <Header />
 
       {/* Hero Section */}
       <section className="container mx-auto px-4 py-20 text-center">

@@ -120,3 +120,13 @@
 body {
   @apply bg-background text-foreground;
 }
+
+/* Fix button visibility - only target buttons with bg-primary class */
+button.bg-primary {
+  background-color: #3b82f6 !important;
+  color: white !important;
+}
+button.bg-primary:hover {
+  background-color: #2563eb !important;
+}
+
