@@ -1,17 +1,28 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { use } from "react"
-import Link from "next/link"
-import { Trophy, ArrowLeft, Users, Clock, MapPin, Calendar, Play, Trash2, History } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { QueueList } from "@/components/queue-list"
-import { CourtStatus } from "@/components/court-status"
-import { QueueManager } from "@/lib/queue-manager"
-import { AdminActivityLogger } from "@/lib/admin-middleware"
-import type { Event, QueueEntry, CourtAssignment, User } from "@/lib/types"
+import { useState } from "react";
+import { use } from "react";
+import Link from "next/link";
+import {
+  Trophy,
+  ArrowLeft,
+  Users,
+  Clock,
+  MapPin,
+  Calendar,
+  Play,
+  Trash2,
+  History,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { QueueList } from "@/components/queue-list";
+import { CourtStatus } from "@/components/court-status";
+import { QueueManager } from "@/lib/queue-manager";
+import { AdminActivityLogger } from "@/lib/admin-middleware";
+import type { Event, QueueEntry, CourtAssignment, User } from "@/lib/types";
+import Image from "next/image";
 
 // Mock data
 const mockEvent: Event = {
@@ -24,7 +35,7 @@ const mockEvent: Event = {
   status: "active",
   createdAt: new Date(),
   updatedAt: new Date(),
-}
+};
 
 const mockUsers: User[] = [
   {
@@ -75,7 +86,7 @@ const mockUsers: User[] = [
     isAdmin: false,
     createdAt: new Date(),
   },
-]
+];
 
 const mockQueue: QueueEntry[] = [
   {
@@ -98,7 +109,7 @@ const mockQueue: QueueEntry[] = [
     joinedAt: new Date(),
     user: mockUsers[1],
   },
-]
+];
 
 const mockAssignments: CourtAssignment[] = [
   {
@@ -115,26 +126,36 @@ const mockAssignments: CourtAssignment[] = [
     player3: mockUsers[4],
     player4: mockUsers[5],
   },
-]
+];
 
-export default function AdminEventDetailPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = use(params)
-  const [event] = useState<Event>(mockEvent)
-  const [queue, setQueue] = useState<QueueEntry[]>(mockQueue)
-  const [assignments, setAssignments] = useState<CourtAssignment[]>(mockAssignments)
-  const [users] = useState<User[]>(mockUsers)
-  const [showActivityLog, setShowActivityLog] = useState(false)
-  const [activities] = useState(AdminActivityLogger.getActivities(id))
+export default function AdminEventDetailPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const { id } = use(params);
+  const [event] = useState<Event>(mockEvent);
+  const [queue, setQueue] = useState<QueueEntry[]>(mockQueue);
+  const [assignments, setAssignments] =
+    useState<CourtAssignment[]>(mockAssignments);
+  const [users] = useState<User[]>(mockUsers);
+  const [showActivityLog, setShowActivityLog] = useState(false);
+  const [activities] = useState(AdminActivityLogger.getActivities(id));
 
-  const waitingCount = queue.filter((e) => e.status === "waiting").length
-  const playingCount = assignments.filter((a) => !a.endedAt).length * 4
+  const waitingCount = queue.filter((e) => e.status === "waiting").length;
+  const playingCount = assignments.filter((a) => !a.endedAt).length * 4;
 
   const handleAssignNext = () => {
-    const newAssignments = QueueManager.assignNextPlayers(queue, event.courtCount, assignments, event.rotationType)
+    const newAssignments = QueueManager.assignNextPlayers(
+      queue,
+      event.courtCount,
+      assignments,
+      event.rotationType
+    );
 
     if (newAssignments.length === 0) {
-      alert("Not enough players in queue or no available courts")
-      return
+      alert("Not enough players in queue or no available courts");
+      return;
     }
 
     AdminActivityLogger.log(
@@ -142,112 +163,161 @@ export default function AdminEventDetailPage({ params }: { params: Promise<{ id:
       "Admin User",
       "assign-players",
       `Assigned ${newAssignments.length * 4} players to courts`,
-      id,
-    )
+      id
+    );
 
-    const courtAssignments: CourtAssignment[] = newAssignments.map((assignment) => ({
-      id: Math.random().toString(),
-      eventId: id,
-      courtNumber: assignment.courtNumber,
-      player1Id: assignment.playerIds[0],
-      player2Id: assignment.playerIds[1],
-      player3Id: assignment.playerIds[2],
-      player4Id: assignment.playerIds[3],
-      startedAt: new Date(),
-      player1: users.find((u) => u.id === assignment.playerIds[0]),
-      player2: users.find((u) => u.id === assignment.playerIds[1]),
-      player3: users.find((u) => u.id === assignment.playerIds[2]),
-      player4: users.find((u) => u.id === assignment.playerIds[3]),
-    }))
+    const courtAssignments: CourtAssignment[] = newAssignments.map(
+      (assignment) => ({
+        id: Math.random().toString(),
+        eventId: id,
+        courtNumber: assignment.courtNumber,
+        player1Id: assignment.playerIds[0],
+        player2Id: assignment.playerIds[1],
+        player3Id: assignment.playerIds[2],
+        player4Id: assignment.playerIds[3],
+        startedAt: new Date(),
+        player1: users.find((u) => u.id === assignment.playerIds[0]),
+        player2: users.find((u) => u.id === assignment.playerIds[1]),
+        player3: users.find((u) => u.id === assignment.playerIds[2]),
+        player4: users.find((u) => u.id === assignment.playerIds[3]),
+      })
+    );
 
-    const assignedPlayerIds = new Set(newAssignments.flatMap((a) => a.playerIds))
+    const assignedPlayerIds = new Set(
+      newAssignments.flatMap((a) => a.playerIds)
+    );
     const updatedQueue = queue.map((entry) =>
-      assignedPlayerIds.has(entry.userId) ? { ...entry, status: "playing" as const } : entry,
-    )
+      assignedPlayerIds.has(entry.userId)
+        ? { ...entry, status: "playing" as const }
+        : entry
+    );
 
-    setAssignments([...assignments, ...courtAssignments])
-    setQueue(QueueManager.reorderQueue(updatedQueue))
-  }
+    setAssignments([...assignments, ...courtAssignments]);
+    setQueue(QueueManager.reorderQueue(updatedQueue));
+  };
 
-  const handleCompleteGame = (assignmentId: string, winningTeam: "team1" | "team2") => {
-    const assignment = assignments.find((a) => a.id === assignmentId)
-    if (!assignment) return
+  const handleCompleteGame = (
+    assignmentId: string,
+    winningTeam: "team1" | "team2"
+  ) => {
+    const assignment = assignments.find((a) => a.id === assignmentId);
+    if (!assignment) return;
 
     AdminActivityLogger.log(
       "admin1",
       "Admin User",
       "complete-game",
       `Completed game on court ${assignment.courtNumber}, ${winningTeam} won`,
-      id,
-    )
+      id
+    );
 
     const { playersToStay, playersToQueue } = QueueManager.handleGameCompletion(
       assignment,
       event.rotationType,
       winningTeam,
+      queue
+    );
+
+    const updatedAssignments = assignments.map((a) =>
+      a.id === assignmentId ? { ...a, endedAt: new Date() } : a
+    );
+
+    const updatedQueue = QueueManager.addPlayersToQueue(
+      playersToQueue,
       queue,
-    )
-
-    const updatedAssignments = assignments.map((a) => (a.id === assignmentId ? { ...a, endedAt: new Date() } : a))
-
-    const updatedQueue = QueueManager.addPlayersToQueue(playersToQueue, queue, id, users)
+      id,
+      users
+    );
 
     if (playersToStay.length > 0) {
-      const nextAssignment = QueueManager.createNextAssignment(assignment.courtNumber, playersToStay, updatedQueue, id)
+      const nextAssignment = QueueManager.createNextAssignment(
+        assignment.courtNumber,
+        playersToStay,
+        updatedQueue,
+        id
+      );
 
       if (nextAssignment) {
         const newAssignment: CourtAssignment = {
           id: Math.random().toString(),
           ...nextAssignment.assignment,
-          player1: users.find((u) => u.id === nextAssignment.assignment.player1Id),
-          player2: users.find((u) => u.id === nextAssignment.assignment.player2Id),
-          player3: users.find((u) => u.id === nextAssignment.assignment.player3Id),
-          player4: users.find((u) => u.id === nextAssignment.assignment.player4Id),
-        } as CourtAssignment
+          player1: users.find(
+            (u) => u.id === nextAssignment.assignment.player1Id
+          ),
+          player2: users.find(
+            (u) => u.id === nextAssignment.assignment.player2Id
+          ),
+          player3: users.find(
+            (u) => u.id === nextAssignment.assignment.player3Id
+          ),
+          player4: users.find(
+            (u) => u.id === nextAssignment.assignment.player4Id
+          ),
+        } as CourtAssignment;
 
-        updatedAssignments.push(newAssignment)
+        updatedAssignments.push(newAssignment);
 
-        const newlyAssignedIds = new Set(nextAssignment.assignedQueueEntries.map((e) => e.userId))
+        const newlyAssignedIds = new Set(
+          nextAssignment.assignedQueueEntries.map((e) => e.userId)
+        );
         const finalQueue = updatedQueue.map((entry) =>
-          newlyAssignedIds.has(entry.userId) ? { ...entry, status: "playing" as const } : entry,
-        )
+          newlyAssignedIds.has(entry.userId)
+            ? { ...entry, status: "playing" as const }
+            : entry
+        );
 
-        setQueue(QueueManager.reorderQueue(finalQueue))
+        setQueue(QueueManager.reorderQueue(finalQueue));
       } else {
-        setQueue(QueueManager.reorderQueue(updatedQueue))
+        setQueue(QueueManager.reorderQueue(updatedQueue));
       }
     } else {
-      setQueue(QueueManager.reorderQueue(updatedQueue))
+      setQueue(QueueManager.reorderQueue(updatedQueue));
     }
 
-    setAssignments(updatedAssignments)
-  }
+    setAssignments(updatedAssignments);
+  };
 
   const handleForceRemove = (entryId: string) => {
-    if (confirm("Are you sure you want to remove this player from the queue?")) {
-      const entry = queue.find((e) => e.id === entryId)
-      if (!entry) return
+    if (
+      confirm("Are you sure you want to remove this player from the queue?")
+    ) {
+      const entry = queue.find((e) => e.id === entryId);
+      if (!entry) return;
 
-      AdminActivityLogger.log("admin1", "Admin User", "force-remove", `Removed ${entry.user?.name} from queue`, id)
+      AdminActivityLogger.log(
+        "admin1",
+        "Admin User",
+        "force-remove",
+        `Removed ${entry.user?.name} from queue`,
+        id
+      );
 
-      const entriesToRemove = entry.groupId ? queue.filter((e) => e.groupId === entry.groupId) : [entry]
-      const updatedQueue = queue.filter((e) => !entriesToRemove.some((r) => r.id === e.id))
-      setQueue(QueueManager.reorderQueue(updatedQueue))
+      const entriesToRemove = entry.groupId
+        ? queue.filter((e) => e.groupId === entry.groupId)
+        : [entry];
+      const updatedQueue = queue.filter(
+        (e) => !entriesToRemove.some((r) => r.id === e.id)
+      );
+      setQueue(QueueManager.reorderQueue(updatedQueue));
     }
-  }
+  };
 
   const handleClearQueue = () => {
-    if (confirm("Are you sure you want to clear the entire queue? This cannot be undone.")) {
+    if (
+      confirm(
+        "Are you sure you want to clear the entire queue? This cannot be undone."
+      )
+    ) {
       AdminActivityLogger.log(
         "admin1",
         "Admin User",
         "clear-queue",
         `Cleared entire queue (${waitingCount} players)`,
-        id,
-      )
-      setQueue([])
+        id
+      );
+      setQueue([]);
     }
-  }
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -255,13 +325,25 @@ export default function AdminEventDetailPage({ params }: { params: Promise<{ id:
       <header className="border-b border-border">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2">
-            <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
+            <Image
+              src="/icon-32x32.png"
+              alt="Ghost Mammoths PB"
+              width={38}
+              height={38}
+            />
+            {/* <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
               <Trophy className="w-6 h-6 text-primary-foreground" />
-            </div>
-            <span className="text-xl font-bold text-foreground">Ghost Mammoths PB</span>
+            </div> */}
+            <span className="text-xl font-bold text-foreground">
+              Ghost Mammoths PB
+            </span>
           </Link>
           <div className="flex items-center gap-2">
-            <Button variant="ghost" size="icon" onClick={() => setShowActivityLog(!showActivityLog)}>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setShowActivityLog(!showActivityLog)}
+            >
               <History className="w-4 h-4" />
             </Button>
             <Button variant="ghost" asChild>
@@ -279,7 +361,9 @@ export default function AdminEventDetailPage({ params }: { params: Promise<{ id:
         <div className="container mx-auto px-4 py-8">
           <div className="flex items-start justify-between mb-6">
             <div>
-              <h1 className="text-3xl font-bold text-foreground mb-2">{event.name}</h1>
+              <h1 className="text-3xl font-bold text-foreground mb-2">
+                {event.name}
+              </h1>
               <div className="flex flex-wrap gap-4 text-muted-foreground">
                 <div className="flex items-center gap-2">
                   <MapPin className="w-4 h-4" />
@@ -288,7 +372,10 @@ export default function AdminEventDetailPage({ params }: { params: Promise<{ id:
                 <div className="flex items-center gap-2">
                   <Calendar className="w-4 h-4" />
                   {event.date.toLocaleDateString()} at{" "}
-                  {event.date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                  {event.date.toLocaleTimeString([], {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}
                 </div>
               </div>
             </div>
@@ -305,18 +392,29 @@ export default function AdminEventDetailPage({ params }: { params: Promise<{ id:
           {showActivityLog && (
             <Card className="border-border bg-background mb-6">
               <CardContent className="p-4">
-                <h3 className="font-semibold text-foreground mb-3">Recent Admin Activity</h3>
+                <h3 className="font-semibold text-foreground mb-3">
+                  Recent Admin Activity
+                </h3>
                 <div className="space-y-2 max-h-48 overflow-y-auto">
                   {activities.length === 0 ? (
-                    <p className="text-sm text-muted-foreground">No activity yet</p>
+                    <p className="text-sm text-muted-foreground">
+                      No activity yet
+                    </p>
                   ) : (
                     activities.map((activity) => (
-                      <div key={activity.id} className="text-sm border-l-2 border-primary pl-3 py-1">
+                      <div
+                        key={activity.id}
+                        className="text-sm border-l-2 border-primary pl-3 py-1"
+                      >
                         <p className="text-foreground">
-                          <span className="font-medium">{activity.adminName}</span> {activity.details}
+                          <span className="font-medium">
+                            {activity.adminName}
+                          </span>{" "}
+                          {activity.details}
                         </p>
                         <p className="text-xs text-muted-foreground">
-                          {activity.timestamp.toLocaleTimeString()} - {activity.action}
+                          {activity.timestamp.toLocaleTimeString()} -{" "}
+                          {activity.action}
                         </p>
                       </div>
                     ))
@@ -334,7 +432,9 @@ export default function AdminEventDetailPage({ params }: { params: Promise<{ id:
                     <Users className="w-5 h-5 text-primary" />
                   </div>
                   <div>
-                    <p className="text-2xl font-bold text-foreground">{waitingCount}</p>
+                    <p className="text-2xl font-bold text-foreground">
+                      {waitingCount}
+                    </p>
                     <p className="text-sm text-muted-foreground">In Queue</p>
                   </div>
                 </div>
@@ -348,7 +448,9 @@ export default function AdminEventDetailPage({ params }: { params: Promise<{ id:
                     <Trophy className="w-5 h-5 text-accent" />
                   </div>
                   <div>
-                    <p className="text-2xl font-bold text-foreground">{playingCount}</p>
+                    <p className="text-2xl font-bold text-foreground">
+                      {playingCount}
+                    </p>
                     <p className="text-sm text-muted-foreground">Playing Now</p>
                   </div>
                 </div>
@@ -363,7 +465,11 @@ export default function AdminEventDetailPage({ params }: { params: Promise<{ id:
                   </div>
                   <div>
                     <p className="text-2xl font-bold text-foreground">
-                      {QueueManager.estimateWaitTime(waitingCount, event.courtCount)}m
+                      {QueueManager.estimateWaitTime(
+                        waitingCount,
+                        event.courtCount
+                      )}
+                      m
                     </p>
                     <p className="text-sm text-muted-foreground">Est. Wait</p>
                   </div>
@@ -391,7 +497,9 @@ export default function AdminEventDetailPage({ params }: { params: Promise<{ id:
           {/* Court Status */}
           <div>
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-2xl font-bold text-foreground">Court Status</h2>
+              <h2 className="text-2xl font-bold text-foreground">
+                Court Status
+              </h2>
               <Badge variant="outline">{event.courtCount} courts</Badge>
             </div>
             <CourtStatus
@@ -405,12 +513,14 @@ export default function AdminEventDetailPage({ params }: { params: Promise<{ id:
           {/* Queue */}
           <div>
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-2xl font-bold text-foreground">Queue Management</h2>
+              <h2 className="text-2xl font-bold text-foreground">
+                Queue Management
+              </h2>
             </div>
             <QueueList queue={queue} onRemove={handleForceRemove} />
           </div>
         </div>
       </div>
     </div>
-  )
+  );
 }

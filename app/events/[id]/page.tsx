@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import {
   Trophy,
@@ -12,6 +12,7 @@ import {
   Bell,
   RefreshCw,
   Settings,
+  Loader2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -22,182 +23,12 @@ import { JoinQueueDialog } from "@/components/join-queue-dialog";
 import { QueuePositionAlert } from "@/components/queue-position-alert";
 import { NotificationPrompt } from "@/components/notification-prompt";
 import { QueueManager } from "@/lib/queue-manager";
-import { useQueuePolling } from "@/lib/use-queue-polling";
 import { useNotifications } from "@/lib/use-notifications";
+import { useRealtimeQueue } from "@/lib/hooks/use-realtime-queue";
+import { useAuth } from "@/lib/auth-context";
+import { joinQueue, leaveQueue } from "@/app/actions/queue";
+import { createClient } from "@/lib/supabase/client";
 import type { Event, QueueEntry, CourtAssignment } from "@/lib/types";
-
-// Mock data
-const mockEvent: Event = {
-  id: "1",
-  name: "Saturday Morning Doubles",
-  location: "Central Park Courts",
-  date: new Date("2025-10-04T09:00:00"),
-  courtCount: 4,
-  rotationType: "2-stay-4-off",
-  status: "active",
-  createdAt: new Date(),
-  updatedAt: new Date(),
-};
-
-const mockQueue: QueueEntry[] = [
-  {
-    id: "1",
-    eventId: "1",
-    userId: "u1",
-    groupSize: 1,
-    position: 1,
-    status: "waiting",
-    joinedAt: new Date(),
-    user: {
-      id: "u1",
-      name: "Alex Johnson",
-      email: "alex@example.com",
-      skillLevel: "advanced",
-      isAdmin: false,
-      createdAt: new Date(),
-    },
-  },
-  {
-    id: "2",
-    eventId: "1",
-    userId: "u2",
-    groupSize: 1,
-    position: 2,
-    status: "waiting",
-    joinedAt: new Date(),
-    user: {
-      id: "u2",
-      name: "Sam Chen",
-      email: "sam@example.com",
-      skillLevel: "intermediate",
-      isAdmin: false,
-      createdAt: new Date(),
-    },
-  },
-  {
-    id: "3",
-    eventId: "1",
-    userId: "u3",
-    groupSize: 2,
-    position: 3,
-    status: "waiting",
-    joinedAt: new Date(),
-    groupId: "g1",
-    user: {
-      id: "u3",
-      name: "Jordan Lee",
-      email: "jordan@example.com",
-      skillLevel: "advanced",
-      isAdmin: false,
-      createdAt: new Date(),
-    },
-  },
-  {
-    id: "4",
-    eventId: "1",
-    userId: "u4",
-    groupSize: 2,
-    position: 4,
-    status: "waiting",
-    joinedAt: new Date(),
-    groupId: "g1",
-    user: {
-      id: "u4",
-      name: "Taylor Kim",
-      email: "taylor@example.com",
-      skillLevel: "advanced",
-      isAdmin: false,
-      createdAt: new Date(),
-    },
-  },
-];
-
-const mockAssignments: CourtAssignment[] = [
-  {
-    id: "a1",
-    eventId: "1",
-    courtNumber: 1,
-    player1Id: "p1",
-    player2Id: "p2",
-    player3Id: "p3",
-    player4Id: "p4",
-    startedAt: new Date(),
-    player1: {
-      id: "p1",
-      name: "Chris Martinez",
-      email: "chris@example.com",
-      skillLevel: "pro",
-      isAdmin: false,
-      createdAt: new Date(),
-    },
-    player2: {
-      id: "p2",
-      name: "Morgan Davis",
-      email: "morgan@example.com",
-      skillLevel: "advanced",
-      isAdmin: false,
-      createdAt: new Date(),
-    },
-    player3: {
-      id: "p3",
-      name: "Riley Brown",
-      email: "riley@example.com",
-      skillLevel: "advanced",
-      isAdmin: false,
-      createdAt: new Date(),
-    },
-    player4: {
-      id: "p4",
-      name: "Casey Wilson",
-      email: "casey@example.com",
-      skillLevel: "intermediate",
-      isAdmin: false,
-      createdAt: new Date(),
-    },
-  },
-  {
-    id: "a2",
-    eventId: "1",
-    courtNumber: 2,
-    player1Id: "p5",
-    player2Id: "p6",
-    player3Id: "p7",
-    player4Id: "p8",
-    startedAt: new Date(),
-    player1: {
-      id: "p5",
-      name: "Jamie Anderson",
-      email: "jamie@example.com",
-      skillLevel: "intermediate",
-      isAdmin: false,
-      createdAt: new Date(),
-    },
-    player2: {
-      id: "p6",
-      name: "Drew Taylor",
-      email: "drew@example.com",
-      skillLevel: "beginner",
-      isAdmin: false,
-      createdAt: new Date(),
-    },
-    player3: {
-      id: "p7",
-      name: "Avery Moore",
-      email: "avery@example.com",
-      skillLevel: "intermediate",
-      isAdmin: false,
-      createdAt: new Date(),
-    },
-    player4: {
-      id: "p8",
-      name: "Quinn Jackson",
-      email: "quinn@example.com",
-      skillLevel: "advanced",
-      isAdmin: false,
-      createdAt: new Date(),
-    },
-  },
-];
 
 export default function EventDetailPage({
   params,
@@ -205,25 +36,75 @@ export default function EventDetailPage({
   params: { id: string };
 }) {
   const { id } = params;
-  const [event] = useState<Event>(mockEvent);
-  const [queue, setQueue] = useState<QueueEntry[]>(mockQueue);
-  const [assignments] = useState<CourtAssignment[]>(mockAssignments);
+  const [event, setEvent] = useState<Event | null>(null);
+  const [assignments, setAssignments] = useState<CourtAssignment[]>([]);
   const [showJoinDialog, setShowJoinDialog] = useState(false);
-  const [currentUserId] = useState("u1");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [lastPosition, setLastPosition] = useState<number>(0);
-  const [isRefreshing, setIsRefreshing] = useState(false);
 
+  const { user } = useAuth();
+  const { queue, loading: queueLoading } = useRealtimeQueue(id);
   const { sendNotification } = useNotifications();
 
-  const waitingCount = queue.filter((e) => e.status === "waiting").length;
-  const playingCount = assignments.filter((a) => !a.endedAt).length * 4;
+  // Fetch event data
+  useEffect(() => {
+    const fetchEvent = async () => {
+      const supabase = createClient();
+      const { data, error } = await supabase
+        .from("events")
+        .select("*")
+        .eq("id", id)
+        .single();
 
+      if (error) {
+        setError("Event not found");
+        console.error("Error fetching event:", error);
+      } else {
+        setEvent(data);
+      }
+      setLoading(false);
+    };
+
+    fetchEvent();
+  }, [id]);
+
+  // Fetch court assignments
+  useEffect(() => {
+    const fetchAssignments = async () => {
+      const supabase = createClient();
+      const { data, error } = await supabase
+        .from("court_assignments")
+        .select(
+          `
+          *,
+          player1:users!player1_id(*),
+          player2:users!player2_id(*),
+          player3:users!player3_id(*),
+          player4:users!player4_id(*)
+        `
+        )
+        .eq("event_id", id)
+        .is("ended_at", null);
+
+      if (error) {
+        console.error("Error fetching assignments:", error);
+      } else {
+        setAssignments(data || []);
+      }
+    };
+
+    fetchAssignments();
+  }, [id]);
+
+  // Get current user's queue position
   const currentUserEntry = queue.find(
-    (e) => e.userId === currentUserId && e.status === "waiting"
+    (e) => e.userId === user?.id && e.status === "waiting"
   );
   const userPosition = currentUserEntry?.position || 0;
   const isUpNext = userPosition > 0 && userPosition <= 4;
 
+  // Handle position change notifications
   useEffect(() => {
     if (userPosition > 0 && lastPosition > 0 && userPosition < lastPosition) {
       if (userPosition <= 4) {
@@ -243,69 +124,78 @@ export default function EventDetailPage({
     }
   }, [userPosition, lastPosition, sendNotification]);
 
-  const handleRefresh = useCallback(() => {
-    setIsRefreshing(true);
-    setTimeout(() => {
-      setIsRefreshing(false);
-    }, 500);
-  }, []);
+  const waitingCount = queue.filter((e) => e.status === "waiting").length;
+  const playingCount = assignments.filter((a) => !a.endedAt).length * 4;
 
-  useQueuePolling({
-    onUpdate: handleRefresh,
-    interval: 10000,
-    enabled: true,
-  });
-
-  const handleJoinQueue = (
+  const handleJoinQueue = async (
     players: Array<{ name: string; skillLevel: string }>,
     groupSize: number
   ) => {
-    const groupId = groupSize > 1 ? Math.random().toString() : undefined;
-    const basePosition = queue.length + 1;
+    if (!user) return;
 
-    const newEntries: QueueEntry[] = players.map((player, index) => ({
-      id: Math.random().toString(),
-      eventId: id,
-      userId: Math.random().toString(),
-      groupId,
-      groupSize: groupSize as 1 | 2 | 3 | 4,
-      position: basePosition + index,
-      status: "waiting",
-      joinedAt: new Date(),
-      user: {
-        id: Math.random().toString(),
-        name: player.name,
-        email: `${player.name.toLowerCase().replace(" ", ".")}@example.com`,
-        skillLevel: player.skillLevel as any,
-        isAdmin: false,
-        createdAt: new Date(),
-      },
-    }));
+    try {
+      const groupId = groupSize > 1 ? Math.random().toString() : undefined;
 
-    setQueue([...queue, ...newEntries]);
-    setShowJoinDialog(false);
+      // For now, just add the current user
+      const { error } = await joinQueue(id, user.id, groupSize, groupId);
 
-    sendNotification("queue-join", "Successfully Joined Queue", {
-      body: `You're now in position #${basePosition} for ${event.name}`,
-      tag: "queue-join",
-    });
+      if (error) {
+        console.error("Error joining queue:", error);
+      } else {
+        setShowJoinDialog(false);
+        sendNotification("queue-join", "Successfully Joined Queue", {
+          body: `You're now in position #${waitingCount + 1} for ${
+            event?.name
+          }`,
+          tag: "queue-join",
+        });
+      }
+    } catch (err) {
+      console.error("Error joining queue:", err);
+    }
   };
 
-  const handleLeaveQueue = (entryId: string) => {
-    const entry = queue.find((e) => e.id === entryId);
-    if (!entry) return;
+  const handleLeaveQueue = async (entryId: string) => {
+    try {
+      const { error } = await leaveQueue(entryId);
+      if (error) {
+        console.error("Error leaving queue:", error);
+      }
+    } catch (err) {
+      console.error("Error leaving queue:", err);
+    }
+  };
 
-    const entriesToRemove = entry.groupId
-      ? queue.filter((e) => e.groupId === entry.groupId)
-      : [entry];
-
-    const updatedQueue = queue.filter(
-      (e) => !entriesToRemove.some((r) => r.id === e.id)
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background">
+        <div className="container mx-auto px-4 py-20">
+          <div className="flex items-center justify-center">
+            <Loader2 className="w-8 h-8 animate-spin" />
+            <span className="ml-2 text-muted-foreground">Loading event...</span>
+          </div>
+        </div>
+      </div>
     );
+  }
 
-    const reorderedQueue = QueueManager.reorderQueue(updatedQueue);
-    setQueue(reorderedQueue);
-  };
+  if (error || !event) {
+    return (
+      <div className="min-h-screen bg-background">
+        <div className="container mx-auto px-4 py-20">
+          <div className="text-center">
+            <h1 className="text-2xl font-bold text-foreground mb-4">
+              Event Not Found
+            </h1>
+            <p className="text-muted-foreground mb-4">{error}</p>
+            <Button asChild>
+              <Link href="/events">Back to Events</Link>
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -325,16 +215,6 @@ export default function EventDetailPage({
               <Link href="/settings/notifications">
                 <Settings className="w-4 h-4" />
               </Link>
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={handleRefresh}
-              disabled={isRefreshing}
-            >
-              <RefreshCw
-                className={`w-4 h-4 ${isRefreshing ? "animate-spin" : ""}`}
-              />
             </Button>
             <Button variant="ghost" asChild>
               <Link href="/events">
@@ -361,8 +241,8 @@ export default function EventDetailPage({
                 </div>
                 <div className="flex items-center gap-2">
                   <Calendar className="w-4 h-4" />
-                  {event.date.toLocaleDateString()} at{" "}
-                  {event.date.toLocaleTimeString([], {
+                  {new Date(event.date).toLocaleDateString()} at{" "}
+                  {new Date(event.date).toLocaleTimeString([], {
                     hour: "2-digit",
                     minute: "2-digit",
                   })}
@@ -467,16 +347,28 @@ export default function EventDetailPage({
                   You're #{userPosition}
                 </Badge>
               ) : (
-                <Button onClick={() => setShowJoinDialog(true)}>
+                <Button
+                  onClick={() => setShowJoinDialog(true)}
+                  disabled={!user}
+                >
                   Join Queue
                 </Button>
               )}
             </div>
-            <QueueList
-              queue={queue}
-              onRemove={handleLeaveQueue}
-              currentUserId={currentUserId}
-            />
+            {queueLoading ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="w-6 h-6 animate-spin" />
+                <span className="ml-2 text-muted-foreground">
+                  Loading queue...
+                </span>
+              </div>
+            ) : (
+              <QueueList
+                queue={queue}
+                onRemove={handleLeaveQueue}
+                currentUserId={user?.id || ""}
+              />
+            )}
           </div>
         </div>
       </div>
