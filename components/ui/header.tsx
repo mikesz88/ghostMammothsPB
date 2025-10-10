@@ -1,14 +1,35 @@
 "use client";
 
 import Link from "next/link";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/auth-context";
 import { signOut } from "@/app/actions/auth";
+import { createClient } from "@/lib/supabase/client";
 import Image from "next/image";
 import { User, LogOut, Settings } from "lucide-react";
 
 export const Header = () => {
   const { user, loading } = useAuth();
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  useEffect(() => {
+    const checkAdmin = async () => {
+      if (user) {
+        const supabase = createClient();
+        const { data } = await supabase
+          .from("users")
+          .select("is_admin")
+          .eq("id", user.id)
+          .single();
+        setIsAdmin(data?.is_admin || false);
+      } else {
+        setIsAdmin(false);
+      }
+    };
+
+    checkAdmin();
+  }, [user]);
 
   if (loading) {
     return (
@@ -61,7 +82,7 @@ export const Header = () => {
 
           {user ? (
             <div className="flex items-center gap-2">
-              {user.user_metadata?.is_admin && (
+              {isAdmin && (
                 <Button variant="outline" size="sm" asChild>
                   <Link href="/admin">Admin</Link>
                 </Button>

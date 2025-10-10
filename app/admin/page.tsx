@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import {
   Trophy,
@@ -11,6 +11,7 @@ import {
   Trash2,
   Edit,
   ExternalLink,
+  Loader2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -23,89 +24,254 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { CreateEventDialog } from "@/components/create-event-dialog";
 import { EditEventDialog } from "@/components/edit-event-dialog";
+import { createClient } from "@/lib/supabase/client";
 import type { Event } from "@/lib/types";
 import Image from "next/image";
 
-// Mock data
-const mockEvents: Event[] = [
-  {
-    id: "1",
-    name: "Saturday Morning Doubles",
-    location: "Central Park Courts",
-    date: new Date("2025-10-04T09:00:00"),
-    courtCount: 4,
-    rotationType: "2-stay-4-off",
-    status: "active",
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  },
-  {
-    id: "2",
-    name: "Evening Mixed Play",
-    location: "Riverside Recreation Center",
-    date: new Date("2025-10-04T18:00:00"),
-    courtCount: 3,
-    rotationType: "winners-stay",
-    status: "active",
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  },
-];
-
 export default function AdminPage() {
-  const [events, setEvents] = useState<Event[]>(mockEvents);
+  const [events, setEvents] = useState<Event[]>([]);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [editingEvent, setEditingEvent] = useState<Event | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  const handleCreateEvent = (
-    eventData: Omit<Event, "id" | "createdAt" | "updatedAt">
-  ) => {
-    const newEvent: Event = {
-      ...eventData,
-      id: Math.random().toString(),
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
-    setEvents([...events, newEvent]);
-    setShowCreateDialog(false);
+  // Fetch events from Supabase
+  useEffect(() => {
+    fetchEvents();
+  }, []);
+
+  const fetchEvents = async () => {
+    setLoading(true);
+    const supabase = createClient();
+    const { data, error } = await supabase
+      .from("events")
+      .select("*")
+      .order("date", { ascending: true });
+
+    if (error) {
+      console.error("Error fetching events:", error);
+    } else {
+      // Convert date strings to Date objects and parse court_count
+      const eventsWithDates = (data || []).map((event: any) => ({
+        ...event,
+        date:
+          event.date && event.time
+            ? new Date(`${event.date}T${event.time}`)
+            : new Date(event.date),
+        courtCount:
+          parseInt(event.court_count) || parseInt(event.num_courts) || 0,
+        rotationType: event.rotation_type,
+        createdAt: new Date(event.created_at),
+        updatedAt: event.updated_at ? new Date(event.updated_at) : new Date(),
+      }));
+      setEvents(eventsWithDates);
+    }
+    setLoading(false);
   };
 
-  const handleUpdateEvent = (
+  const handleCreateEvent = async (
+    eventData: Omit<Event, "id" | "createdAt" | "updatedAt">
+  ) => {
+    try {
+      const supabase = createClient();
+
+      console.log("Creating event with data:", {
+        name: eventData.name,
+        location: eventData.location,
+        date: eventData.date.toISOString(),
+        court_count: eventData.courtCount,
+        rotation_type: eventData.rotationType,
+        status: eventData.status,
+      });
+
+      // Extract date and time from the date object
+      const eventDateTime = new Date(eventData.date);
+      const dateOnly = eventDateTime.toISOString().split("T")[0]; // YYYY-MM-DD
+      const timeOnly = eventDateTime.toTimeString().split(" ")[0]; // HH:MM:SS
+
+      const { data, error } = await supabase
+        .from("events")
+        .insert({
+          name: eventData.name,
+          location: eventData.location,
+          date: dateOnly, // DATE type - just the date part
+          time: timeOnly, // TIME type - just the time part
+          num_courts: eventData.courtCount.toString(), // TEXT type
+          court_count: eventData.courtCount, // SMALLINT type
+          rotation_type: eventData.rotationType,
+          status: eventData.status,
+        })
+        .select()
+        .single();
+
+      if (error) {
+        console.error("Error creating event:", error);
+        alert(`Failed to create event: ${error.message}`);
+        return;
+      }
+
+      console.log("Event created successfully:", data);
+      await fetchEvents(); // Refresh the list
+      setShowCreateDialog(false);
+      alert("Event created successfully!");
+    } catch (err) {
+      console.error("Unexpected error creating event:", err);
+      alert(
+        `Unexpected error: ${
+          err instanceof Error ? err.message : "Unknown error"
+        }`
+      );
+    }
+  };
+
+  const handleUpdateEvent = async (
     eventData: Omit<Event, "id" | "createdAt" | "updatedAt">
   ) => {
     if (!editingEvent) return;
-    const updatedEvents = events.map((e) =>
-      e.id === editingEvent.id
-        ? {
-            ...e,
-            ...eventData,
-            updatedAt: new Date(),
-          }
-        : e
-    );
-    setEvents(updatedEvents);
-    setEditingEvent(null);
+
+    try {
+      const supabase = createClient();
+
+      console.log("Updating event:", editingEvent.id, eventData);
+
+      // Extract date and time from the date object
+      const eventDateTime = new Date(eventData.date);
+      const dateOnly = eventDateTime.toISOString().split("T")[0]; // YYYY-MM-DD
+      const timeOnly = eventDateTime.toTimeString().split(" ")[0]; // HH:MM:SS
+
+      const { error } = await supabase
+        .from("events")
+        .update({
+          name: eventData.name,
+          location: eventData.location,
+          date: dateOnly, // DATE type - just the date part
+          time: timeOnly, // TIME type - just the time part
+          num_courts: eventData.courtCount.toString(), // TEXT type
+          court_count: eventData.courtCount, // SMALLINT type
+          rotation_type: eventData.rotationType,
+          status: eventData.status,
+        })
+        .eq("id", editingEvent.id);
+
+      if (error) {
+        console.error("Error updating event:", error);
+        alert(`Failed to update event: ${error.message}`);
+        return;
+      }
+
+      console.log("Event updated successfully");
+      await fetchEvents(); // Refresh the list
+      setEditingEvent(null);
+      alert("Event updated successfully!");
+    } catch (err) {
+      console.error("Unexpected error updating event:", err);
+      alert(
+        `Unexpected error: ${
+          err instanceof Error ? err.message : "Unknown error"
+        }`
+      );
+    }
   };
 
-  const handleEndEvent = (eventId: string) => {
-    const updatedEvents = events.map((e) =>
-      e.id === eventId ? { ...e, status: "ended" as const } : e
-    );
-    setEvents(updatedEvents);
+  const handleEndEvent = async (eventId: string) => {
+    if (!confirm("Are you sure you want to end this event?")) return;
+
+    try {
+      const supabase = createClient();
+
+      console.log("Ending event:", eventId);
+
+      const { error } = await supabase
+        .from("events")
+        .update({ status: "ended" })
+        .eq("id", eventId);
+
+      if (error) {
+        console.error("Error ending event:", error);
+        alert(`Failed to end event: ${error.message}`);
+        return;
+      }
+
+      console.log("Event ended successfully");
+      await fetchEvents(); // Refresh the list
+      alert("Event ended successfully!");
+    } catch (err) {
+      console.error("Unexpected error ending event:", err);
+      alert(
+        `Unexpected error: ${
+          err instanceof Error ? err.message : "Unknown error"
+        }`
+      );
+    }
   };
 
-  const handleDeleteEvent = (eventId: string) => {
+  const handleDeleteEvent = async (eventId: string) => {
     if (
-      confirm(
+      !confirm(
         "Are you sure you want to delete this event? This will remove all queue entries and court assignments."
       )
     ) {
-      setEvents(events.filter((e) => e.id !== eventId));
+      return;
+    }
+
+    try {
+      const supabase = createClient();
+
+      console.log("Deleting event:", eventId);
+
+      const { error } = await supabase
+        .from("events")
+        .delete()
+        .eq("id", eventId);
+
+      if (error) {
+        console.error("Error deleting event:", error);
+        alert(`Failed to delete event: ${error.message}`);
+        return;
+      }
+
+      console.log("Event deleted successfully");
+      await fetchEvents(); // Refresh the list
+      alert("Event deleted successfully!");
+    } catch (err) {
+      console.error("Unexpected error deleting event:", err);
+      alert(
+        `Unexpected error: ${
+          err instanceof Error ? err.message : "Unknown error"
+        }`
+      );
     }
   };
 
   const activeEvents = events.filter((e) => e.status === "active");
   const endedEvents = events.filter((e) => e.status === "ended");
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background">
+        <header className="border-b border-border">
+          <div className="container mx-auto px-4 py-4 flex items-center justify-between">
+            <Link href="/" className="flex items-center gap-2">
+              <Image
+                src="/icon-32x32.png"
+                alt="Ghost Mammoths PB"
+                width={38}
+                height={38}
+              />
+              <span className="text-xl font-bold text-foreground">
+                Ghost Mammoths PB
+              </span>
+            </Link>
+          </div>
+        </header>
+        <div className="container mx-auto px-4 py-20">
+          <div className="flex items-center justify-center">
+            <Loader2 className="w-8 h-8 animate-spin mr-2" />
+            <span className="text-muted-foreground">Loading events...</span>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -134,7 +300,13 @@ export default function AdminPage() {
               Events
             </Link>
             <Link href="/admin" className="text-foreground font-medium">
-              Admin
+              Dashboard
+            </Link>
+            <Link
+              href="/admin/users"
+              className="text-muted-foreground hover:text-foreground transition-colors"
+            >
+              Users
             </Link>
           </nav>
         </div>

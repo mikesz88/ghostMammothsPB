@@ -28,6 +28,7 @@ import { useRealtimeQueue } from "@/lib/hooks/use-realtime-queue";
 import { useAuth } from "@/lib/auth-context";
 import { joinQueue, leaveQueue } from "@/app/actions/queue";
 import { createClient } from "@/lib/supabase/client";
+import { canUserJoinEvent, formatPrice } from "@/lib/membership-helpers";
 import type { Event, QueueEntry, CourtAssignment } from "@/lib/types";
 
 export default function EventDetailPage({
@@ -42,9 +43,17 @@ export default function EventDetailPage({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [lastPosition, setLastPosition] = useState<number>(0);
+  const [canJoin, setCanJoin] = useState(true);
+  const [joinReason, setJoinReason] = useState<string | undefined>();
+  const [requiresPayment, setRequiresPayment] = useState(false);
+  const [paymentAmount, setPaymentAmount] = useState<number | undefined>();
 
   const { user } = useAuth();
-  const { queue, loading: queueLoading } = useRealtimeQueue(id);
+  const {
+    queue,
+    loading: queueLoading,
+    refetch: refetchQueue,
+  } = useRealtimeQueue(id);
   const { sendNotification } = useNotifications();
 
   // Fetch event data
@@ -61,7 +70,20 @@ export default function EventDetailPage({
         setError("Event not found");
         console.error("Error fetching event:", error);
       } else {
-        setEvent(data);
+        // Convert date strings to Date objects and map snake_case to camelCase
+        const eventWithDate = {
+          ...data,
+          date:
+            data.date && data.time
+              ? new Date(`${data.date}T${data.time}`)
+              : new Date(data.date),
+          courtCount:
+            parseInt(data.court_count) || parseInt(data.num_courts) || 0,
+          rotationType: data.rotation_type,
+          createdAt: new Date(data.created_at),
+          updatedAt: data.updated_at ? new Date(data.updated_at) : new Date(),
+        };
+        setEvent(eventWithDate);
       }
       setLoading(false);
     };
@@ -96,6 +118,21 @@ export default function EventDetailPage({
 
     fetchAssignments();
   }, [id]);
+
+  // Check if user can join event based on membership
+  useEffect(() => {
+    const checkAccess = async () => {
+      if (user && event) {
+        const access = await canUserJoinEvent(user.id, id);
+        setCanJoin(access.canJoin);
+        setJoinReason(access.reason);
+        setRequiresPayment(access.requiresPayment);
+        setPaymentAmount(access.amount);
+      }
+    };
+
+    checkAccess();
+  }, [user, event, id]);
 
   // Get current user's queue position
   const currentUserEntry = queue.find(
@@ -134,17 +171,27 @@ export default function EventDetailPage({
     if (!user) return;
 
     try {
-      const groupId = groupSize > 1 ? Math.random().toString() : undefined;
+      // Generate a unique group ID if joining as a group
+      const groupId = groupSize > 1 ? crypto.randomUUID() : undefined;
 
-      // For now, just add the current user
+      // Add the current user to the queue with group information
+      // Note: Currently only the authenticated user is added to the database
+      // The other player names are stored in the dialog but not persisted
+      // This is intentional - only registered users can join the queue
       const { error } = await joinQueue(id, user.id, groupSize, groupId);
 
       if (error) {
         console.error("Error joining queue:", error);
+        alert("Failed to join queue. Please try again.");
       } else {
         setShowJoinDialog(false);
+
+        // Manually refetch queue to ensure UI updates immediately
+        await refetchQueue();
+
+        const groupText = groupSize > 1 ? ` as a group of ${groupSize}` : "";
         sendNotification("queue-join", "Successfully Joined Queue", {
-          body: `You're now in position #${waitingCount + 1} for ${
+          body: `You're now in position #${waitingCount + 1}${groupText} for ${
             event?.name
           }`,
           tag: "queue-join",
@@ -152,6 +199,7 @@ export default function EventDetailPage({
       }
     } catch (err) {
       console.error("Error joining queue:", err);
+      alert("An unexpected error occurred. Please try again.");
     }
   };
 
@@ -160,9 +208,19 @@ export default function EventDetailPage({
       const { error } = await leaveQueue(entryId);
       if (error) {
         console.error("Error leaving queue:", error);
+        alert("Failed to leave queue. Please try again.");
+      } else {
+        // Manually refetch queue to ensure UI updates immediately
+        await refetchQueue();
+
+        sendNotification("queue-leave", "Left Queue", {
+          body: `You've been removed from the queue for ${event?.name}`,
+          tag: "queue-leave",
+        });
       }
     } catch (err) {
       console.error("Error leaving queue:", err);
+      alert("An unexpected error occurred. Please try again.");
     }
   };
 
@@ -347,12 +405,37 @@ export default function EventDetailPage({
                   You're #{userPosition}
                 </Badge>
               ) : (
-                <Button
-                  onClick={() => setShowJoinDialog(true)}
-                  disabled={!user}
-                >
-                  Join Queue
-                </Button>
+                <>
+                  {!canJoin && joinReason ? (
+                    <div className="flex flex-col items-end gap-2">
+                      <p className="text-sm text-muted-foreground">
+                        {joinReason}
+                      </p>
+                      <Button variant="default" asChild>
+                        <Link href="/membership">Upgrade Membership</Link>
+                      </Button>
+                    </div>
+                  ) : requiresPayment && paymentAmount ? (
+                    <div className="flex flex-col items-end gap-2">
+                      <p className="text-sm text-muted-foreground">
+                        {formatPrice(paymentAmount)} to join
+                      </p>
+                      <Button
+                        onClick={() => setShowJoinDialog(true)}
+                        disabled={!user}
+                      >
+                        Pay & Join Queue
+                      </Button>
+                    </div>
+                  ) : (
+                    <Button
+                      onClick={() => setShowJoinDialog(true)}
+                      disabled={!user}
+                    >
+                      Join Queue
+                    </Button>
+                  )}
+                </>
               )}
             </div>
             {queueLoading ? (

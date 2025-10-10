@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 
 export type NotificationType =
   | "queue-join"
+  | "queue-leave"
   | "position-change"
   | "up-next"
   | "court-assignment"
@@ -63,6 +64,7 @@ export function useNotifications() {
     // Check if this notification type is enabled
     const typeEnabled = {
       "queue-join": settings.notifyOnQueueJoin,
+      "queue-leave": settings.notifyOnQueueJoin, // Use same setting as queue-join
       "position-change": settings.notifyOnPositionChange,
       "up-next": settings.notifyOnUpNext,
       "court-assignment": settings.notifyOnCourtAssignment,

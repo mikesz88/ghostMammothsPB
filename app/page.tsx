@@ -1,5 +1,9 @@
+"use client";
+
 import Link from "next/link";
-import { Users, Calendar, Trophy, Zap } from "lucide-react";
+import { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
+import { Users, Calendar, Trophy, Zap, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -8,9 +12,42 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Header } from "@/components/ui/header";
+import { useAuth } from "@/lib/auth-context";
+import { createClient } from "@/lib/supabase/client";
 
 export default function HomePage() {
+  const { user } = useAuth();
+  const searchParams = useSearchParams();
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [showAdminError, setShowAdminError] = useState(false);
+
+  useEffect(() => {
+    const checkAdmin = async () => {
+      if (user) {
+        const supabase = createClient();
+        const { data } = await supabase
+          .from("users")
+          .select("is_admin")
+          .eq("id", user.id)
+          .single();
+        setIsAdmin(data?.is_admin || false);
+      } else {
+        setIsAdmin(false);
+      }
+    };
+
+    checkAdmin();
+  }, [user]);
+
+  useEffect(() => {
+    if (searchParams.get("error") === "admin-access-required") {
+      setShowAdminError(true);
+      setTimeout(() => setShowAdminError(false), 5000);
+    }
+  }, [searchParams]);
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -18,6 +55,18 @@ export default function HomePage() {
 
       {/* Hero Section */}
       <section className="container mx-auto px-4 py-20 text-center">
+        {showAdminError && (
+          <div className="max-w-2xl mx-auto mb-6">
+            <Alert variant="destructive">
+              <AlertCircle className="w-4 h-4" />
+              <AlertDescription>
+                Admin access required. You don't have permission to access the
+                admin dashboard.
+              </AlertDescription>
+            </Alert>
+          </div>
+        )}
+
         <h1 className="text-5xl font-bold text-foreground mb-6 text-balance">
           Smart Queue Management for Pickleball Events
         </h1>
@@ -27,12 +76,27 @@ export default function HomePage() {
           management.
         </p>
         <div className="flex items-center justify-center gap-4">
-          <Button size="lg" asChild>
-            <Link href="/events">View Events</Link>
-          </Button>
-          <Button size="lg" variant="outline" asChild>
-            <Link href="/admin">Admin Dashboard</Link>
-          </Button>
+          {user ? (
+            <>
+              <Button size="lg" asChild>
+                <Link href="/events">View Events</Link>
+              </Button>
+              {isAdmin && (
+                <Button size="lg" variant="outline" asChild>
+                  <Link href="/admin">Admin Dashboard</Link>
+                </Button>
+              )}
+            </>
+          ) : (
+            <>
+              <Button size="lg" asChild>
+                <Link href="/signup">Sign Up to Join Events</Link>
+              </Button>
+              <Button size="lg" variant="outline" asChild>
+                <Link href="/login">Login</Link>
+              </Button>
+            </>
+          )}
         </div>
       </section>
 
