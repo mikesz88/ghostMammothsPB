@@ -21,7 +21,20 @@ export function useRealtimeEvents() {
       if (error) {
         console.error("Error fetching events:", error);
       } else {
-        setEvents(data || []);
+        // Convert date strings to Date objects and map snake_case to camelCase
+        const eventsWithDates = (data || []).map((event: any) => ({
+          ...event,
+          date:
+            event.date && event.time
+              ? new Date(`${event.date}T${event.time}`)
+              : new Date(event.date),
+          courtCount:
+            parseInt(event.court_count) || parseInt(event.num_courts) || 0,
+          rotationType: event.rotation_type,
+          createdAt: new Date(event.created_at),
+          updatedAt: event.updated_at ? new Date(event.updated_at) : new Date(),
+        }));
+        setEvents(eventsWithDates);
       }
       setLoading(false);
     };

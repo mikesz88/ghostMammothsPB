@@ -59,6 +59,36 @@ ALTER TABLE court_assignments ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Events are viewable by everyone" ON events
   FOR SELECT USING (true);
 
+-- Allow admins to create events
+CREATE POLICY "Admins can create events" ON events
+  FOR INSERT WITH CHECK (
+    EXISTS (
+      SELECT 1 FROM users 
+      WHERE users.id = auth.uid() 
+      AND users.is_admin = true
+    )
+  );
+
+-- Allow admins to update events
+CREATE POLICY "Admins can update events" ON events
+  FOR UPDATE USING (
+    EXISTS (
+      SELECT 1 FROM users 
+      WHERE users.id = auth.uid() 
+      AND users.is_admin = true
+    )
+  );
+
+-- Allow admins to delete events
+CREATE POLICY "Admins can delete events" ON events
+  FOR DELETE USING (
+    EXISTS (
+      SELECT 1 FROM users 
+      WHERE users.id = auth.uid() 
+      AND users.is_admin = true
+    )
+  );
+
 -- Allow users to read their own profile
 CREATE POLICY "Users can view own profile" ON users
   FOR SELECT USING (auth.uid() = id);
