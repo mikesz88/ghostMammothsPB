@@ -10,9 +10,15 @@ interface QueueListProps {
   queue: QueueEntry[];
   onRemove?: (entryId: string) => void;
   currentUserId?: string;
+  isAdmin?: boolean;
 }
 
-export function QueueList({ queue, onRemove, currentUserId }: QueueListProps) {
+export function QueueList({
+  queue,
+  onRemove,
+  currentUserId,
+  isAdmin = false,
+}: QueueListProps) {
   const waitingQueue = queue
     .filter((entry) => entry.status === "waiting")
     .sort((a, b) => a.position - b.position);
@@ -113,11 +119,14 @@ export function QueueList({ queue, onRemove, currentUserId }: QueueListProps) {
                       })()}
                     </span>
                   </div>
-                  {isCurrentUser && onRemove && (
+                  {onRemove && (
                     <Button
                       variant="ghost"
                       size="icon"
                       onClick={() => onRemove(firstEntry.id)}
+                      title={
+                        isAdmin ? "Admin: Remove from queue" : "Leave queue"
+                      }
                     >
                       <X className="w-4 h-4" />
                     </Button>
