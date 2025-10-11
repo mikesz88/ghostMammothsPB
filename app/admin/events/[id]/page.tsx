@@ -28,9 +28,9 @@ import Image from "next/image";
 export default function AdminEventDetailPage({
   params,
 }: {
-  params: Promise<{ id: string }>;
+  params: { id: string };
 }) {
-  const { id } = use(params);
+  const { id } = params;
   const [event, setEvent] = useState<Event | null>(null);
   const [queue, setQueue] = useState<QueueEntry[]>([]);
   const [assignments, setAssignments] = useState<CourtAssignment[]>([]);
