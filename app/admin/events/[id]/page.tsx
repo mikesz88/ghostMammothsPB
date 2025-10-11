@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { use } from "react";
 import Link from "next/link";
 import {
@@ -13,120 +13,17 @@ import {
   Play,
   Trash2,
   History,
+  Loader2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { QueueList } from "@/components/queue-list";
 import { CourtStatus } from "@/components/court-status";
-import { QueueManager } from "@/lib/queue-manager";
-import { AdminActivityLogger } from "@/lib/admin-middleware";
-import type { Event, QueueEntry, CourtAssignment, User } from "@/lib/types";
+import { createClient } from "@/lib/supabase/client";
+import { leaveQueue } from "@/app/actions/queue";
+import type { Event, QueueEntry, CourtAssignment } from "@/lib/types";
 import Image from "next/image";
-
-// Mock data
-const mockEvent: Event = {
-  id: "1",
-  name: "Saturday Morning Doubles",
-  location: "Central Park Courts",
-  date: new Date("2025-10-04T09:00:00"),
-  courtCount: 4,
-  rotationType: "2-stay-4-off",
-  status: "active",
-  createdAt: new Date(),
-  updatedAt: new Date(),
-};
-
-const mockUsers: User[] = [
-  {
-    id: "u1",
-    name: "Alex Johnson",
-    email: "alex@example.com",
-    skillLevel: "advanced",
-    isAdmin: false,
-    createdAt: new Date(),
-  },
-  {
-    id: "u2",
-    name: "Sam Chen",
-    email: "sam@example.com",
-    skillLevel: "intermediate",
-    isAdmin: false,
-    createdAt: new Date(),
-  },
-  {
-    id: "p1",
-    name: "Chris Martinez",
-    email: "chris@example.com",
-    skillLevel: "pro",
-    isAdmin: false,
-    createdAt: new Date(),
-  },
-  {
-    id: "p2",
-    name: "Morgan Davis",
-    email: "morgan@example.com",
-    skillLevel: "advanced",
-    isAdmin: false,
-    createdAt: new Date(),
-  },
-  {
-    id: "p3",
-    name: "Riley Brown",
-    email: "riley@example.com",
-    skillLevel: "advanced",
-    isAdmin: false,
-    createdAt: new Date(),
-  },
-  {
-    id: "p4",
-    name: "Casey Wilson",
-    email: "casey@example.com",
-    skillLevel: "intermediate",
-    isAdmin: false,
-    createdAt: new Date(),
-  },
-];
-
-const mockQueue: QueueEntry[] = [
-  {
-    id: "1",
-    eventId: "1",
-    userId: "u1",
-    groupSize: 1,
-    position: 1,
-    status: "waiting",
-    joinedAt: new Date(),
-    user: mockUsers[0],
-  },
-  {
-    id: "2",
-    eventId: "1",
-    userId: "u2",
-    groupSize: 1,
-    position: 2,
-    status: "waiting",
-    joinedAt: new Date(),
-    user: mockUsers[1],
-  },
-];
-
-const mockAssignments: CourtAssignment[] = [
-  {
-    id: "a1",
-    eventId: "1",
-    courtNumber: 1,
-    player1Id: "p1",
-    player2Id: "p2",
-    player3Id: "p3",
-    player4Id: "p4",
-    startedAt: new Date(),
-    player1: mockUsers[2],
-    player2: mockUsers[3],
-    player3: mockUsers[4],
-    player4: mockUsers[5],
-  },
-];
 
 export default function AdminEventDetailPage({
   params,
@@ -134,341 +31,551 @@ export default function AdminEventDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = use(params);
-  const [event] = useState<Event>(mockEvent);
-  const [queue, setQueue] = useState<QueueEntry[]>(mockQueue);
-  const [assignments, setAssignments] =
-    useState<CourtAssignment[]>(mockAssignments);
-  const [users] = useState<User[]>(mockUsers);
-  const [showActivityLog, setShowActivityLog] = useState(false);
-  const [activities] = useState(AdminActivityLogger.getActivities(id));
+  const [event, setEvent] = useState<Event | null>(null);
+  const [queue, setQueue] = useState<QueueEntry[]>([]);
+  const [assignments, setAssignments] = useState<CourtAssignment[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // Fetch event data
+  useEffect(() => {
+    const fetchEvent = async () => {
+      const supabase = createClient();
+      const { data, error } = await supabase
+        .from("events")
+        .select("*")
+        .eq("id", id)
+        .single();
+
+      if (error) {
+        console.error("Error fetching event:", error);
+        setError("Failed to load event");
+        setLoading(false);
+        return;
+      }
+
+      if (data) {
+        // Parse date and time
+        const eventDate = new Date(data.date);
+        if (data.time) {
+          const timeParts = data.time.split(":");
+          eventDate.setHours(parseInt(timeParts[0]), parseInt(timeParts[1]));
+        }
+
+        setEvent({
+          id: data.id,
+          name: data.name,
+          location: data.location,
+          date: eventDate,
+          courtCount:
+            parseInt(data.court_count) || parseInt(data.num_courts) || 0,
+          rotationType: data.rotation_type,
+          status: data.status,
+          createdAt: new Date(data.created_at),
+          updatedAt: new Date(data.updated_at || data.created_at),
+        });
+      }
+      setLoading(false);
+    };
+
+    fetchEvent();
+  }, [id]);
+
+  // Fetch queue data
+  useEffect(() => {
+    const fetchQueue = async () => {
+      const supabase = createClient();
+      const { data, error } = await supabase
+        .from("queue_entries")
+        .select(
+          `
+          *,
+          user:users(id, name, email, skill_level)
+        `
+        )
+        .eq("event_id", id)
+        .order("position");
+
+      if (error) {
+        console.error("Error fetching queue:", error);
+        return;
+      }
+
+      if (data) {
+        const queueEntries: QueueEntry[] = data.map((entry) => ({
+          id: entry.id,
+          eventId: entry.event_id,
+          userId: entry.user_id,
+          groupSize: entry.group_size || 1,
+          groupId: entry.group_id,
+          position: entry.position,
+          status: entry.status,
+          joinedAt: new Date(entry.joined_at),
+          user: entry.user
+            ? {
+                id: entry.user.id,
+                name: entry.user.name,
+                email: entry.user.email,
+                skillLevel: entry.user.skill_level,
+                isAdmin: false,
+                createdAt: new Date(),
+              }
+            : undefined,
+        }));
+        setQueue(queueEntries);
+      }
+    };
+
+    fetchQueue();
+
+    // Set up real-time subscription
+    const supabase = createClient();
+    const channel = supabase
+      .channel(`admin-queue-${id}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "queue_entries",
+          filter: `event_id=eq.${id}`,
+        },
+        () => {
+          fetchQueue();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [id]);
+
+  // Fetch court assignments
+  useEffect(() => {
+    const fetchAssignments = async () => {
+      const supabase = createClient();
+      const { data, error } = await supabase
+        .from("court_assignments")
+        .select(
+          `
+          *,
+          player1:users!court_assignments_player1_id_fkey(id, name, email, skill_level),
+          player2:users!court_assignments_player2_id_fkey(id, name, email, skill_level),
+          player3:users!court_assignments_player3_id_fkey(id, name, email, skill_level),
+          player4:users!court_assignments_player4_id_fkey(id, name, email, skill_level)
+        `
+        )
+        .eq("event_id", id)
+        .order("court_number");
+
+      if (error) {
+        console.error("Error fetching assignments:", error);
+        return;
+      }
+
+      if (data) {
+        const courtAssignments: CourtAssignment[] = data.map((assignment) => ({
+          id: assignment.id,
+          eventId: assignment.event_id,
+          courtNumber: assignment.court_number,
+          player1Id: assignment.player1_id,
+          player2Id: assignment.player2_id,
+          player3Id: assignment.player3_id,
+          player4Id: assignment.player4_id,
+          startedAt: new Date(assignment.started_at),
+          endedAt: assignment.ended_at
+            ? new Date(assignment.ended_at)
+            : undefined,
+          player1: assignment.player1
+            ? {
+                id: assignment.player1.id,
+                name: assignment.player1.name,
+                email: assignment.player1.email,
+                skillLevel: assignment.player1.skill_level,
+                isAdmin: false,
+                createdAt: new Date(),
+              }
+            : undefined,
+          player2: assignment.player2
+            ? {
+                id: assignment.player2.id,
+                name: assignment.player2.name,
+                email: assignment.player2.email,
+                skillLevel: assignment.player2.skill_level,
+                isAdmin: false,
+                createdAt: new Date(),
+              }
+            : undefined,
+          player3: assignment.player3
+            ? {
+                id: assignment.player3.id,
+                name: assignment.player3.name,
+                email: assignment.player3.email,
+                skillLevel: assignment.player3.skill_level,
+                isAdmin: false,
+                createdAt: new Date(),
+              }
+            : undefined,
+          player4: assignment.player4
+            ? {
+                id: assignment.player4.id,
+                name: assignment.player4.name,
+                email: assignment.player4.email,
+                skillLevel: assignment.player4.skill_level,
+                isAdmin: false,
+                createdAt: new Date(),
+              }
+            : undefined,
+        }));
+        setAssignments(courtAssignments);
+      }
+    };
+
+    fetchAssignments();
+
+    // Set up real-time subscription
+    const supabase = createClient();
+    const channel = supabase
+      .channel(`admin-assignments-${id}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "court_assignments",
+          filter: `event_id=eq.${id}`,
+        },
+        () => {
+          fetchAssignments();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [id]);
 
   const waitingCount = queue.filter((e) => e.status === "waiting").length;
   const playingCount = assignments.filter((a) => !a.endedAt).length * 4;
 
-  const handleAssignNext = () => {
-    const newAssignments = QueueManager.assignNextPlayers(
-      queue,
-      event.courtCount,
-      assignments,
-      event.rotationType
-    );
+  const handleAssignNext = async () => {
+    if (!event) return;
 
-    if (newAssignments.length === 0) {
-      alert("Not enough players in queue or no available courts");
+    // Get the next 4 players from queue
+    const nextPlayers = queue.filter((e) => e.status === "waiting").slice(0, 4);
+
+    if (nextPlayers.length < 4) {
+      alert("Not enough players in queue (need 4 players)");
       return;
     }
 
-    AdminActivityLogger.log(
-      "admin1",
-      "Admin User",
-      "assign-players",
-      `Assigned ${newAssignments.length * 4} players to courts`,
-      id
-    );
+    // Find an available court
+    const availableCourt =
+      assignments.length === 0
+        ? 1
+        : assignments.filter((a) => !a.endedAt).length < event.courtCount
+        ? Math.max(...assignments.map((a) => a.courtNumber)) + 1
+        : null;
 
-    const courtAssignments: CourtAssignment[] = newAssignments.map(
-      (assignment) => ({
-        id: Math.random().toString(),
-        eventId: id,
-        courtNumber: assignment.courtNumber,
-        player1Id: assignment.playerIds[0],
-        player2Id: assignment.playerIds[1],
-        player3Id: assignment.playerIds[2],
-        player4Id: assignment.playerIds[3],
-        startedAt: new Date(),
-        player1: users.find((u) => u.id === assignment.playerIds[0]),
-        player2: users.find((u) => u.id === assignment.playerIds[1]),
-        player3: users.find((u) => u.id === assignment.playerIds[2]),
-        player4: users.find((u) => u.id === assignment.playerIds[3]),
-      })
-    );
+    if (availableCourt === null) {
+      alert("No available courts. End a game first.");
+      return;
+    }
 
-    const assignedPlayerIds = new Set(
-      newAssignments.flatMap((a) => a.playerIds)
-    );
-    const updatedQueue = queue.map((entry) =>
-      assignedPlayerIds.has(entry.userId)
-        ? { ...entry, status: "playing" as const }
-        : entry
-    );
+    try {
+      const supabase = createClient();
 
-    setAssignments([...assignments, ...courtAssignments]);
-    setQueue(QueueManager.reorderQueue(updatedQueue));
-  };
+      // Create court assignment
+      const { error: assignmentError } = await supabase
+        .from("court_assignments")
+        .insert({
+          event_id: id,
+          court_number: availableCourt,
+          player1_id: nextPlayers[0].userId,
+          player2_id: nextPlayers[1].userId,
+          player3_id: nextPlayers[2].userId,
+          player4_id: nextPlayers[3].userId,
+          started_at: new Date().toISOString(),
+        });
 
-  const handleCompleteGame = (
-    assignmentId: string,
-    winningTeam: "team1" | "team2"
-  ) => {
-    const assignment = assignments.find((a) => a.id === assignmentId);
-    if (!assignment) return;
-
-    AdminActivityLogger.log(
-      "admin1",
-      "Admin User",
-      "complete-game",
-      `Completed game on court ${assignment.courtNumber}, ${winningTeam} won`,
-      id
-    );
-
-    const { playersToStay, playersToQueue } = QueueManager.handleGameCompletion(
-      assignment,
-      event.rotationType,
-      winningTeam,
-      queue
-    );
-
-    const updatedAssignments = assignments.map((a) =>
-      a.id === assignmentId ? { ...a, endedAt: new Date() } : a
-    );
-
-    const updatedQueue = QueueManager.addPlayersToQueue(
-      playersToQueue,
-      queue,
-      id,
-      users
-    );
-
-    if (playersToStay.length > 0) {
-      const nextAssignment = QueueManager.createNextAssignment(
-        assignment.courtNumber,
-        playersToStay,
-        updatedQueue,
-        id
-      );
-
-      if (nextAssignment) {
-        const newAssignment: CourtAssignment = {
-          id: Math.random().toString(),
-          ...nextAssignment.assignment,
-          player1: users.find(
-            (u) => u.id === nextAssignment.assignment.player1Id
-          ),
-          player2: users.find(
-            (u) => u.id === nextAssignment.assignment.player2Id
-          ),
-          player3: users.find(
-            (u) => u.id === nextAssignment.assignment.player3Id
-          ),
-          player4: users.find(
-            (u) => u.id === nextAssignment.assignment.player4Id
-          ),
-        } as CourtAssignment;
-
-        updatedAssignments.push(newAssignment);
-
-        const newlyAssignedIds = new Set(
-          nextAssignment.assignedQueueEntries.map((e) => e.userId)
-        );
-        const finalQueue = updatedQueue.map((entry) =>
-          newlyAssignedIds.has(entry.userId)
-            ? { ...entry, status: "playing" as const }
-            : entry
-        );
-
-        setQueue(QueueManager.reorderQueue(finalQueue));
-      } else {
-        setQueue(QueueManager.reorderQueue(updatedQueue));
+      if (assignmentError) {
+        console.error("Error creating assignment:", assignmentError);
+        alert(`Failed to assign players: ${assignmentError.message}`);
+        return;
       }
-    } else {
-      setQueue(QueueManager.reorderQueue(updatedQueue));
-    }
 
-    setAssignments(updatedAssignments);
+      // Update queue entries to "playing"
+      for (const player of nextPlayers) {
+        await supabase
+          .from("queue_entries")
+          .update({ status: "playing" })
+          .eq("id", player.id);
+      }
+
+      alert(`Assigned 4 players to Court ${availableCourt}`);
+    } catch (err) {
+      console.error("Error assigning players:", err);
+      alert("Failed to assign players");
+    }
   };
 
-  const handleForceRemove = (entryId: string) => {
+  const handleForceRemove = async (entryId: string) => {
     if (
-      confirm("Are you sure you want to remove this player from the queue?")
+      !confirm("Are you sure you want to remove this player from the queue?")
     ) {
-      const entry = queue.find((e) => e.id === entryId);
-      if (!entry) return;
+      return;
+    }
 
-      AdminActivityLogger.log(
-        "admin1",
-        "Admin User",
-        "force-remove",
-        `Removed ${entry.user?.name} from queue`,
-        id
-      );
+    const entry = queue.find((e) => e.id === entryId);
+    if (!entry) return;
 
-      const entriesToRemove = entry.groupId
-        ? queue.filter((e) => e.groupId === entry.groupId)
-        : [entry];
-      const updatedQueue = queue.filter(
-        (e) => !entriesToRemove.some((r) => r.id === e.id)
-      );
-      setQueue(QueueManager.reorderQueue(updatedQueue));
+    try {
+      // Use the existing leaveQueue action which handles Supabase
+      const { error } = await leaveQueue(id, entry.userId);
+
+      if (error) {
+        console.error("Error removing player:", error);
+        alert(`Failed to remove player: ${error.message}`);
+      } else {
+        alert("Player removed from queue");
+      }
+    } catch (err) {
+      console.error("Error removing player:", err);
+      alert("Failed to remove player");
     }
   };
 
-  const handleClearQueue = () => {
+  const handleClearQueue = async () => {
     if (
-      confirm(
+      !confirm(
         "Are you sure you want to clear the entire queue? This cannot be undone."
       )
     ) {
-      AdminActivityLogger.log(
-        "admin1",
-        "Admin User",
-        "clear-queue",
-        `Cleared entire queue (${waitingCount} players)`,
-        id
-      );
-      setQueue([]);
+      return;
+    }
+
+    try {
+      const supabase = createClient();
+      const { error } = await supabase
+        .from("queue_entries")
+        .delete()
+        .eq("event_id", id)
+        .eq("status", "waiting");
+
+      if (error) {
+        console.error("Error clearing queue:", error);
+        alert(`Failed to clear queue: ${error.message}`);
+      } else {
+        alert("Queue cleared successfully");
+      }
+    } catch (err) {
+      console.error("Error clearing queue:", err);
+      alert("Failed to clear queue");
     }
   };
+
+  const handleEndGame = async (assignmentId: string) => {
+    if (!confirm("Mark this game as complete?")) return;
+
+    try {
+      const supabase = createClient();
+
+      // End the assignment
+      const { error: endError } = await supabase
+        .from("court_assignments")
+        .update({ ended_at: new Date().toISOString() })
+        .eq("id", assignmentId);
+
+      if (endError) {
+        console.error("Error ending game:", endError);
+        alert(`Failed to end game: ${endError.message}`);
+        return;
+      }
+
+      // Get the assignment to find player IDs
+      const assignment = assignments.find((a) => a.id === assignmentId);
+      if (!assignment) return;
+
+      // Remove players from queue
+      const playerIds = [
+        assignment.player1Id,
+        assignment.player2Id,
+        assignment.player3Id,
+        assignment.player4Id,
+      ].filter(Boolean);
+
+      for (const playerId of playerIds) {
+        await supabase
+          .from("queue_entries")
+          .delete()
+          .eq("event_id", id)
+          .eq("user_id", playerId);
+      }
+
+      alert("Game ended successfully");
+    } catch (err) {
+      console.error("Error ending game:", err);
+      alert("Failed to end game");
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="flex items-center gap-2">
+          <Loader2 className="w-6 h-6 animate-spin" />
+          <span className="text-muted-foreground">Loading event...</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !event) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Card className="max-w-md">
+          <CardContent className="p-8 text-center">
+            <h2 className="text-2xl font-bold text-foreground mb-4">
+              Event Not Found
+            </h2>
+            <p className="text-muted-foreground mb-6">{error}</p>
+            <Button asChild>
+              <Link href="/admin">
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Back to Admin
+              </Link>
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
       <header className="border-b border-border">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2">
+          <Link href="/admin" className="flex items-center gap-2">
             <Image
               src="/icon-32x32.png"
               alt="Ghost Mammoths PB"
-              width={38}
-              height={38}
+              width={32}
+              height={32}
             />
-            {/* <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
-              <Trophy className="w-6 h-6 text-primary-foreground" />
-            </div> */}
             <span className="text-xl font-bold text-foreground">
               Ghost Mammoths PB
             </span>
           </Link>
           <div className="flex items-center gap-2">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setShowActivityLog(!showActivityLog)}
-            >
-              <History className="w-4 h-4" />
-            </Button>
-            <Button variant="ghost" asChild>
-              <Link href="/admin">
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                Back to Admin
-              </Link>
+            <Badge variant="default">Admin View</Badge>
+            <Button variant="outline" asChild>
+              <Link href={`/events/${id}`}>View Public Page</Link>
             </Button>
           </div>
         </div>
       </header>
 
-      {/* Event Header */}
-      <div className="border-b border-border bg-card">
-        <div className="container mx-auto px-4 py-8">
-          <div className="flex items-start justify-between mb-6">
-            <div>
-              <h1 className="text-3xl font-bold text-foreground mb-2">
-                {event.name}
-              </h1>
-              <div className="flex flex-wrap gap-4 text-muted-foreground">
-                <div className="flex items-center gap-2">
-                  <MapPin className="w-4 h-4" />
-                  {event.location}
-                </div>
-                <div className="flex items-center gap-2">
-                  <Calendar className="w-4 h-4" />
-                  {event.date.toLocaleDateString()} at{" "}
-                  {event.date.toLocaleTimeString([], {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })}
+      <div className="container mx-auto px-4 py-8">
+        {/* Back Button */}
+        <Button variant="ghost" className="mb-4" asChild>
+          <Link href="/admin">
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Back to Admin Dashboard
+          </Link>
+        </Button>
+
+        {/* Event Header */}
+        <Card className="border-border mb-8">
+          <CardContent className="p-6">
+            <div className="flex items-start justify-between mb-6">
+              <div>
+                <h1 className="text-3xl font-bold text-foreground mb-2">
+                  {event.name}
+                </h1>
+                <div className="flex flex-wrap items-center gap-4 text-muted-foreground">
+                  <div className="flex items-center gap-2">
+                    <MapPin className="w-4 h-4" />
+                    <span>{event.location}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Calendar className="w-4 h-4" />
+                    <span>{event.date.toLocaleDateString()}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Clock className="w-4 h-4" />
+                    <span>
+                      {event.date.toLocaleTimeString([], {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Trophy className="w-4 h-4" />
+                    <span>{event.courtCount} Courts</span>
+                  </div>
                 </div>
               </div>
-            </div>
-            <div className="flex gap-2">
-              <Badge variant="default" className="text-sm">
-                Admin View
-              </Badge>
-              <Badge variant="outline" className="text-sm">
-                {event.rotationType}
+              <Badge
+                variant={event.status === "active" ? "default" : "secondary"}
+              >
+                {event.status}
               </Badge>
             </div>
+
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded-full bg-yellow-500" />
+                <span className="text-sm text-muted-foreground">
+                  {waitingCount} Waiting
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded-full bg-green-500" />
+                <span className="text-sm text-muted-foreground">
+                  {playingCount} Playing
+                </span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <div className="grid lg:grid-cols-2 gap-8">
+          {/* Court Status */}
+          <div>
+            <h2 className="text-2xl font-bold text-foreground mb-4">Courts</h2>
+            <CourtStatus
+              assignments={assignments}
+              courtCount={event.courtCount}
+              onEndGame={handleEndGame}
+            />
           </div>
 
-          {showActivityLog && (
-            <Card className="border-border bg-background mb-6">
-              <CardContent className="p-4">
-                <h3 className="font-semibold text-foreground mb-3">
-                  Recent Admin Activity
-                </h3>
-                <div className="space-y-2 max-h-48 overflow-y-auto">
-                  {activities.length === 0 ? (
-                    <p className="text-sm text-muted-foreground">
-                      No activity yet
-                    </p>
-                  ) : (
-                    activities.map((activity) => (
-                      <div
-                        key={activity.id}
-                        className="text-sm border-l-2 border-primary pl-3 py-1"
-                      >
-                        <p className="text-foreground">
-                          <span className="font-medium">
-                            {activity.adminName}
-                          </span>{" "}
-                          {activity.details}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          {activity.timestamp.toLocaleTimeString()} -{" "}
-                          {activity.action}
-                        </p>
-                      </div>
-                    ))
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          <div className="grid grid-cols-3 gap-4">
-            <Card className="border-border bg-background">
-              <CardContent className="p-4">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
-                    <Users className="w-5 h-5 text-primary" />
-                  </div>
-                  <div>
-                    <p className="text-2xl font-bold text-foreground">
+          {/* Queue */}
+          <div>
+            <Card className="border-border mb-4">
+              <CardContent className="p-6">
+                <div className="grid grid-cols-3 gap-4">
+                  <div className="text-center">
+                    <p className="text-3xl font-bold text-foreground">
                       {waitingCount}
                     </p>
                     <p className="text-sm text-muted-foreground">In Queue</p>
                   </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="border-border bg-background">
-              <CardContent className="p-4">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-accent/10 rounded-lg flex items-center justify-center">
-                    <Trophy className="w-5 h-5 text-accent" />
-                  </div>
-                  <div>
-                    <p className="text-2xl font-bold text-foreground">
-                      {playingCount}
+                  <div className="text-center">
+                    <p className="text-3xl font-bold text-foreground">
+                      {Math.ceil(waitingCount / 4)}
                     </p>
-                    <p className="text-sm text-muted-foreground">Playing Now</p>
+                    <p className="text-sm text-muted-foreground">Full Games</p>
                   </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="border-border bg-background">
-              <CardContent className="p-4">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
-                    <Clock className="w-5 h-5 text-primary" />
-                  </div>
-                  <div>
-                    <p className="text-2xl font-bold text-foreground">
-                      {QueueManager.estimateWaitTime(
-                        waitingCount,
-                        event.courtCount
-                      )}
+                  <div className="text-center">
+                    <p className="text-3xl font-bold text-foreground">
+                      {waitingCount > 0
+                        ? Math.ceil((waitingCount / 4) * 15)
+                        : 0}
                       m
                     </p>
                     <p className="text-sm text-muted-foreground">Est. Wait</p>
@@ -476,48 +583,37 @@ export default function AdminEventDetailPage({
                 </div>
               </CardContent>
             </Card>
-          </div>
 
-          <div className="mt-4 flex gap-2">
-            <Button onClick={handleAssignNext} size="lg" className="flex-1">
-              <Play className="w-4 h-4 mr-2" />
-              Assign Next Players to Courts
-            </Button>
-            <Button onClick={handleClearQueue} size="lg" variant="destructive">
-              <Trash2 className="w-4 h-4 mr-2" />
-              Clear Queue
-            </Button>
-          </div>
-        </div>
-      </div>
-
-      {/* Main Content */}
-      <div className="container mx-auto px-4 py-8">
-        <div className="grid lg:grid-cols-2 gap-8">
-          {/* Court Status */}
-          <div>
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-2xl font-bold text-foreground">
-                Court Status
-              </h2>
-              <Badge variant="outline">{event.courtCount} courts</Badge>
+            <div className="flex gap-2 mb-4">
+              <Button onClick={handleAssignNext} size="lg" className="flex-1">
+                <Play className="w-4 h-4 mr-2" />
+                Assign Next Players
+              </Button>
+              <Button
+                onClick={handleClearQueue}
+                size="lg"
+                variant="destructive"
+              >
+                <Trash2 className="w-4 h-4 mr-2" />
+                Clear Queue
+              </Button>
             </div>
-            <CourtStatus
-              courtCount={event.courtCount}
-              assignments={assignments}
-              onCompleteGame={handleCompleteGame}
-              isAdmin={true}
-            />
-          </div>
 
-          {/* Queue */}
-          <div>
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-2xl font-bold text-foreground">
-                Queue Management
-              </h2>
-            </div>
-            <QueueList queue={queue} onRemove={handleForceRemove} />
+            <h2 className="text-2xl font-bold text-foreground mb-4">Queue</h2>
+            {queue.length === 0 ? (
+              <Card className="border-border">
+                <CardContent className="p-12 text-center">
+                  <Users className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                  <p className="text-muted-foreground">No players in queue</p>
+                </CardContent>
+              </Card>
+            ) : (
+              <QueueList
+                queue={queue}
+                onRemove={handleForceRemove}
+                currentUserId=""
+              />
+            )}
           </div>
         </div>
       </div>

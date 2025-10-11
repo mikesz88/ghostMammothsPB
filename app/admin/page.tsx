@@ -173,13 +173,43 @@ export default function AdminPage() {
   };
 
   const handleEndEvent = async (eventId: string) => {
-    if (!confirm("Are you sure you want to end this event?")) return;
+    if (
+      !confirm(
+        "Are you sure you want to end this event? This will clear all queue entries and court assignments."
+      )
+    )
+      return;
 
     try {
       const supabase = createClient();
 
       console.log("Ending event:", eventId);
 
+      // Delete all queue entries for this event
+      const { error: queueError } = await supabase
+        .from("queue_entries")
+        .delete()
+        .eq("event_id", eventId);
+
+      if (queueError) {
+        console.error("Error clearing queue:", queueError);
+        alert(`Failed to clear queue: ${queueError.message}`);
+        return;
+      }
+
+      // Delete all court assignments for this event
+      const { error: assignmentsError } = await supabase
+        .from("court_assignments")
+        .delete()
+        .eq("event_id", eventId);
+
+      if (assignmentsError) {
+        console.error("Error clearing assignments:", assignmentsError);
+        alert(`Failed to clear assignments: ${assignmentsError.message}`);
+        return;
+      }
+
+      // Update event status to ended
       const { error } = await supabase
         .from("events")
         .update({ status: "ended" })
@@ -191,9 +221,11 @@ export default function AdminPage() {
         return;
       }
 
-      console.log("Event ended successfully");
+      console.log("Event ended successfully - queue and assignments cleared");
       await fetchEvents(); // Refresh the list
-      alert("Event ended successfully!");
+      alert(
+        "Event ended successfully! All queue entries and assignments cleared."
+      );
     } catch (err) {
       console.error("Unexpected error ending event:", err);
       alert(

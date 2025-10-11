@@ -74,10 +74,24 @@ export const Header = () => {
             Events
           </Link>
           <Link
+            href="/calendar"
+            className="text-muted-foreground hover:text-foreground transition-colors"
+          >
+            Calendar
+          </Link>
+          <Link
             href="/about"
             className="text-muted-foreground hover:text-foreground transition-colors"
           >
             About
+          </Link>
+          <Link
+            href="https://ghost-mammoths-pb.myshopify.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-muted-foreground hover:text-foreground transition-colors"
+          >
+            Shop
           </Link>
 
           {user ? (
