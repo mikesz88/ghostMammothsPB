@@ -102,7 +102,7 @@ export const Header = () => {
                 </Button>
               )}
               <Button variant="outline" size="sm" asChild>
-                <Link href="/settings/notifications">
+                <Link href="/settings">
                   <Settings className="w-4 h-4 mr-1" />
                   Settings
                 </Link>
