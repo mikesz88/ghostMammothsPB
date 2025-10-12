@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { use } from "react";
 import Link from "next/link";
 import {
   Trophy,
@@ -21,7 +20,7 @@ import { Badge } from "@/components/ui/badge";
 import { QueueList } from "@/components/queue-list";
 import { CourtStatus } from "@/components/court-status";
 import { createClient } from "@/lib/supabase/client";
-import { leaveQueue } from "@/app/actions/queue";
+import { leaveQueue, adminRemoveFromQueue } from "@/app/actions/queue";
 import type { Event, QueueEntry, CourtAssignment } from "@/lib/types";
 import Image from "next/image";
 
@@ -322,27 +321,33 @@ export default function AdminEventDetailPage({
   };
 
   const handleForceRemove = async (entryId: string) => {
+    console.log(
+      "🔍 [ADMIN PAGE] handleForceRemove called with entryId:",
+      entryId
+    );
+
     if (
       !confirm("Are you sure you want to remove this player from the queue?")
     ) {
+      console.log("🔍 [ADMIN PAGE] User cancelled removal");
       return;
     }
 
-    const entry = queue.find((e) => e.id === entryId);
-    if (!entry) return;
-
     try {
-      // Use the existing leaveQueue action which handles Supabase
-      const { error } = await leaveQueue(id, entry.userId);
+      console.log("🔍 [ADMIN PAGE] Calling adminRemoveFromQueue...");
+      const { error } = await adminRemoveFromQueue(entryId, "Admin removal");
+
+      console.log("🔍 [ADMIN PAGE] adminRemoveFromQueue result:", { error });
 
       if (error) {
-        console.error("Error removing player:", error);
-        alert(`Failed to remove player: ${error.message}`);
+        console.error("❌ [ADMIN PAGE] Error removing player:", error);
+        alert(`Failed to remove player: ${error}`);
       } else {
+        console.log("✅ [ADMIN PAGE] Player removed successfully");
         alert("Player removed from queue");
       }
     } catch (err) {
-      console.error("Error removing player:", err);
+      console.error("❌ [ADMIN PAGE] Exception in handleForceRemove:", err);
       alert("Failed to remove player");
     }
   };
@@ -550,7 +555,7 @@ export default function AdminEventDetailPage({
             <CourtStatus
               assignments={assignments}
               courtCount={event.courtCount}
-              onEndGame={handleEndGame}
+              // onEndGame={handleEndGame}
             />
           </div>
 
@@ -612,6 +617,7 @@ export default function AdminEventDetailPage({
                 queue={queue}
                 onRemove={handleForceRemove}
                 currentUserId=""
+                isAdmin={true}
               />
             )}
           </div>
