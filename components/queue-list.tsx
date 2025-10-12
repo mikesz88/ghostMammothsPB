@@ -119,7 +119,7 @@ export function QueueList({
                       })()}
                     </span>
                   </div>
-                  {onRemove && (
+                  {((isCurrentUser && onRemove) || (isAdmin && onRemove)) && (
                     <Button
                       variant="ghost"
                       size="icon"
