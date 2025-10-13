@@ -109,12 +109,12 @@ async function handleSubscriptionUpdate(
       stripe_customer_id: subscription.customer as string,
       stripe_subscription_id: subscription.id,
       current_period_start: new Date(
-        subscription.current_period_start * 1000
+        (subscription as any).current_period_start * 1000
       ).toISOString(),
       current_period_end: new Date(
-        subscription.current_period_end * 1000
+        (subscription as any).current_period_end * 1000
       ).toISOString(),
-      cancel_at_period_end: subscription.cancel_at_period_end,
+      cancel_at_period_end: (subscription as any).cancel_at_period_end || false,
       updated_at: new Date().toISOString(),
     },
     {
@@ -170,8 +170,8 @@ async function handleSubscriptionDeleted(
 }
 
 async function handlePaymentSucceeded(invoice: Stripe.Invoice, supabase: any) {
-  const subscription = invoice.subscription;
-  const userId = invoice.subscription_details?.metadata?.user_id;
+  const subscription = (invoice as any).subscription;
+  const userId = (invoice as any).subscription_details?.metadata?.user_id;
 
   if (!userId) {
     console.error("No user_id in invoice metadata");
@@ -181,10 +181,10 @@ async function handlePaymentSucceeded(invoice: Stripe.Invoice, supabase: any) {
   // Record payment
   await supabase.from("payments").insert({
     user_id: userId,
-    amount: invoice.amount_paid / 100, // Convert from cents
+    amount: (invoice.amount_paid || 0) / 100, // Convert from cents
     currency: invoice.currency.toUpperCase(),
     payment_type: "membership",
-    stripe_payment_intent_id: invoice.payment_intent as string,
+    stripe_payment_intent_id: (invoice as any).payment_intent as string,
     status: "succeeded",
     description: `Monthly membership payment`,
     metadata: {
@@ -194,12 +194,12 @@ async function handlePaymentSucceeded(invoice: Stripe.Invoice, supabase: any) {
   });
 
   console.log(
-    `Payment succeeded for user ${userId}: $${invoice.amount_paid / 100}`
+    `Payment succeeded for user ${userId}: $${(invoice.amount_paid || 0) / 100}`
   );
 }
 
 async function handlePaymentFailed(invoice: Stripe.Invoice, supabase: any) {
-  const userId = invoice.subscription_details?.metadata?.user_id;
+  const userId = (invoice as any).subscription_details?.metadata?.user_id;
 
   if (!userId) {
     console.error("No user_id in invoice metadata");
@@ -224,14 +224,14 @@ async function handlePaymentFailed(invoice: Stripe.Invoice, supabase: any) {
   // Record failed payment
   await supabase.from("payments").insert({
     user_id: userId,
-    amount: invoice.amount_due / 100,
+    amount: (invoice.amount_due || 0) / 100,
     currency: invoice.currency.toUpperCase(),
     payment_type: "membership",
     status: "failed",
     description: `Failed monthly membership payment`,
     metadata: {
       invoice_id: invoice.id,
-      subscription_id: invoice.subscription,
+      subscription_id: (invoice as any).subscription,
     },
   });
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, use } from "react";
 import Link from "next/link";
 import {
   Trophy,
@@ -24,11 +24,12 @@ import { createClient } from "@/lib/supabase/client";
 import { leaveQueue, adminRemoveFromQueue } from "@/app/actions/queue";
 import type { Event, QueueEntry, CourtAssignment } from "@/lib/types";
 
-export default function AdminEventDetailPage({
-  params,
-}: {
-  params: { id: string };
-}) {
+export default function AdminEventDetailPage(
+  props: {
+    params: Promise<{ id: string }>;
+  }
+) {
+  const params = use(props.params);
   const { id } = params;
   const [event, setEvent] = useState<Event | null>(null);
   const [queue, setQueue] = useState<QueueEntry[]>([]);
