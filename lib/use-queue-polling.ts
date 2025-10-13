@@ -9,7 +9,7 @@ interface UseQueuePollingOptions {
 }
 
 export function useQueuePolling({ onUpdate, interval = 5000, enabled = true }: UseQueuePollingOptions) {
-  const intervalRef = useRef<NodeJS.Timeout>()
+  const intervalRef = useRef<NodeJS.Timeout>(undefined)
 
   useEffect(() => {
     if (!enabled) {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, use } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -50,11 +50,12 @@ interface User {
   created_at: string;
 }
 
-export default function AdminUserDetailPage({
-  params,
-}: {
-  params: { id: string };
-}) {
+export default function AdminUserDetailPage(
+  props: {
+    params: Promise<{ id: string }>;
+  }
+) {
+  const params = use(props.params);
   const { id } = params;
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);

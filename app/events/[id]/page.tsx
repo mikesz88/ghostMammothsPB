@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, use } from "react";
 import Link from "next/link";
 import {
   Trophy,
@@ -32,11 +32,12 @@ import { canUserJoinEvent, formatPrice } from "@/lib/membership-helpers";
 import { Header } from "@/components/ui/header";
 import type { Event, QueueEntry, CourtAssignment } from "@/lib/types";
 
-export default function EventDetailPage({
-  params,
-}: {
-  params: { id: string };
-}) {
+export default function EventDetailPage(
+  props: {
+    params: Promise<{ id: string }>;
+  }
+) {
+  const params = use(props.params);
   const { id } = params;
   const [event, setEvent] = useState<Event | null>(null);
   const [assignments, setAssignments] = useState<CourtAssignment[]>([]);
