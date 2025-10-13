@@ -19,10 +19,10 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { QueueList } from "@/components/queue-list";
 import { CourtStatus } from "@/components/court-status";
+import { Header } from "@/components/ui/header";
 import { createClient } from "@/lib/supabase/client";
 import { leaveQueue, adminRemoveFromQueue } from "@/app/actions/queue";
 import type { Event, QueueEntry, CourtAssignment } from "@/lib/types";
-import Image from "next/image";
 
 export default function AdminEventDetailPage({
   params,
@@ -460,38 +460,12 @@ export default function AdminEventDetailPage({
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="border-b border-border">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <Link href="/admin" className="flex items-center gap-2">
-            <Image
-              src="/icon-32x32.png"
-              alt="Ghost Mammoths PB"
-              width={32}
-              height={32}
-            />
-            <span className="text-xl font-bold text-foreground">
-              Ghost Mammoths PB
-            </span>
-          </Link>
-          <div className="flex items-center gap-2">
-            <Badge variant="default">Admin View</Badge>
-            <Button variant="outline" asChild>
-              <Link href={`/events/${id}`}>View Public Page</Link>
-            </Button>
-          </div>
-        </div>
-      </header>
+      <Header
+        variant="admin"
+        backButton={{ href: "/admin", label: "Back to Dashboard" }}
+      />
 
       <div className="container mx-auto px-4 py-8">
-        {/* Back Button */}
-        <Button variant="ghost" className="mb-4" asChild>
-          <Link href="/admin">
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to Admin Dashboard
-          </Link>
-        </Button>
-
         {/* Event Header */}
         <Card className="border-border mb-8">
           <CardContent className="p-6">

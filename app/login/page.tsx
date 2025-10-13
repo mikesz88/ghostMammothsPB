@@ -15,7 +15,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/lib/auth-context";
-import Image from "next/image";
+import { Header } from "@/components/ui/header";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -54,74 +55,64 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
-        <div className="flex items-center justify-center mb-8">
-          <Link href="/" className="flex items-center gap-2">
-            <Image
-              src="/icon-32x32.png"
-              alt="Ghost Mammoths PB"
-              width={38}
-              height={38}
-            />
-            <span className="text-2xl font-bold text-foreground">
-              Ghost Mammoths PB
-            </span>
-          </Link>
-        </div>
+    <div className="min-h-screen bg-background">
+      <Header />
 
-        <Card className="border-border bg-card">
-          <CardHeader>
-            <CardTitle className="text-foreground">Welcome Back</CardTitle>
-            <CardDescription>
-              Sign in to manage your queue and events
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              {message && (
-                <div className="p-3 text-sm text-blue-700 bg-blue-50 dark:text-blue-200 dark:bg-blue-950 rounded-md">
-                  {message}
+      <div className="flex items-center justify-center p-4 py-12">
+        <div className="w-full max-w-md">
+          <Card className="border-border bg-card">
+            <CardHeader>
+              <CardTitle className="text-foreground">Welcome Back</CardTitle>
+              <CardDescription>
+                Sign in to manage your queue and events
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleSubmit} className="space-y-4">
+                {message && (
+                  <div className="p-3 text-sm text-blue-700 bg-blue-50 dark:text-blue-200 dark:bg-blue-950 rounded-md">
+                    {message}
+                  </div>
+                )}
+                {error && (
+                  <div className="p-3 text-sm text-destructive-foreground bg-destructive rounded-md">
+                    {error}
+                  </div>
+                )}
+                <div className="space-y-2">
+                  <Label htmlFor="email">Email</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="you@example.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                  />
                 </div>
-              )}
-              {error && (
-                <div className="p-3 text-sm text-destructive-foreground bg-destructive rounded-md">
-                  {error}
+                <div className="space-y-2">
+                  <Label htmlFor="password">Password</Label>
+                  <Input
+                    id="password"
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                  />
                 </div>
-              )}
-              <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="you@example.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                />
+                <Button type="submit" className="w-full" disabled={loading}>
+                  {loading ? "Signing In..." : "Sign In"}
+                </Button>
+              </form>
+              <div className="mt-4 text-center text-sm text-muted-foreground">
+                Don't have an account?{" "}
+                <Link href="/signup" className="text-primary hover:underline">
+                  Sign up
+                </Link>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                />
-              </div>
-              <Button type="submit" className="w-full" disabled={loading}>
-                {loading ? "Signing In..." : "Sign In"}
-              </Button>
-            </form>
-            <div className="mt-4 text-center text-sm text-muted-foreground">
-              Don't have an account?{" "}
-              <Link href="/signup" className="text-primary hover:underline">
-                Sign up
-              </Link>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </div>
   );
