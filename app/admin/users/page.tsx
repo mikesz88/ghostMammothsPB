@@ -28,7 +28,7 @@ import {
   toggleAdminStatus,
   deleteUser,
 } from "@/app/actions/admin-users";
-import Image from "next/image";
+import { Header } from "@/components/ui/header";
 
 interface User {
   id: string;
@@ -123,21 +123,7 @@ export default function AdminUsersPage() {
   if (loading) {
     return (
       <div className="min-h-screen bg-background">
-        <header className="border-b border-border">
-          <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-            <Link href="/" className="flex items-center gap-2">
-              <Image
-                src="/icon-32x32.png"
-                alt="Ghost Mammoths PB"
-                width={38}
-                height={38}
-              />
-              <span className="text-xl font-bold text-foreground">
-                Ghost Mammoths PB
-              </span>
-            </Link>
-          </div>
-        </header>
+        <Header variant="admin" />
         <div className="container mx-auto px-4 py-20">
           <div className="flex items-center justify-center">
             <Loader2 className="w-8 h-8 animate-spin mr-2" />
@@ -150,33 +136,7 @@ export default function AdminUsersPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="border-b border-border">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2">
-            <Image
-              src="/icon-32x32.png"
-              alt="Ghost Mammoths PB"
-              width={38}
-              height={38}
-            />
-            <span className="text-xl font-bold text-foreground">
-              Ghost Mammoths PB
-            </span>
-          </Link>
-          <nav className="flex items-center gap-4">
-            <Link
-              href="/admin"
-              className="text-muted-foreground hover:text-foreground transition-colors"
-            >
-              Events
-            </Link>
-            <Link href="/admin/users" className="text-foreground font-medium">
-              Users
-            </Link>
-          </nav>
-        </div>
-      </header>
+      <Header variant="admin" />
 
       {/* Page Content */}
       <div className="container mx-auto px-4 py-12">

@@ -29,6 +29,7 @@ import { useAuth } from "@/lib/auth-context";
 import { joinQueue, leaveQueue } from "@/app/actions/queue";
 import { createClient } from "@/lib/supabase/client";
 import { canUserJoinEvent, formatPrice } from "@/lib/membership-helpers";
+import { Header } from "@/components/ui/header";
 import type { Event, QueueEntry, CourtAssignment } from "@/lib/types";
 
 export default function EventDetailPage({
@@ -257,32 +258,7 @@ export default function EventDetailPage({
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="border-b border-border">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2">
-            <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
-              <Trophy className="w-6 h-6 text-primary-foreground" />
-            </div>
-            <span className="text-xl font-bold text-foreground">
-              Ghost Mammoths PB
-            </span>
-          </Link>
-          <div className="flex items-center gap-2">
-            <Button variant="ghost" size="icon" asChild>
-              <Link href="/settings/notifications">
-                <Settings className="w-4 h-4" />
-              </Link>
-            </Button>
-            <Button variant="ghost" asChild>
-              <Link href="/events">
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                Back to Events
-              </Link>
-            </Button>
-          </div>
-        </div>
-      </header>
+      <Header backButton={{ href: "/events", label: "Back to Events" }} />
 
       {/* Event Header */}
       <div className="border-b border-border bg-card">

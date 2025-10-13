@@ -24,9 +24,9 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { CreateEventDialog } from "@/components/create-event-dialog";
 import { EditEventDialog } from "@/components/edit-event-dialog";
+import { Header } from "@/components/ui/header";
 import { createClient } from "@/lib/supabase/client";
 import type { Event } from "@/lib/types";
-import Image from "next/image";
 
 export default function AdminPage() {
   const [events, setEvents] = useState<Event[]>([]);
@@ -280,21 +280,7 @@ export default function AdminPage() {
   if (loading) {
     return (
       <div className="min-h-screen bg-background">
-        <header className="border-b border-border">
-          <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-            <Link href="/" className="flex items-center gap-2">
-              <Image
-                src="/icon-32x32.png"
-                alt="Ghost Mammoths PB"
-                width={38}
-                height={38}
-              />
-              <span className="text-xl font-bold text-foreground">
-                Ghost Mammoths PB
-              </span>
-            </Link>
-          </div>
-        </header>
+        <Header variant="admin" />
         <div className="container mx-auto px-4 py-20">
           <div className="flex items-center justify-center">
             <Loader2 className="w-8 h-8 animate-spin mr-2" />
@@ -307,42 +293,7 @@ export default function AdminPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="border-b border-border">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2">
-            <Image
-              src="/icon-32x32.png"
-              alt="Ghost Mammoths PB"
-              width={38}
-              height={38}
-            />
-            {/* <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
-              <Trophy className="w-6 h-6 text-primary-foreground" />
-            </div> */}
-            <span className="text-xl font-bold text-foreground">
-              Ghost Mammoths PB
-            </span>
-          </Link>
-          <nav className="flex items-center gap-4">
-            <Link
-              href="/events"
-              className="text-muted-foreground hover:text-foreground transition-colors"
-            >
-              Events
-            </Link>
-            <Link href="/admin" className="text-foreground font-medium">
-              Dashboard
-            </Link>
-            <Link
-              href="/admin/users"
-              className="text-muted-foreground hover:text-foreground transition-colors"
-            >
-              Users
-            </Link>
-          </nav>
-        </div>
-      </header>
+      <Header variant="admin" />
 
       {/* Page Content */}
       <div className="container mx-auto px-4 py-12">
