@@ -273,8 +273,8 @@ export default function AdminEventDetailPage(props: {
       .slice(0, playersPerCourt);
 
     if (nextPlayers.length < playersPerCourt) {
-      alert(
-        `Not enough players in queue (need ${playersPerCourt} players for ${
+      toast.error("Not enough players in queue", {
+        description: `Need ${playersPerCourt} players for ${
           event.teamSize === 1
             ? "solo"
             : event.teamSize === 2
@@ -282,8 +282,8 @@ export default function AdminEventDetailPage(props: {
             : event.teamSize === 3
             ? "triplets"
             : "quads"
-        })`
-      );
+        }`,
+      });
       return;
     }
 
@@ -304,7 +304,9 @@ export default function AdminEventDetailPage(props: {
     })();
 
     if (availableCourt === null) {
-      alert("No available courts. End a game first.");
+      toast.error("No available courts", {
+        description: "End a game first to free up a court.",
+      });
       return;
     }
 
@@ -334,7 +336,9 @@ export default function AdminEventDetailPage(props: {
 
       if (assignmentError) {
         console.error("Error creating assignment:", assignmentError);
-        alert(`Failed to assign players: ${assignmentError.message}`);
+        toast.error("Failed to assign players", {
+          description: assignmentError.message,
+        });
         return;
       }
 
@@ -361,13 +365,15 @@ export default function AdminEventDetailPage(props: {
         }
       }
 
-      alert(`Assigned ${playersPerCourt} players to Court ${availableCourt}`);
+      toast.success(
+        `Assigned ${playersPerCourt} players to Court ${availableCourt}`
+      );
 
       // Force page refresh to show updated data
       window.location.reload();
     } catch (err) {
       console.error("Error assigning players:", err);
-      alert("Failed to assign players");
+      toast.error("Failed to assign players");
     }
   };
 
@@ -422,13 +428,15 @@ export default function AdminEventDetailPage(props: {
 
       if (error) {
         console.error("Error clearing queue:", error);
-        alert(`Failed to clear queue: ${error.message}`);
+        toast.error("Failed to clear queue", {
+          description: error.message,
+        });
       } else {
-        alert("Queue cleared successfully");
+        toast.success("Queue cleared successfully");
       }
     } catch (err) {
       console.error("Error clearing queue:", err);
-      alert("Failed to clear queue");
+      toast.error("Failed to clear queue");
     }
   };
 
@@ -436,15 +444,23 @@ export default function AdminEventDetailPage(props: {
     assignmentId: string,
     winningTeam: "team1" | "team2"
   ) => {
-    if (
-      !confirm(
-        `Mark this game as complete? ${
-          winningTeam === "team1" ? "Team 1" : "Team 2"
-        } wins!`
-      )
-    )
-      return;
+    const winningTeamName = winningTeam === "team1" ? "Team 1" : "Team 2";
 
+    toast(`Mark this game as complete?`, {
+      description: `${winningTeamName} wins!`,
+      action: {
+        label: "End Game",
+        onClick: async () => {
+          await performEndGame(assignmentId);
+        },
+      },
+      cancel: {
+        label: "Cancel",
+      },
+    });
+  };
+
+  const performEndGame = async (assignmentId: string) => {
     try {
       const supabase = createClient();
 
@@ -456,7 +472,9 @@ export default function AdminEventDetailPage(props: {
 
       if (endError) {
         console.error("Error ending game:", endError);
-        alert(`Failed to end game: ${endError.message}`);
+        toast.error("Failed to end game", {
+          description: endError.message,
+        });
         return;
       }
 
@@ -484,11 +502,11 @@ export default function AdminEventDetailPage(props: {
           .eq("user_id", playerId);
       }
 
-      alert("Game ended successfully");
+      toast.success("Game ended successfully");
       window.location.reload();
     } catch (err) {
       console.error("Error ending game:", err);
-      alert("Failed to end game");
+      toast.error("Failed to end game");
     }
   };
 
