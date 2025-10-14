@@ -13,6 +13,7 @@ import {
   Loader2,
   UserPlus,
 } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -72,7 +73,9 @@ export default function AdminUsersPage() {
 
     if (error) {
       console.error("Error fetching users:", error);
-      alert(`Failed to fetch users: ${error}`);
+      toast.error("Failed to fetch users", {
+        description: error,
+      });
     } else {
       setUsers(data || []);
       setFilteredUsers(data || []);
@@ -83,38 +86,57 @@ export default function AdminUsersPage() {
   const handleToggleAdmin = async (userId: string, currentStatus: boolean) => {
     const newStatus = !currentStatus;
     const confirmMessage = newStatus
-      ? "Are you sure you want to grant admin access to this user?"
-      : "Are you sure you want to remove admin access from this user?";
+      ? "Grant admin access to this user?"
+      : "Remove admin access from this user?";
 
-    if (!confirm(confirmMessage)) return;
+    toast(confirmMessage, {
+      description: newStatus
+        ? "This user will have full admin privileges."
+        : "This user will lose admin privileges.",
+      action: {
+        label: newStatus ? "Grant Access" : "Remove Access",
+        onClick: async () => {
+          const { error } = await toggleAdminStatus(userId, newStatus);
 
-    const { error } = await toggleAdminStatus(userId, newStatus);
-
-    if (error) {
-      alert(`Failed to update admin status: ${error}`);
-    } else {
-      alert("Admin status updated successfully!");
-      await fetchUsers();
-    }
+          if (error) {
+            toast.error("Failed to update admin status", {
+              description: error,
+            });
+          } else {
+            toast.success("Admin status updated successfully!");
+            await fetchUsers();
+          }
+        },
+      },
+      cancel: {
+        label: "Cancel",
+      },
+    });
   };
 
   const handleDeleteUser = async (userId: string, userName: string) => {
-    if (
-      !confirm(
-        `Are you sure you want to delete ${userName}? This will remove all their queue entries and cannot be undone.`
-      )
-    ) {
-      return;
-    }
+    toast(`Delete ${userName}?`, {
+      description:
+        "This will remove all their queue entries and cannot be undone.",
+      action: {
+        label: "Delete",
+        onClick: async () => {
+          const { error } = await deleteUser(userId);
 
-    const { error } = await deleteUser(userId);
-
-    if (error) {
-      alert(`Failed to delete user: ${error}`);
-    } else {
-      alert("User deleted successfully!");
-      await fetchUsers();
-    }
+          if (error) {
+            toast.error("Failed to delete user", {
+              description: error,
+            });
+          } else {
+            toast.success("User deleted successfully!");
+            await fetchUsers();
+          }
+        },
+      },
+      cancel: {
+        label: "Cancel",
+      },
+    });
   };
 
   const adminUsers = filteredUsers.filter((u) => u.is_admin);

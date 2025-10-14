@@ -14,6 +14,7 @@ import {
   History,
   Loader2,
 } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -24,11 +25,9 @@ import { createClient } from "@/lib/supabase/client";
 import { leaveQueue, adminRemoveFromQueue } from "@/app/actions/queue";
 import type { Event, QueueEntry, CourtAssignment } from "@/lib/types";
 
-export default function AdminEventDetailPage(
-  props: {
-    params: Promise<{ id: string }>;
-  }
-) {
+export default function AdminEventDetailPage(props: {
+  params: Promise<{ id: string }>;
+}) {
   const params = use(props.params);
   const { id } = params;
   const [event, setEvent] = useState<Event | null>(null);
@@ -267,7 +266,9 @@ export default function AdminEventDetailPage(
     const nextPlayers = queue.filter((e) => e.status === "waiting").slice(0, 4);
 
     if (nextPlayers.length < 4) {
-      alert("Not enough players in queue (need 4 players)");
+      toast.error("Not enough players in queue", {
+        description: "Need 4 players to start a game",
+      });
       return;
     }
 
@@ -280,7 +281,9 @@ export default function AdminEventDetailPage(
         : null;
 
     if (availableCourt === null) {
-      alert("No available courts. End a game first.");
+      toast.error("No available courts", {
+        description: "End a game first to free up a court",
+      });
       return;
     }
 
@@ -302,7 +305,9 @@ export default function AdminEventDetailPage(
 
       if (assignmentError) {
         console.error("Error creating assignment:", assignmentError);
-        alert(`Failed to assign players: ${assignmentError.message}`);
+        toast.error("Failed to assign players", {
+          description: assignmentError.message,
+        });
         return;
       }
 
@@ -314,10 +319,10 @@ export default function AdminEventDetailPage(
           .eq("id", player.id);
       }
 
-      alert(`Assigned 4 players to Court ${availableCourt}`);
+      toast.success(`Assigned 4 players to Court ${availableCourt}`);
     } catch (err) {
       console.error("Error assigning players:", err);
-      alert("Failed to assign players");
+      toast.error("Failed to assign players");
     }
   };
 
@@ -327,104 +332,134 @@ export default function AdminEventDetailPage(
       entryId
     );
 
-    if (
-      !confirm("Are you sure you want to remove this player from the queue?")
-    ) {
-      console.log("🔍 [ADMIN PAGE] User cancelled removal");
-      return;
-    }
+    toast("Remove this player from queue?", {
+      description: "This action cannot be undone.",
+      action: {
+        label: "Remove",
+        onClick: async () => {
+          try {
+            console.log("🔍 [ADMIN PAGE] Calling adminRemoveFromQueue...");
+            const { error } = await adminRemoveFromQueue(
+              entryId,
+              "Admin removal"
+            );
 
-    try {
-      console.log("🔍 [ADMIN PAGE] Calling adminRemoveFromQueue...");
-      const { error } = await adminRemoveFromQueue(entryId, "Admin removal");
+            console.log("🔍 [ADMIN PAGE] adminRemoveFromQueue result:", {
+              error,
+            });
 
-      console.log("🔍 [ADMIN PAGE] adminRemoveFromQueue result:", { error });
-
-      if (error) {
-        console.error("❌ [ADMIN PAGE] Error removing player:", error);
-        alert(`Failed to remove player: ${error}`);
-      } else {
-        console.log("✅ [ADMIN PAGE] Player removed successfully");
-        alert("Player removed from queue");
-      }
-    } catch (err) {
-      console.error("❌ [ADMIN PAGE] Exception in handleForceRemove:", err);
-      alert("Failed to remove player");
-    }
+            if (error) {
+              console.error("❌ [ADMIN PAGE] Error removing player:", error);
+              toast.error("Failed to remove player", {
+                description: error,
+              });
+            } else {
+              console.log("✅ [ADMIN PAGE] Player removed successfully");
+              toast.success("Player removed from queue");
+            }
+          } catch (err) {
+            console.error(
+              "❌ [ADMIN PAGE] Exception in handleForceRemove:",
+              err
+            );
+            toast.error("Failed to remove player");
+          }
+        },
+      },
+      cancel: {
+        label: "Cancel",
+      },
+    });
   };
 
   const handleClearQueue = async () => {
-    if (
-      !confirm(
-        "Are you sure you want to clear the entire queue? This cannot be undone."
-      )
-    ) {
-      return;
-    }
+    toast("Clear the entire queue?", {
+      description:
+        "This will remove all waiting players. This action cannot be undone.",
+      action: {
+        label: "Clear Queue",
+        onClick: async () => {
+          try {
+            const supabase = createClient();
+            const { error } = await supabase
+              .from("queue_entries")
+              .delete()
+              .eq("event_id", id)
+              .eq("status", "waiting");
 
-    try {
-      const supabase = createClient();
-      const { error } = await supabase
-        .from("queue_entries")
-        .delete()
-        .eq("event_id", id)
-        .eq("status", "waiting");
-
-      if (error) {
-        console.error("Error clearing queue:", error);
-        alert(`Failed to clear queue: ${error.message}`);
-      } else {
-        alert("Queue cleared successfully");
-      }
-    } catch (err) {
-      console.error("Error clearing queue:", err);
-      alert("Failed to clear queue");
-    }
+            if (error) {
+              console.error("Error clearing queue:", error);
+              toast.error("Failed to clear queue", {
+                description: error.message,
+              });
+            } else {
+              toast.success("Queue cleared successfully");
+            }
+          } catch (err) {
+            console.error("Error clearing queue:", err);
+            toast.error("Failed to clear queue");
+          }
+        },
+      },
+      cancel: {
+        label: "Cancel",
+      },
+    });
   };
 
   const handleEndGame = async (assignmentId: string) => {
-    if (!confirm("Mark this game as complete?")) return;
+    toast("Mark this game as complete?", {
+      action: {
+        label: "End Game",
+        onClick: async () => {
+          try {
+            const supabase = createClient();
 
-    try {
-      const supabase = createClient();
+            // End the assignment
+            const { error: endError } = await supabase
+              .from("court_assignments")
+              .update({ ended_at: new Date().toISOString() })
+              .eq("id", assignmentId);
 
-      // End the assignment
-      const { error: endError } = await supabase
-        .from("court_assignments")
-        .update({ ended_at: new Date().toISOString() })
-        .eq("id", assignmentId);
+            if (endError) {
+              console.error("Error ending game:", endError);
+              toast.error("Failed to end game", {
+                description: endError.message,
+              });
+              return;
+            }
 
-      if (endError) {
-        console.error("Error ending game:", endError);
-        alert(`Failed to end game: ${endError.message}`);
-        return;
-      }
+            // Get the assignment to find player IDs
+            const assignment = assignments.find((a) => a.id === assignmentId);
+            if (!assignment) return;
 
-      // Get the assignment to find player IDs
-      const assignment = assignments.find((a) => a.id === assignmentId);
-      if (!assignment) return;
+            // Remove players from queue
+            const playerIds = [
+              assignment.player1Id,
+              assignment.player2Id,
+              assignment.player3Id,
+              assignment.player4Id,
+            ].filter(Boolean);
 
-      // Remove players from queue
-      const playerIds = [
-        assignment.player1Id,
-        assignment.player2Id,
-        assignment.player3Id,
-        assignment.player4Id,
-      ].filter(Boolean);
+            for (const playerId of playerIds) {
+              await supabase
+                .from("queue_entries")
+                .delete()
+                .eq("event_id", id)
+                .eq("user_id", playerId);
+            }
 
-      for (const playerId of playerIds) {
-        await supabase
-          .from("queue_entries")
-          .delete()
-          .eq("event_id", id)
-          .eq("user_id", playerId);
-      }
-
-      alert("Game ended successfully");
-    } catch (err) {
-      console.error("Error ending game:", err);
-      alert("Failed to end game");
-    }
+            toast.success("Game ended successfully");
+          } catch (err) {
+            console.error("Error ending game:", err);
+            toast.error("Failed to end game");
+          }
+        },
+      },
+      cancel: {
+        label: "Cancel",
+      },
+    });
   };
 
   if (loading) {

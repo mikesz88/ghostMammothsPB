@@ -13,6 +13,7 @@ import {
   ExternalLink,
   Loader2,
 } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -105,21 +106,21 @@ export default function AdminPage() {
 
       if (error) {
         console.error("Error creating event:", error);
-        alert(`Failed to create event: ${error.message}`);
+        toast.error("Failed to create event", {
+          description: error.message,
+        });
         return;
       }
 
       console.log("Event created successfully:", data);
       await fetchEvents(); // Refresh the list
       setShowCreateDialog(false);
-      alert("Event created successfully!");
+      toast.success("Event created successfully!");
     } catch (err) {
       console.error("Unexpected error creating event:", err);
-      alert(
-        `Unexpected error: ${
-          err instanceof Error ? err.message : "Unknown error"
-        }`
-      );
+      toast.error("Unexpected error", {
+        description: err instanceof Error ? err.message : "Unknown error",
+      });
     }
   };
 
@@ -154,124 +155,138 @@ export default function AdminPage() {
 
       if (error) {
         console.error("Error updating event:", error);
-        alert(`Failed to update event: ${error.message}`);
+        toast.error("Failed to update event", {
+          description: error.message,
+        });
         return;
       }
 
       console.log("Event updated successfully");
       await fetchEvents(); // Refresh the list
       setEditingEvent(null);
-      alert("Event updated successfully!");
+      toast.success("Event updated successfully!");
     } catch (err) {
       console.error("Unexpected error updating event:", err);
-      alert(
-        `Unexpected error: ${
-          err instanceof Error ? err.message : "Unknown error"
-        }`
-      );
+      toast.error("Unexpected error", {
+        description: err instanceof Error ? err.message : "Unknown error",
+      });
     }
   };
 
   const handleEndEvent = async (eventId: string) => {
-    if (
-      !confirm(
-        "Are you sure you want to end this event? This will clear all queue entries and court assignments."
-      )
-    )
-      return;
+    toast("End this event?", {
+      description: "This will clear all queue entries and court assignments.",
+      action: {
+        label: "End Event",
+        onClick: async () => {
+          try {
+            const supabase = createClient();
 
-    try {
-      const supabase = createClient();
+            console.log("Ending event:", eventId);
 
-      console.log("Ending event:", eventId);
+            // Delete all queue entries for this event
+            const { error: queueError } = await supabase
+              .from("queue_entries")
+              .delete()
+              .eq("event_id", eventId);
 
-      // Delete all queue entries for this event
-      const { error: queueError } = await supabase
-        .from("queue_entries")
-        .delete()
-        .eq("event_id", eventId);
+            if (queueError) {
+              console.error("Error clearing queue:", queueError);
+              toast.error("Failed to clear queue", {
+                description: queueError.message,
+              });
+              return;
+            }
 
-      if (queueError) {
-        console.error("Error clearing queue:", queueError);
-        alert(`Failed to clear queue: ${queueError.message}`);
-        return;
-      }
+            // Delete all court assignments for this event
+            const { error: assignmentsError } = await supabase
+              .from("court_assignments")
+              .delete()
+              .eq("event_id", eventId);
 
-      // Delete all court assignments for this event
-      const { error: assignmentsError } = await supabase
-        .from("court_assignments")
-        .delete()
-        .eq("event_id", eventId);
+            if (assignmentsError) {
+              console.error("Error clearing assignments:", assignmentsError);
+              toast.error("Failed to clear assignments", {
+                description: assignmentsError.message,
+              });
+              return;
+            }
 
-      if (assignmentsError) {
-        console.error("Error clearing assignments:", assignmentsError);
-        alert(`Failed to clear assignments: ${assignmentsError.message}`);
-        return;
-      }
+            // Update event status to ended
+            const { error } = await supabase
+              .from("events")
+              .update({ status: "ended" })
+              .eq("id", eventId);
 
-      // Update event status to ended
-      const { error } = await supabase
-        .from("events")
-        .update({ status: "ended" })
-        .eq("id", eventId);
+            if (error) {
+              console.error("Error ending event:", error);
+              toast.error("Failed to end event", {
+                description: error.message,
+              });
+              return;
+            }
 
-      if (error) {
-        console.error("Error ending event:", error);
-        alert(`Failed to end event: ${error.message}`);
-        return;
-      }
-
-      console.log("Event ended successfully - queue and assignments cleared");
-      await fetchEvents(); // Refresh the list
-      alert(
-        "Event ended successfully! All queue entries and assignments cleared."
-      );
-    } catch (err) {
-      console.error("Unexpected error ending event:", err);
-      alert(
-        `Unexpected error: ${
-          err instanceof Error ? err.message : "Unknown error"
-        }`
-      );
-    }
+            console.log(
+              "Event ended successfully - queue and assignments cleared"
+            );
+            await fetchEvents(); // Refresh the list
+            toast.success("Event ended successfully!", {
+              description: "All queue entries and assignments cleared.",
+            });
+          } catch (err) {
+            console.error("Unexpected error ending event:", err);
+            toast.error("Unexpected error", {
+              description: err instanceof Error ? err.message : "Unknown error",
+            });
+          }
+        },
+      },
+      cancel: {
+        label: "Cancel",
+      },
+    });
   };
 
   const handleDeleteEvent = async (eventId: string) => {
-    if (
-      !confirm(
-        "Are you sure you want to delete this event? This will remove all queue entries and court assignments."
-      )
-    ) {
-      return;
-    }
+    toast("Delete this event?", {
+      description:
+        "This will remove all queue entries and court assignments. This action cannot be undone.",
+      action: {
+        label: "Delete",
+        onClick: async () => {
+          try {
+            const supabase = createClient();
 
-    try {
-      const supabase = createClient();
+            console.log("Deleting event:", eventId);
 
-      console.log("Deleting event:", eventId);
+            const { error } = await supabase
+              .from("events")
+              .delete()
+              .eq("id", eventId);
 
-      const { error } = await supabase
-        .from("events")
-        .delete()
-        .eq("id", eventId);
+            if (error) {
+              console.error("Error deleting event:", error);
+              toast.error("Failed to delete event", {
+                description: error.message,
+              });
+              return;
+            }
 
-      if (error) {
-        console.error("Error deleting event:", error);
-        alert(`Failed to delete event: ${error.message}`);
-        return;
-      }
-
-      console.log("Event deleted successfully");
-      await fetchEvents(); // Refresh the list
-      alert("Event deleted successfully!");
-    } catch (err) {
-      console.error("Unexpected error deleting event:", err);
-      alert(
-        `Unexpected error: ${
-          err instanceof Error ? err.message : "Unknown error"
-        }`
-      );
-    }
+            console.log("Event deleted successfully");
+            await fetchEvents(); // Refresh the list
+            toast.success("Event deleted successfully!");
+          } catch (err) {
+            console.error("Unexpected error deleting event:", err);
+            toast.error("Unexpected error", {
+              description: err instanceof Error ? err.message : "Unknown error",
+            });
+          }
+        },
+      },
+      cancel: {
+        label: "Cancel",
+      },
+    });
   };
 
   const activeEvents = events.filter((e) => e.status === "active");
