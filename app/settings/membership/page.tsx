@@ -29,11 +29,13 @@ import {
   formatPrice,
   getMembershipBadgeVariant,
 } from "@/lib/membership-helpers";
+import { createClient } from "@/lib/supabase/client";
 import type { UserMembershipInfo } from "@/lib/membership-helpers";
 
 export default function MembershipSettingsPage() {
   const { user } = useAuth();
   const [membership, setMembership] = useState<UserMembershipInfo | null>(null);
+  const [monthlyPrice, setMonthlyPrice] = useState<number>(35);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
 
@@ -44,6 +46,19 @@ export default function MembershipSettingsPage() {
   const fetchMembership = async () => {
     if (user) {
       setLoading(true);
+
+      // Fetch membership price from database
+      const supabase = createClient();
+      const { data: monthlyTierData } = await supabase
+        .from("membership_tiers")
+        .select("price")
+        .eq("name", "monthly")
+        .single();
+
+      if (monthlyTierData) {
+        setMonthlyPrice(monthlyTierData.price);
+      }
+
       const info = await getUserMembership(user.id);
       setMembership(info);
       setLoading(false);
@@ -178,8 +193,6 @@ export default function MembershipSettingsPage() {
       </div>
     );
   }
-
-  const monthlyPrice = 35;
 
   return (
     <div className="min-h-screen bg-background">

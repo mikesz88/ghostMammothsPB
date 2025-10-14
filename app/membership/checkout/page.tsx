@@ -15,12 +15,31 @@ import {
 import { Header } from "@/components/ui/header";
 import { useAuth } from "@/lib/auth-context";
 import { formatPrice } from "@/lib/membership-helpers";
+import { createClient } from "@/lib/supabase/client";
+import { useEffect } from "react";
 
 export default function CheckoutPage() {
   const { user } = useAuth();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
-  const monthlyPrice = 35;
+  const [monthlyPrice, setMonthlyPrice] = useState<number>(35);
+
+  // Fetch monthly price from database
+  useEffect(() => {
+    const fetchPrice = async () => {
+      const supabase = createClient();
+      const { data } = await supabase
+        .from("membership_tiers")
+        .select("price")
+        .eq("name", "monthly")
+        .single();
+
+      if (data) {
+        setMonthlyPrice(data.price);
+      }
+    };
+    fetchPrice();
+  }, []);
 
   const handleCheckout = async () => {
     if (!user) {
