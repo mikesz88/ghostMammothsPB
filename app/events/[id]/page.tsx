@@ -32,11 +32,9 @@ import { canUserJoinEvent, formatPrice } from "@/lib/membership-helpers";
 import { Header } from "@/components/ui/header";
 import type { Event, QueueEntry, CourtAssignment } from "@/lib/types";
 
-export default function EventDetailPage(
-  props: {
-    params: Promise<{ id: string }>;
-  }
-) {
+export default function EventDetailPage(props: {
+  params: Promise<{ id: string }>;
+}) {
   const params = use(props.params);
   const { id } = params;
   const [event, setEvent] = useState<Event | null>(null);
@@ -81,6 +79,7 @@ export default function EventDetailPage(
               : new Date(data.date),
           courtCount:
             parseInt(data.court_count) || parseInt(data.num_courts) || 0,
+          teamSize: data.team_size || 2,
           rotationType: data.rotation_type,
           createdAt: new Date(data.created_at),
           updatedAt: data.updated_at ? new Date(data.updated_at) : new Date(),
@@ -105,7 +104,11 @@ export default function EventDetailPage(
           player1:users!player1_id(*),
           player2:users!player2_id(*),
           player3:users!player3_id(*),
-          player4:users!player4_id(*)
+          player4:users!player4_id(*),
+          player5:users!player5_id(*),
+          player6:users!player6_id(*),
+          player7:users!player7_id(*),
+          player8:users!player8_id(*)
         `
         )
         .eq("event_id", id)
@@ -164,7 +167,8 @@ export default function EventDetailPage(
   }, [userPosition, lastPosition, sendNotification]);
 
   const waitingCount = queue.filter((e) => e.status === "waiting").length;
-  const playingCount = assignments.filter((a) => !a.endedAt).length * 4;
+  const playingCount =
+    assignments.filter((a) => !a.endedAt).length * (event?.teamSize || 2) * 2;
 
   const handleJoinQueue = async (
     players: Array<{ name: string; skillLevel: string }>,
@@ -282,6 +286,20 @@ export default function EventDetailPage(
                     minute: "2-digit",
                   })}
                 </div>
+                <div className="flex items-center gap-2">
+                  <Users className="w-4 h-4" />
+                  {event.teamSize === 1
+                    ? "Solo (1v1)"
+                    : event.teamSize === 2
+                    ? "Doubles (2v2)"
+                    : event.teamSize === 3
+                    ? "Triplets (3v3)"
+                    : "Quads (4v4)"}{" "}
+                  •{" "}
+                  {event.rotationType
+                    .replace("-", " ")
+                    .replace(/\b\w/g, (l) => l.toUpperCase())}
+                </div>
               </div>
             </div>
             <Badge variant="default" className="text-sm">
@@ -342,7 +360,8 @@ export default function EventDetailPage(
                     <p className="text-2xl font-bold text-foreground">
                       {QueueManager.estimateWaitTime(
                         waitingCount,
-                        event.courtCount
+                        event.courtCount,
+                        event.teamSize
                       )}
                       m
                     </p>
@@ -369,6 +388,7 @@ export default function EventDetailPage(
             <CourtStatus
               courtCount={event.courtCount}
               assignments={assignments}
+              teamSize={event.teamSize}
             />
           </div>
 
@@ -437,6 +457,7 @@ export default function EventDetailPage(
         open={showJoinDialog}
         onOpenChange={setShowJoinDialog}
         onJoin={handleJoinQueue}
+        eventTeamSize={event.teamSize}
       />
     </div>
   );
