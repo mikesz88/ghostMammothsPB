@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2, CreditCard, Shield, Check } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -43,7 +44,9 @@ export default function CheckoutPage() {
       const { url, error } = await response.json();
 
       if (error) {
-        alert(`Failed to create checkout session: ${error}`);
+        toast.error("Failed to create checkout session", {
+          description: error,
+        });
         setLoading(false);
         return;
       }
@@ -53,7 +56,9 @@ export default function CheckoutPage() {
       }
     } catch (error) {
       console.error("Error creating checkout session:", error);
-      alert("An unexpected error occurred. Please try again.");
+      toast.error("An unexpected error occurred", {
+        description: "Please try again.",
+      });
       setLoading(false);
     }
   };

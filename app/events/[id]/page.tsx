@@ -14,6 +14,7 @@ import {
   Settings,
   Loader2,
 } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -188,7 +189,9 @@ export default function EventDetailPage(props: {
 
       if (error) {
         console.error("Error joining queue:", error);
-        alert("Failed to join queue. Please try again.");
+        toast.error("Failed to join queue", {
+          description: "Please try again.",
+        });
       } else {
         setShowJoinDialog(false);
 
@@ -205,7 +208,9 @@ export default function EventDetailPage(props: {
       }
     } catch (err) {
       console.error("Error joining queue:", err);
-      alert("An unexpected error occurred. Please try again.");
+      toast.error("An unexpected error occurred", {
+        description: "Please try again.",
+      });
     }
   };
 
@@ -214,7 +219,9 @@ export default function EventDetailPage(props: {
       const { error } = await leaveQueue(entryId);
       if (error) {
         console.error("Error leaving queue:", error);
-        alert("Failed to leave queue. Please try again.");
+        toast.error("Failed to leave queue", {
+          description: "Please try again.",
+        });
       } else {
         // Manually refetch queue to ensure UI updates immediately
         await refetchQueue();
@@ -226,7 +233,9 @@ export default function EventDetailPage(props: {
       }
     } catch (err) {
       console.error("Error leaving queue:", err);
-      alert("An unexpected error occurred. Please try again.");
+      toast.error("An unexpected error occurred", {
+        description: "Please try again.",
+      });
     }
   };
 
