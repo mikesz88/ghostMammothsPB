@@ -10,6 +10,7 @@ import {
   MessageSquare,
   Save,
 } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -58,7 +59,7 @@ export default function NotificationSettingsPage() {
 
   const handleSave = () => {
     // In a real app, this would save to the database
-    alert("Notification settings saved!");
+    toast.success("Notification settings saved!");
   };
 
   return (

@@ -11,6 +11,7 @@ import {
   Loader2,
   Check,
 } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -50,37 +51,44 @@ export default function MembershipSettingsPage() {
   };
 
   const handleCancelSubscription = async () => {
-    if (
-      !confirm(
-        "Are you sure you want to cancel your membership? You'll continue to have access until the end of your billing period."
-      )
-    ) {
-      return;
-    }
+    toast("Cancel your membership?", {
+      description:
+        "You'll continue to have access until the end of your billing period.",
+      action: {
+        label: "Cancel Membership",
+        onClick: async () => {
+          setActionLoading(true);
 
-    setActionLoading(true);
+          try {
+            const response = await fetch("/api/stripe/cancel-subscription", {
+              method: "POST",
+            });
 
-    try {
-      const response = await fetch("/api/stripe/cancel-subscription", {
-        method: "POST",
-      });
+            const { error } = await response.json();
 
-      const { error } = await response.json();
+            if (error) {
+              toast.error("Failed to cancel subscription", {
+                description: error,
+              });
+            } else {
+              toast.success("Subscription cancelled successfully", {
+                description:
+                  "You'll have access until the end of your billing period.",
+              });
+              await fetchMembership();
+            }
+          } catch (error) {
+            console.error("Error cancelling subscription:", error);
+            toast.error("An unexpected error occurred. Please try again.");
+          }
 
-      if (error) {
-        alert(`Failed to cancel subscription: ${error}`);
-      } else {
-        alert(
-          "Subscription cancelled successfully. You'll have access until the end of your billing period."
-        );
-        await fetchMembership();
-      }
-    } catch (error) {
-      console.error("Error cancelling subscription:", error);
-      alert("An unexpected error occurred. Please try again.");
-    }
-
-    setActionLoading(false);
+          setActionLoading(false);
+        },
+      },
+      cancel: {
+        label: "Keep Membership",
+      },
+    });
   };
 
   const handleReactivateSubscription = async () => {
@@ -94,14 +102,16 @@ export default function MembershipSettingsPage() {
       const { error } = await response.json();
 
       if (error) {
-        alert(`Failed to reactivate subscription: ${error}`);
+        toast.error("Failed to reactivate subscription", {
+          description: error,
+        });
       } else {
-        alert("Subscription reactivated successfully!");
+        toast.success("Subscription reactivated successfully!");
         await fetchMembership();
       }
     } catch (error) {
       console.error("Error reactivating subscription:", error);
-      alert("An unexpected error occurred. Please try again.");
+      toast.error("An unexpected error occurred. Please try again.");
     }
 
     setActionLoading(false);
@@ -118,13 +128,15 @@ export default function MembershipSettingsPage() {
       const { url, error } = await response.json();
 
       if (error) {
-        alert(`Failed to open billing portal: ${error}`);
+        toast.error("Failed to open billing portal", {
+          description: error,
+        });
       } else if (url) {
         window.location.href = url;
       }
     } catch (error) {
       console.error("Error opening billing portal:", error);
-      alert("An unexpected error occurred. Please try again.");
+      toast.error("An unexpected error occurred. Please try again.");
     }
 
     setActionLoading(false);

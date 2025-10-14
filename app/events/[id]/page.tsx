@@ -14,6 +14,7 @@ import {
   Settings,
   Loader2,
 } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -32,11 +33,9 @@ import { canUserJoinEvent, formatPrice } from "@/lib/membership-helpers";
 import { Header } from "@/components/ui/header";
 import type { Event, QueueEntry, CourtAssignment } from "@/lib/types";
 
-export default function EventDetailPage(
-  props: {
-    params: Promise<{ id: string }>;
-  }
-) {
+export default function EventDetailPage(props: {
+  params: Promise<{ id: string }>;
+}) {
   const params = use(props.params);
   const { id } = params;
   const [event, setEvent] = useState<Event | null>(null);
@@ -184,7 +183,9 @@ export default function EventDetailPage(
 
       if (error) {
         console.error("Error joining queue:", error);
-        alert("Failed to join queue. Please try again.");
+        toast.error("Failed to join queue", {
+          description: "Please try again.",
+        });
       } else {
         setShowJoinDialog(false);
 
@@ -201,7 +202,9 @@ export default function EventDetailPage(
       }
     } catch (err) {
       console.error("Error joining queue:", err);
-      alert("An unexpected error occurred. Please try again.");
+      toast.error("An unexpected error occurred", {
+        description: "Please try again.",
+      });
     }
   };
 
@@ -210,7 +213,9 @@ export default function EventDetailPage(
       const { error } = await leaveQueue(entryId);
       if (error) {
         console.error("Error leaving queue:", error);
-        alert("Failed to leave queue. Please try again.");
+        toast.error("Failed to leave queue", {
+          description: "Please try again.",
+        });
       } else {
         // Manually refetch queue to ensure UI updates immediately
         await refetchQueue();
@@ -222,7 +227,9 @@ export default function EventDetailPage(
       }
     } catch (err) {
       console.error("Error leaving queue:", err);
-      alert("An unexpected error occurred. Please try again.");
+      toast.error("An unexpected error occurred", {
+        description: "Please try again.",
+      });
     }
   };
 
