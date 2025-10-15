@@ -60,6 +60,7 @@ export default function AdminPage() {
             : new Date(event.date),
         courtCount:
           parseInt(event.court_count) || parseInt(event.num_courts) || 0,
+        teamSize: event.team_size || 2,
         rotationType: event.rotation_type,
         createdAt: new Date(event.created_at),
         updatedAt: event.updated_at ? new Date(event.updated_at) : new Date(),
@@ -98,6 +99,7 @@ export default function AdminPage() {
           time: timeOnly, // TIME type - just the time part
           num_courts: eventData.courtCount.toString(), // TEXT type
           court_count: eventData.courtCount, // SMALLINT type
+          team_size: eventData.teamSize,
           rotation_type: eventData.rotationType,
           status: eventData.status,
         })
@@ -148,6 +150,7 @@ export default function AdminPage() {
           time: timeOnly, // TIME type - just the time part
           num_courts: eventData.courtCount.toString(), // TEXT type
           court_count: eventData.courtCount, // SMALLINT type
+          team_size: eventData.teamSize,
           rotation_type: eventData.rotationType,
           status: eventData.status,
         })
