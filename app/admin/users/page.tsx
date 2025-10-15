@@ -110,6 +110,7 @@ export default function AdminUsersPage() {
       },
       cancel: {
         label: "Cancel",
+        onClick: () => {},
       },
     });
   };
@@ -135,6 +136,7 @@ export default function AdminUsersPage() {
       },
       cancel: {
         label: "Cancel",
+        onClick: () => {},
       },
     });
   };

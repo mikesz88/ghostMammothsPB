@@ -11,6 +11,8 @@ export async function createMembershipCheckoutSession(
   userId: string,
   userEmail: string,
   priceId: string,
+  tierId: string,
+  tierName: string,
   successUrl: string,
   cancelUrl: string
 ) {
@@ -24,14 +26,18 @@ export async function createMembershipCheckoutSession(
         },
       ],
       mode: "subscription",
-      success_url: successUrl,
+      success_url: `${successUrl}?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: cancelUrl,
       metadata: {
         user_id: userId,
+        tier_id: tierId,
+        tier_name: tierName,
       },
       subscription_data: {
         metadata: {
           user_id: userId,
+          tier_id: tierId,
+          tier_name: tierName,
         },
       },
     });
@@ -118,13 +124,36 @@ export async function createCustomerPortalSession(
   returnUrl: string
 ) {
   try {
+    console.log("Creating billing portal session for customer:", customerId);
+
+    // Verify customer exists in Stripe first
+    const customer = await stripe.customers.retrieve(customerId);
+
+    if (customer.deleted) {
+      throw new Error("Customer has been deleted in Stripe");
+    }
+
+    console.log("Customer verified in Stripe:", {
+      id: customer.id,
+      email: (customer as any).email,
+    });
+
     const session = await stripe.billingPortal.sessions.create({
       customer: customerId,
       return_url: returnUrl,
     });
+
+    console.log("✅ Billing portal session created:", session.id);
     return { session, error: null };
   } catch (error) {
-    console.error("Error creating portal session:", error);
+    console.error("❌ Error creating portal session:", error);
+
+    // Log specific error details
+    if (error instanceof Error) {
+      console.error("Error message:", error.message);
+      console.error("Error type:", error.constructor.name);
+    }
+
     return { session: null, error };
   }
 }

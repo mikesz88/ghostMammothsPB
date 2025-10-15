@@ -246,6 +246,7 @@ export default function AdminPage() {
       },
       cancel: {
         label: "Cancel",
+        onClick: () => {},
       },
     });
   };
@@ -288,6 +289,7 @@ export default function AdminPage() {
       },
       cancel: {
         label: "Cancel",
+        onClick: () => {},
       },
     });
   };

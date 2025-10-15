@@ -102,6 +102,7 @@ export default function MembershipSettingsPage() {
       },
       cancel: {
         label: "Keep Membership",
+        onClick: () => {}, // No-op, just dismiss
       },
     });
   };
@@ -140,11 +141,12 @@ export default function MembershipSettingsPage() {
         method: "POST",
       });
 
-      const { url, error } = await response.json();
+      const { url, error, details } = await response.json();
 
       if (error) {
+        console.error("Billing portal error:", { error, details });
         toast.error("Failed to open billing portal", {
-          description: error,
+          description: details || error,
         });
       } else if (url) {
         window.location.href = url;
@@ -232,18 +234,19 @@ export default function MembershipSettingsPage() {
                 <div>
                   <p className="font-medium text-foreground mb-1">Plan</p>
                   <p className="text-sm text-muted-foreground">
-                    {membership!.tierName === "free"
-                      ? "Free Member"
-                      : "Monthly Member"}
+                    {membership!.tierDisplayName}
                   </p>
                 </div>
                 <div className="text-right">
                   <p className="font-bold text-foreground">
-                    {membership!.tierName === "free"
-                      ? formatPrice(0)
-                      : formatPrice(monthlyPrice)}
+                    {formatPrice(membership!.tierPrice)}
                   </p>
-                  <p className="text-sm text-muted-foreground">/month</p>
+                  <p className="text-sm text-muted-foreground">
+                    /
+                    {membership!.tierBillingPeriod === "free"
+                      ? "forever"
+                      : membership!.tierBillingPeriod}
+                  </p>
                 </div>
               </div>
 
@@ -325,7 +328,7 @@ export default function MembershipSettingsPage() {
                   <Button className="w-full" asChild>
                     <Link href="/membership">
                       <Crown className="w-4 h-4 mr-2" />
-                      Upgrade to Monthly
+                      Upgrade Membership
                     </Link>
                   </Button>
                 )}
@@ -338,7 +341,7 @@ export default function MembershipSettingsPage() {
             <Card className="border-border mb-6">
               <CardHeader>
                 <CardTitle className="text-foreground">
-                  Your Monthly Benefits
+                  Your {membership!.tierDisplayName} Benefits
                 </CardTitle>
                 <CardDescription>
                   What's included in your membership

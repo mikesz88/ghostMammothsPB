@@ -23,6 +23,7 @@ import { Header } from "@/components/ui/header";
 import { createClient } from "@/lib/supabase/client";
 import { leaveQueue, adminRemoveFromQueue } from "@/app/actions/queue";
 import type { Event, QueueEntry, CourtAssignment } from "@/lib/types";
+import { toast } from "sonner";
 
 export default function AdminEventDetailPage(props: {
   params: Promise<{ id: string }>;
@@ -398,14 +399,16 @@ export default function AdminEventDetailPage(props: {
 
       if (error) {
         console.error("❌ [ADMIN PAGE] Error removing player:", error);
-        alert(`Failed to remove player: ${error}`);
+        toast.error("Failed to remove player", {
+          description: error,
+        });
       } else {
         console.log("✅ [ADMIN PAGE] Player removed successfully");
-        alert("Player removed from queue");
+        toast.success("Player removed from queue");
       }
     } catch (err) {
       console.error("❌ [ADMIN PAGE] Exception in handleForceRemove:", err);
-      alert("Failed to remove player");
+      toast.error("Failed to remove player");
     }
   };
 
@@ -456,6 +459,7 @@ export default function AdminEventDetailPage(props: {
       },
       cancel: {
         label: "Cancel",
+        onClick: () => {},
       },
     });
   };
@@ -503,7 +507,6 @@ export default function AdminEventDetailPage(props: {
       }
 
       toast.success("Game ended successfully");
-      window.location.reload();
     } catch (err) {
       console.error("Error ending game:", err);
       toast.error("Failed to end game");

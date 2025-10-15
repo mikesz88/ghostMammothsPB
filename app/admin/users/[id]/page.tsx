@@ -144,6 +144,7 @@ export default function AdminUserDetailPage(props: {
       },
       cancel: {
         label: "Cancel",
+        onClick: () => {},
       },
     });
   };
@@ -170,6 +171,7 @@ export default function AdminUserDetailPage(props: {
       },
       cancel: {
         label: "Cancel",
+        onClick: () => {},
       },
     });
   };
