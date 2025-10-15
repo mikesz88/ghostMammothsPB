@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { cancelSubscription } from "@/lib/stripe/server";
+import { cancelSubscription, stripe } from "@/lib/stripe/server";
 
 export async function POST() {
   try {
@@ -16,23 +16,58 @@ export async function POST() {
     }
 
     // Get user's subscription ID
-    const { data: membership } = await supabase
+    let { data: membership } = await supabase
       .from("user_memberships")
-      .select("stripe_subscription_id")
+      .select("stripe_subscription_id, stripe_customer_id")
       .eq("user_id", user.id)
       .single();
 
-    if (!membership?.stripe_subscription_id) {
+    let subscriptionId = membership?.stripe_subscription_id;
+
+    // If no subscription ID but we have customer ID, try to find it in Stripe
+    if (!subscriptionId && membership?.stripe_customer_id) {
+      console.log("No subscription ID in DB, fetching from Stripe...");
+
+      try {
+        const subscriptions = await stripe.subscriptions.list({
+          customer: membership.stripe_customer_id,
+          status: "active",
+          limit: 1,
+        });
+
+        if (subscriptions.data.length > 0) {
+          subscriptionId = subscriptions.data[0].id;
+          console.log("Found active subscription in Stripe:", subscriptionId);
+
+          // Update database with the subscription ID
+          await supabase
+            .from("user_memberships")
+            .update({
+              stripe_subscription_id: subscriptionId,
+              updated_at: new Date().toISOString(),
+            })
+            .eq("user_id", user.id);
+        }
+      } catch (err) {
+        console.error("Error fetching subscriptions from Stripe:", err);
+      }
+    }
+
+    if (!subscriptionId) {
+      console.error("No subscription ID found for user:", user.id);
+      console.log("Membership data:", membership);
+
       return NextResponse.json(
-        { error: "No active subscription found" },
+        {
+          error:
+            "No active subscription found. Your subscription may not have been created through Stripe, or the subscription ID was not recorded.",
+        },
         { status: 404 }
       );
     }
 
     // Cancel the subscription in Stripe
-    const { subscription, error } = await cancelSubscription(
-      membership.stripe_subscription_id
-    );
+    const { subscription, error } = await cancelSubscription(subscriptionId);
 
     if (error || !subscription) {
       console.error("Error cancelling subscription:", error);

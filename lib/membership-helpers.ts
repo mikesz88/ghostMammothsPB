@@ -4,6 +4,9 @@ import type { MembershipStatus } from "@/lib/types-membership";
 export interface UserMembershipInfo {
   status: MembershipStatus;
   tierName: string;
+  tierDisplayName: string;
+  tierPrice: number;
+  tierBillingPeriod: string;
   isActive: boolean;
   isPaid: boolean;
   currentPeriodEnd?: Date;
@@ -30,10 +33,57 @@ export async function getUserMembership(
     .single();
 
   if (!membership || !membership.tier) {
-    // No membership found, return free tier
+    // No membership found in user_memberships, check users.membership_status as fallback
+    const { data: userData } = await supabase
+      .from("users")
+      .select("membership_status")
+      .eq("id", userId)
+      .single();
+
+    if (userData?.membership_status && userData.membership_status !== "free") {
+      // User has membership_status set, fetch that tier
+      // Try to match by name first, then by display_name (in case display_name was stored)
+      const { data: tiers } = await supabase
+        .from("membership_tiers")
+        .select("*")
+        .or(
+          `name.eq.${userData.membership_status},display_name.eq.${userData.membership_status}`
+        );
+
+      const tier = tiers?.[0];
+
+      if (tier) {
+        console.log("Found tier from users.membership_status fallback:", {
+          searchedFor: userData.membership_status,
+          foundName: tier.name,
+          foundDisplayName: tier.display_name,
+        });
+
+        return {
+          status: "active",
+          tierName: tier.name,
+          tierDisplayName: tier.display_name,
+          tierPrice: tier.price,
+          tierBillingPeriod: tier.billing_period,
+          isActive: true,
+          isPaid: tier.price > 0,
+        };
+      }
+    }
+
+    // Truly no membership found, fetch the free tier from database
+    const { data: freeTier } = await supabase
+      .from("membership_tiers")
+      .select("*")
+      .eq("name", "free")
+      .single();
+
     return {
       status: "free",
       tierName: "free",
+      tierDisplayName: freeTier?.display_name || "Free Member",
+      tierPrice: freeTier?.price || 0,
+      tierBillingPeriod: freeTier?.billing_period || "free",
       isActive: true,
       isPaid: false,
     };
@@ -41,11 +91,14 @@ export async function getUserMembership(
 
   const isActive =
     membership.status === "active" || membership.status === "trialing";
-  const isPaid = membership.tier.name === "monthly";
+  const isPaid = membership.tier.price > 0; // Any tier with price > 0 is paid
 
   return {
     status: membership.status,
     tierName: membership.tier.name,
+    tierDisplayName: membership.tier.display_name,
+    tierPrice: membership.tier.price,
+    tierBillingPeriod: membership.tier.billing_period,
     isActive,
     isPaid,
     currentPeriodEnd: membership.current_period_end
@@ -114,7 +167,7 @@ export async function canUserJoinEvent(
   if (event.requires_membership && !membership.isPaid) {
     return {
       canJoin: false,
-      reason: "This event requires a monthly membership",
+      reason: "This event requires a paid membership",
       requiresPayment: false,
     };
   }

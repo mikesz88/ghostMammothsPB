@@ -34,6 +34,13 @@ export async function POST(request: NextRequest) {
 
   try {
     switch (event.type) {
+      case "checkout.session.completed":
+        await handleCheckoutCompleted(
+          event.data.object as Stripe.Checkout.Session,
+          supabase
+        );
+        break;
+
       case "customer.subscription.created":
       case "customer.subscription.updated":
         await handleSubscriptionUpdate(
@@ -77,26 +84,122 @@ export async function POST(request: NextRequest) {
   }
 }
 
+async function handleCheckoutCompleted(
+  session: Stripe.Checkout.Session,
+  supabase: any
+) {
+  const userId = session.metadata?.user_id;
+  const tierId = session.metadata?.tier_id;
+
+  if (!userId || !tierId) {
+    console.error("Missing metadata in checkout session:", session.id);
+    return;
+  }
+
+  console.log(`Checkout completed for user ${userId}, tier ${tierId}`);
+
+  // Verify tier exists and get full details
+  const { data: tier, error: tierError } = await supabase
+    .from("membership_tiers")
+    .select("id, name, display_name, price")
+    .eq("id", tierId)
+    .single();
+
+  if (tierError || !tier) {
+    console.error(`Tier ${tierId} not found in database:`, tierError);
+    return;
+  }
+
+  console.log(`Found tier for checkout:`, {
+    id: tier.id,
+    name: tier.name,
+    displayName: tier.display_name,
+    price: tier.price,
+  });
+
+  // Create or update user membership record
+  const { error: membershipError } = await supabase
+    .from("user_memberships")
+    .upsert(
+      {
+        user_id: userId,
+        tier_id: tierId,
+        status: "active",
+        stripe_customer_id: session.customer as string,
+        stripe_subscription_id: session.subscription as string,
+        updated_at: new Date().toISOString(),
+      },
+      {
+        onConflict: "user_id",
+      }
+    );
+
+  if (membershipError) {
+    console.error("Error upserting membership:", membershipError);
+  }
+
+  // Update user's membership_status
+  await supabase
+    .from("users")
+    .update({
+      membership_status: tier.name,
+      stripe_customer_id: session.customer as string,
+    })
+    .eq("id", userId);
+
+  // Record initial payment in payments table
+  if (session.amount_total && session.payment_intent) {
+    await supabase.from("payments").insert({
+      user_id: userId,
+      amount: session.amount_total / 100, // Convert from cents
+      currency: session.currency?.toUpperCase() || "USD",
+      payment_type: "membership",
+      stripe_payment_intent_id: session.payment_intent as string,
+      status: "succeeded",
+      description: `${tier.display_name} - Initial subscription payment`,
+      metadata: {
+        checkout_session_id: session.id,
+        subscription_id: session.subscription,
+        tier_id: tierId,
+        tier_name: tier.name,
+      },
+    });
+
+    console.log(
+      `Payment recorded for user ${userId}: $${session.amount_total / 100}`
+    );
+  }
+
+  console.log(`User ${userId} upgraded to ${tier.name}`);
+}
+
 async function handleSubscriptionUpdate(
   subscription: Stripe.Subscription,
   supabase: any
 ) {
   const userId = subscription.metadata.user_id;
+  const tierId = subscription.metadata.tier_id;
+  const tierName = subscription.metadata.tier_name;
 
   if (!userId) {
     console.error("No user_id in subscription metadata");
     return;
   }
 
-  // Get the monthly tier ID
+  if (!tierId) {
+    console.error("No tier_id in subscription metadata");
+    return;
+  }
+
+  // Verify tier exists
   const { data: tier } = await supabase
     .from("membership_tiers")
-    .select("id")
-    .eq("name", "monthly")
+    .select("id, name")
+    .eq("id", tierId)
     .single();
 
   if (!tier) {
-    console.error("Monthly tier not found");
+    console.error(`Tier ${tierId} not found in database`);
     return;
   }
 
@@ -104,7 +207,7 @@ async function handleSubscriptionUpdate(
   const { error } = await supabase.from("user_memberships").upsert(
     {
       user_id: userId,
-      tier_id: tier.id,
+      tier_id: tierId,
       status: subscription.status,
       stripe_customer_id: subscription.customer as string,
       stripe_subscription_id: subscription.id,
@@ -127,16 +230,18 @@ async function handleSubscriptionUpdate(
     return;
   }
 
-  // Update user's membership_status
+  // Update user's membership_status to the tier name
   await supabase
     .from("users")
     .update({
-      membership_status: subscription.status,
+      membership_status: tier.name,
       stripe_customer_id: subscription.customer as string,
     })
     .eq("id", userId);
 
-  console.log(`Subscription ${subscription.status} for user ${userId}`);
+  console.log(
+    `Subscription ${subscription.status} for user ${userId} - Tier: ${tier.name} (${tierId})`
+  );
 }
 
 async function handleSubscriptionDeleted(
@@ -178,6 +283,15 @@ async function handlePaymentSucceeded(invoice: Stripe.Invoice, supabase: any) {
     return;
   }
 
+  // Get tier name from user's membership
+  const { data: membership } = await supabase
+    .from("user_memberships")
+    .select("tier:membership_tiers(name, display_name)")
+    .eq("user_id", userId)
+    .single();
+
+  const tierName = membership?.tier?.display_name || "Membership";
+
   // Record payment
   await supabase.from("payments").insert({
     user_id: userId,
@@ -186,7 +300,7 @@ async function handlePaymentSucceeded(invoice: Stripe.Invoice, supabase: any) {
     payment_type: "membership",
     stripe_payment_intent_id: (invoice as any).payment_intent as string,
     status: "succeeded",
-    description: `Monthly membership payment`,
+    description: `${tierName} payment`,
     metadata: {
       invoice_id: invoice.id,
       subscription_id: subscription,
@@ -205,6 +319,15 @@ async function handlePaymentFailed(invoice: Stripe.Invoice, supabase: any) {
     console.error("No user_id in invoice metadata");
     return;
   }
+
+  // Get tier name from user's membership
+  const { data: membership } = await supabase
+    .from("user_memberships")
+    .select("tier:membership_tiers(name, display_name)")
+    .eq("user_id", userId)
+    .single();
+
+  const tierName = membership?.tier?.display_name || "Membership";
 
   // Update membership status to past_due
   await supabase
@@ -228,7 +351,7 @@ async function handlePaymentFailed(invoice: Stripe.Invoice, supabase: any) {
     currency: invoice.currency.toUpperCase(),
     payment_type: "membership",
     status: "failed",
-    description: `Failed monthly membership payment`,
+    description: `Failed ${tierName} payment`,
     metadata: {
       invoice_id: invoice.id,
       subscription_id: (invoice as any).subscription,
