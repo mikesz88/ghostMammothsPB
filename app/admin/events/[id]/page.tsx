@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, use } from "react";
 import Link from "next/link";
 import {
   Trophy,
@@ -19,16 +19,16 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { QueueList } from "@/components/queue-list";
 import { CourtStatus } from "@/components/court-status";
+import { Header } from "@/components/ui/header";
 import { createClient } from "@/lib/supabase/client";
 import { leaveQueue, adminRemoveFromQueue } from "@/app/actions/queue";
 import type { Event, QueueEntry, CourtAssignment } from "@/lib/types";
-import Image from "next/image";
+import { toast } from "sonner";
 
-export default function AdminEventDetailPage({
-  params,
-}: {
-  params: { id: string };
+export default function AdminEventDetailPage(props: {
+  params: Promise<{ id: string }>;
 }) {
+  const params = use(props.params);
   const { id } = params;
   const [event, setEvent] = useState<Event | null>(null);
   const [queue, setQueue] = useState<QueueEntry[]>([]);
@@ -68,6 +68,7 @@ export default function AdminEventDetailPage({
           date: eventDate,
           courtCount:
             parseInt(data.court_count) || parseInt(data.num_courts) || 0,
+          teamSize: data.team_size || 2,
           rotationType: data.rotation_type,
           status: data.status,
           createdAt: new Date(data.created_at),
@@ -162,7 +163,11 @@ export default function AdminEventDetailPage({
           player1:users!court_assignments_player1_id_fkey(id, name, email, skill_level),
           player2:users!court_assignments_player2_id_fkey(id, name, email, skill_level),
           player3:users!court_assignments_player3_id_fkey(id, name, email, skill_level),
-          player4:users!court_assignments_player4_id_fkey(id, name, email, skill_level)
+          player4:users!court_assignments_player4_id_fkey(id, name, email, skill_level),
+          player5:users!court_assignments_player5_id_fkey(id, name, email, skill_level),
+          player6:users!court_assignments_player6_id_fkey(id, name, email, skill_level),
+          player7:users!court_assignments_player7_id_fkey(id, name, email, skill_level),
+          player8:users!court_assignments_player8_id_fkey(id, name, email, skill_level)
         `
         )
         .eq("event_id", id)
@@ -257,66 +262,119 @@ export default function AdminEventDetailPage({
   }, [id]);
 
   const waitingCount = queue.filter((e) => e.status === "waiting").length;
-  const playingCount = assignments.filter((a) => !a.endedAt).length * 4;
+  const playingCount =
+    assignments.filter((a) => !a.endedAt).length * (event?.teamSize || 2) * 2;
 
   const handleAssignNext = async () => {
     if (!event) return;
 
-    // Get the next 4 players from queue
-    const nextPlayers = queue.filter((e) => e.status === "waiting").slice(0, 4);
+    const playersPerCourt = event.teamSize * 2;
+    const nextPlayers = queue
+      .filter((e) => e.status === "waiting")
+      .slice(0, playersPerCourt);
 
-    if (nextPlayers.length < 4) {
-      alert("Not enough players in queue (need 4 players)");
+    if (nextPlayers.length < playersPerCourt) {
+      toast.error("Not enough players in queue", {
+        description: `Need ${playersPerCourt} players for ${
+          event.teamSize === 1
+            ? "solo"
+            : event.teamSize === 2
+            ? "doubles"
+            : event.teamSize === 3
+            ? "triplets"
+            : "quads"
+        }`,
+      });
       return;
     }
 
-    // Find an available court
-    const availableCourt =
-      assignments.length === 0
-        ? 1
-        : assignments.filter((a) => !a.endedAt).length < event.courtCount
-        ? Math.max(...assignments.map((a) => a.courtNumber)) + 1
-        : null;
+    // Find an available court - reuse ended court numbers
+    const availableCourt = (() => {
+      const activeCourts = new Set(
+        assignments.filter((a) => !a.endedAt).map((a) => a.courtNumber)
+      );
+
+      // Find first court number that's not in use
+      for (let i = 1; i <= event.courtCount; i++) {
+        if (!activeCourts.has(i)) {
+          return i;
+        }
+      }
+
+      return null; // All courts occupied
+    })();
 
     if (availableCourt === null) {
-      alert("No available courts. End a game first.");
+      toast.error("No available courts", {
+        description: "End a game first to free up a court.",
+      });
       return;
     }
 
     try {
       const supabase = createClient();
 
-      // Create court assignment
+      // Create court assignment with dynamic player slots
+      const assignmentData: any = {
+        event_id: id,
+        court_number: availableCourt,
+        started_at: new Date().toISOString(),
+      };
+
+      // Assign players to slots based on team size
+      if (nextPlayers[0]) assignmentData.player1_id = nextPlayers[0].userId;
+      if (nextPlayers[1]) assignmentData.player2_id = nextPlayers[1].userId;
+      if (nextPlayers[2]) assignmentData.player3_id = nextPlayers[2].userId;
+      if (nextPlayers[3]) assignmentData.player4_id = nextPlayers[3].userId;
+      if (nextPlayers[4]) assignmentData.player5_id = nextPlayers[4].userId;
+      if (nextPlayers[5]) assignmentData.player6_id = nextPlayers[5].userId;
+      if (nextPlayers[6]) assignmentData.player7_id = nextPlayers[6].userId;
+      if (nextPlayers[7]) assignmentData.player8_id = nextPlayers[7].userId;
+
       const { error: assignmentError } = await supabase
         .from("court_assignments")
-        .insert({
-          event_id: id,
-          court_number: availableCourt,
-          player1_id: nextPlayers[0].userId,
-          player2_id: nextPlayers[1].userId,
-          player3_id: nextPlayers[2].userId,
-          player4_id: nextPlayers[3].userId,
-          started_at: new Date().toISOString(),
-        });
+        .insert(assignmentData);
 
       if (assignmentError) {
         console.error("Error creating assignment:", assignmentError);
-        alert(`Failed to assign players: ${assignmentError.message}`);
+        toast.error("Failed to assign players", {
+          description: assignmentError.message,
+        });
         return;
       }
 
       // Update queue entries to "playing"
+      console.log(
+        "Updating queue entries to playing:",
+        nextPlayers.map((p) => ({
+          id: p.id,
+          userId: p.userId,
+          name: p.user?.name,
+        }))
+      );
+
       for (const player of nextPlayers) {
-        await supabase
+        const { error: updateError } = await supabase
           .from("queue_entries")
           .update({ status: "playing" })
           .eq("id", player.id);
+
+        if (updateError) {
+          console.error(`Failed to update player ${player.id}:`, updateError);
+        } else {
+          console.log(`Updated player ${player.id} to playing`);
+        }
       }
 
-      alert(`Assigned 4 players to Court ${availableCourt}`);
+      toast.success(
+        `Assigned ${playersPerCourt} players to Court ${availableCourt}`
+      );
+
+      // Force page refresh to show updated data
+      window.location.reload();
     } catch (err) {
       console.error("Error assigning players:", err);
-      alert("Failed to assign players");
+      toast.error("Failed to assign players");
     }
   };
 
@@ -341,14 +399,16 @@ export default function AdminEventDetailPage({
 
       if (error) {
         console.error("❌ [ADMIN PAGE] Error removing player:", error);
-        alert(`Failed to remove player: ${error}`);
+        toast.error("Failed to remove player", {
+          description: error,
+        });
       } else {
         console.log("✅ [ADMIN PAGE] Player removed successfully");
-        alert("Player removed from queue");
+        toast.success("Player removed from queue");
       }
     } catch (err) {
       console.error("❌ [ADMIN PAGE] Exception in handleForceRemove:", err);
-      alert("Failed to remove player");
+      toast.error("Failed to remove player");
     }
   };
 
@@ -371,31 +431,54 @@ export default function AdminEventDetailPage({
 
       if (error) {
         console.error("Error clearing queue:", error);
-        alert(`Failed to clear queue: ${error.message}`);
+        toast.error("Failed to clear queue", {
+          description: error.message,
+        });
       } else {
-        alert("Queue cleared successfully");
+        toast.success("Queue cleared successfully");
       }
     } catch (err) {
       console.error("Error clearing queue:", err);
-      alert("Failed to clear queue");
+      toast.error("Failed to clear queue");
     }
   };
 
-  const handleEndGame = async (assignmentId: string) => {
-    if (!confirm("Mark this game as complete?")) return;
+  const handleEndGame = async (
+    assignmentId: string,
+    winningTeam: "team1" | "team2"
+  ) => {
+    const winningTeamName = winningTeam === "team1" ? "Team 1" : "Team 2";
 
+    toast(`Mark this game as complete?`, {
+      description: `${winningTeamName} wins!`,
+      action: {
+        label: "End Game",
+        onClick: async () => {
+          await performEndGame(assignmentId);
+        },
+      },
+      cancel: {
+        label: "Cancel",
+        onClick: () => {},
+      },
+    });
+  };
+
+  const performEndGame = async (assignmentId: string) => {
     try {
       const supabase = createClient();
 
-      // End the assignment
+      // Delete the assignment (simpler approach - no history kept)
       const { error: endError } = await supabase
         .from("court_assignments")
-        .update({ ended_at: new Date().toISOString() })
+        .delete()
         .eq("id", assignmentId);
 
       if (endError) {
         console.error("Error ending game:", endError);
-        alert(`Failed to end game: ${endError.message}`);
+        toast.error("Failed to end game", {
+          description: endError.message,
+        });
         return;
       }
 
@@ -403,12 +486,16 @@ export default function AdminEventDetailPage({
       const assignment = assignments.find((a) => a.id === assignmentId);
       if (!assignment) return;
 
-      // Remove players from queue
+      // Remove players from queue (support up to 8 players)
       const playerIds = [
         assignment.player1Id,
         assignment.player2Id,
         assignment.player3Id,
         assignment.player4Id,
+        assignment.player5Id,
+        assignment.player6Id,
+        assignment.player7Id,
+        assignment.player8Id,
       ].filter(Boolean);
 
       for (const playerId of playerIds) {
@@ -419,10 +506,10 @@ export default function AdminEventDetailPage({
           .eq("user_id", playerId);
       }
 
-      alert("Game ended successfully");
+      toast.success("Game ended successfully");
     } catch (err) {
       console.error("Error ending game:", err);
-      alert("Failed to end game");
+      toast.error("Failed to end game");
     }
   };
 
@@ -460,38 +547,12 @@ export default function AdminEventDetailPage({
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="border-b border-border">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <Link href="/admin" className="flex items-center gap-2">
-            <Image
-              src="/icon-32x32.png"
-              alt="Ghost Mammoths PB"
-              width={32}
-              height={32}
-            />
-            <span className="text-xl font-bold text-foreground">
-              Ghost Mammoths PB
-            </span>
-          </Link>
-          <div className="flex items-center gap-2">
-            <Badge variant="default">Admin View</Badge>
-            <Button variant="outline" asChild>
-              <Link href={`/events/${id}`}>View Public Page</Link>
-            </Button>
-          </div>
-        </div>
-      </header>
+      <Header
+        variant="admin"
+        backButton={{ href: "/admin", label: "Back to Dashboard" }}
+      />
 
       <div className="container mx-auto px-4 py-8">
-        {/* Back Button */}
-        <Button variant="ghost" className="mb-4" asChild>
-          <Link href="/admin">
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to Admin Dashboard
-          </Link>
-        </Button>
-
         {/* Event Header */}
         <Card className="border-border mb-8">
           <CardContent className="p-6">
@@ -516,6 +577,22 @@ export default function AdminEventDetailPage({
                         hour: "2-digit",
                         minute: "2-digit",
                       })}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Users className="w-4 h-4" />
+                    <span>
+                      {event.teamSize === 1
+                        ? "Solo (1v1)"
+                        : event.teamSize === 2
+                        ? "Doubles (2v2)"
+                        : event.teamSize === 3
+                        ? "Triplets (3v3)"
+                        : "Quads (4v4)"}{" "}
+                      •{" "}
+                      {event.rotationType
+                        .replace("-", " ")
+                        .replace(/\b\w/g, (l) => l.toUpperCase())}
                     </span>
                   </div>
                   <div className="flex items-center gap-2">
@@ -555,7 +632,9 @@ export default function AdminEventDetailPage({
             <CourtStatus
               assignments={assignments}
               courtCount={event.courtCount}
-              // onEndGame={handleEndGame}
+              teamSize={event.teamSize}
+              isAdmin={true}
+              onCompleteGame={handleEndGame}
             />
           </div>
 

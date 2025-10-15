@@ -59,6 +59,7 @@ export async function createEvent(formData: FormData) {
     location: formData.get("location") as string,
     date: formData.get("date") as string,
     court_count: parseInt(formData.get("court_count") as string),
+    team_size: parseInt(formData.get("team_size") as string),
     rotation_type: formData.get("rotation_type") as string,
     status: "active",
   };

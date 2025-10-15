@@ -2,8 +2,8 @@
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useState, useEffect } from "react";
-import { Trophy } from "lucide-react";
+import { useState, useEffect, Suspense } from "react";
+import { Trophy, Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -15,14 +15,16 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/lib/auth-context";
-import Image from "next/image";
+import { Header } from "@/components/ui/header";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
-export default function LoginPage() {
+function LoginForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
   const { signIn } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -54,22 +56,8 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4">
+    <div className="flex items-center justify-center p-4 py-12">
       <div className="w-full max-w-md">
-        <div className="flex items-center justify-center mb-8">
-          <Link href="/" className="flex items-center gap-2">
-            <Image
-              src="/icon-32x32.png"
-              alt="Ghost Mammoths PB"
-              width={38}
-              height={38}
-            />
-            <span className="text-2xl font-bold text-foreground">
-              Ghost Mammoths PB
-            </span>
-          </Link>
-        </div>
-
         <Card className="border-border bg-card">
           <CardHeader>
             <CardTitle className="text-foreground">Welcome Back</CardTitle>
@@ -102,13 +90,29 @@ export default function LoginPage() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="password">Password</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                />
+                <div className="relative">
+                  <Input
+                    id="password"
+                    type={showPassword ? "text" : "password"}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                    className="pr-10"
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                    onClick={() => setShowPassword(!showPassword)}
+                  >
+                    {showPassword ? (
+                      <EyeOff className="h-4 w-4 text-muted-foreground" />
+                    ) : (
+                      <Eye className="h-4 w-4 text-muted-foreground" />
+                    )}
+                  </Button>
+                </div>
               </div>
               <Button type="submit" className="w-full" disabled={loading}>
                 {loading ? "Signing In..." : "Sign In"}
@@ -123,6 +127,23 @@ export default function LoginPage() {
           </CardContent>
         </Card>
       </div>
+    </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <div className="min-h-screen bg-background">
+      <Header />
+      <Suspense
+        fallback={
+          <div className="flex items-center justify-center p-4 py-12">
+            <div className="text-muted-foreground">Loading...</div>
+          </div>
+        }
+      >
+        <LoginForm />
+      </Suspense>
     </div>
   );
 }

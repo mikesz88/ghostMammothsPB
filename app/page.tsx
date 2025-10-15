@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { Users, Calendar, Trophy, Zap, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -17,7 +17,7 @@ import { Header } from "@/components/ui/header";
 import { useAuth } from "@/lib/auth-context";
 import { createClient } from "@/lib/supabase/client";
 
-export default function HomePage() {
+function HomeContent() {
   const { user } = useAuth();
   const searchParams = useSearchParams();
   const [isAdmin, setIsAdmin] = useState(false);
@@ -185,5 +185,22 @@ export default function HomePage() {
         </div>
       </footer>
     </div>
+  );
+}
+
+export default function HomePage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-background">
+          <Header />
+          <div className="flex items-center justify-center py-20">
+            <div className="text-muted-foreground">Loading...</div>
+          </div>
+        </div>
+      }
+    >
+      <HomeContent />
+    </Suspense>
   );
 }

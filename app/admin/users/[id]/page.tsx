@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, use } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -13,6 +13,7 @@ import {
   Calendar,
   Trophy,
 } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -37,7 +38,7 @@ import {
   toggleAdminStatus,
   deleteUser,
 } from "@/app/actions/admin-users";
-import Image from "next/image";
+import { Header } from "@/components/ui/header";
 
 interface User {
   id: string;
@@ -50,11 +51,10 @@ interface User {
   created_at: string;
 }
 
-export default function AdminUserDetailPage({
-  params,
-}: {
-  params: { id: string };
+export default function AdminUserDetailPage(props: {
+  params: Promise<{ id: string }>;
 }) {
+  const params = use(props.params);
   const { id } = params;
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
@@ -77,7 +77,9 @@ export default function AdminUserDetailPage({
 
     if (error) {
       console.error("Error fetching user:", error);
-      alert(`Failed to fetch user: ${error}`);
+      toast.error("Failed to fetch user", {
+        description: error,
+      });
       router.push("/admin/users");
     } else if (data) {
       setUser(data);
@@ -103,9 +105,11 @@ export default function AdminUserDetailPage({
     });
 
     if (error) {
-      alert(`Failed to update user: ${error}`);
+      toast.error("Failed to update user", {
+        description: error,
+      });
     } else {
-      alert("User updated successfully!");
+      toast.success("User updated successfully!");
       await fetchUser();
     }
     setSaving(false);
@@ -116,60 +120,69 @@ export default function AdminUserDetailPage({
 
     const newStatus = !user.is_admin;
     const confirmMessage = newStatus
-      ? "Are you sure you want to grant admin access to this user?"
-      : "Are you sure you want to remove admin access from this user?";
+      ? "Grant admin access to this user?"
+      : "Remove admin access from this user?";
 
-    if (!confirm(confirmMessage)) return;
+    toast(confirmMessage, {
+      description: newStatus
+        ? "This user will have full admin privileges."
+        : "This user will lose admin privileges.",
+      action: {
+        label: newStatus ? "Grant Access" : "Remove Access",
+        onClick: async () => {
+          const { error } = await toggleAdminStatus(user.id, newStatus);
 
-    const { error } = await toggleAdminStatus(user.id, newStatus);
-
-    if (error) {
-      alert(`Failed to update admin status: ${error}`);
-    } else {
-      alert("Admin status updated successfully!");
-      await fetchUser();
-    }
+          if (error) {
+            toast.error("Failed to update admin status", {
+              description: error,
+            });
+          } else {
+            toast.success("Admin status updated successfully!");
+            await fetchUser();
+          }
+        },
+      },
+      cancel: {
+        label: "Cancel",
+        onClick: () => {},
+      },
+    });
   };
 
   const handleDelete = async () => {
     if (!user) return;
 
-    if (
-      !confirm(
-        `Are you sure you want to delete ${user.name}? This will remove all their data and cannot be undone.`
-      )
-    ) {
-      return;
-    }
+    toast(`Delete ${user.name}?`, {
+      description: "This will remove all their data and cannot be undone.",
+      action: {
+        label: "Delete",
+        onClick: async () => {
+          const { error } = await deleteUser(user.id);
 
-    const { error } = await deleteUser(user.id);
-
-    if (error) {
-      alert(`Failed to delete user: ${error}`);
-    } else {
-      alert("User deleted successfully!");
-      router.push("/admin/users");
-    }
+          if (error) {
+            toast.error("Failed to delete user", {
+              description: error,
+            });
+          } else {
+            toast.success("User deleted successfully!");
+            router.push("/admin/users");
+          }
+        },
+      },
+      cancel: {
+        label: "Cancel",
+        onClick: () => {},
+      },
+    });
   };
 
   if (loading) {
     return (
       <div className="min-h-screen bg-background">
-        <header className="border-b border-border">
-          <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-            <Link href="/" className="flex items-center gap-2">
-              <Image
-                src="/icon-32x32.png"
-                alt="Ghost Mammoths PB"
-                width={38}
-                height={38}
-              />
-              <span className="text-xl font-bold text-foreground">
-                Ghost Mammoths PB
-              </span>
-            </Link>
-          </div>
-        </header>
+        <Header
+          variant="admin"
+          backButton={{ href: "/admin/users", label: "Back to Users" }}
+        />
         <div className="container mx-auto px-4 py-20">
           <div className="flex items-center justify-center">
             <Loader2 className="w-8 h-8 animate-spin mr-2" />
@@ -199,28 +212,10 @@ export default function AdminUserDetailPage({
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="border-b border-border">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2">
-            <Image
-              src="/icon-32x32.png"
-              alt="Ghost Mammoths PB"
-              width={38}
-              height={38}
-            />
-            <span className="text-xl font-bold text-foreground">
-              Ghost Mammoths PB
-            </span>
-          </Link>
-          <Button variant="outline" asChild>
-            <Link href="/admin/users">
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Back to Users
-            </Link>
-          </Button>
-        </div>
-      </header>
+      <Header
+        variant="admin"
+        backButton={{ href: "/admin/users", label: "Back to Users" }}
+      />
 
       {/* Page Content */}
       <div className="container mx-auto px-4 py-12">

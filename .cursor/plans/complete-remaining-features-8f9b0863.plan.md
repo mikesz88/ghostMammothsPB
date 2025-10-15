@@ -1,267 +1,492 @@
-<!-- 8f9b0863-9000-426a-9fbd-a3c8a7cdc9b7 dfe87bdf-2ffb-4d72-a981-92a813e77c76 -->
-# Gap Analysis: What's Done vs What's Missing
+<!-- 8f9b0863-9000-426a-9fbd-a3c8a7cdc9b7 44529b05-4402-44be-9ad8-c34f3a6a8b2b -->
+# Replace Native Alerts with Sonner Toast Notifications
 
-## COMPLETED FEATURES ✅
+## Current State
 
-### Core User Features (DONE)
+**Problem:** App uses native browser `alert()` and `confirm()` dialogs (65 instances across 8 files)
 
-1. **Authentication** - Fully working
+**Issues with native alerts:**
 
-- Sign up with email confirmation
-- Login/logout
-- Protected routes
-- Admin access control
+- Blocks UI thread
+- Can't be styled
+- Poor UX on mobile
+- No error/success variants
+- No positioning control
+- Looks outdated
+- Can't be dismissed programmatically
 
-2. **Events System** - Fully working
-
-- Browse events (real Supabase data)
-- View event details
-- Real-time updates
-- Court assignments display
-
-3. **Queue System** - Fully working
-
-- Join/leave queue
-- Solo + Group support (Duo/Triple/Quad) in UI
-- Skill level selection
-- Real-time queue updates
-- Position tracking
-- Group display with badges
-
-4. **Membership System (Stripe)** - Complete code, waiting for API keys
-
-- Pricing page (/membership)
-- Checkout flow
-- Success/cancel pages
-- Webhook handler
-- Event access control based on membership
-- Manage membership page (/settings/membership)
-- Cancel/reactivate subscription
-
-5. **Admin Features** - Partially working
-
-- Create/edit events ✅ (Supabase connected)
-- Delete events ✅
-- End event ✅ (status changes, but doesn't clear queue/assignments)
-- Force remove users ✅ (UI only, needs Supabase)
-- Manual assign players ✅ (UI only, needs Supabase)
-- Admin dashboard ✅
-- Admin-only access ✅
-
-6. **Pages & Content**
-
-- Home page ✅
-- About page ✅ (has content)
-- Events listing ✅
-- Event detail ✅
-- Login/signup ✅
-- Settings (notifications) ✅
-
-7. **Notifications**
-
-- Browser notifications ✅
-- Queue position alerts ✅
-- Settings page ✅
+**Already installed:** Sonner v1.7.4 (but not configured)
 
 ---
 
-## MISSING FEATURES ❌
+## What is Sonner?
 
-### 1. Google Calendar Page (MISSING)
+**Sonner** is a modern, lightweight toast notification library:
 
-**Required:** Yes - you specifically mentioned "google calendar page for events"
-**File needed:** app/calendar/page.tsx
-**Effort:** 30 minutes (simple embed)
+- Beautiful default styling
+- Multiple variants (success, error, warning, info)
+- Non-blocking
+- Stackable notifications
+- Mobile-friendly
+- Accessible
+- Customizable
+- Promise-based toasts
+- Action buttons support
 
-### 2. Shopify Link (MISSING)
+**Better than react-hot-toast because:**
 
-**Required:** Yes - you mentioned "link to shopify store"
-**Location:** Add to Header navigation
-**Effort:** 5 minutes
-
-### 3. Admin Tools - Database Integration (PARTIAL)
-
-**Currently:** Admin event detail page uses MOCK data
-**Files affected:**
-
-- app/admin/events/[id]/page.tsx (line 136-142 uses mockData)
-- Need to connect force remove to Supabase
-- Need to connect assign players to Supabase
-
-**Status:** UI exists but not connected to real database
-**Effort:** 2-3 hours
-
-### 4. End Event - Clear Data (INCOMPLETE)
-
-**Currently:** Changes status to "ended" but doesn't clear queue/assignments
-**Required:** Delete queue entries and assignments when event ends
-**File:** app/admin/page.tsx (line 175-196)
-**Effort:** 30 minutes
-
-### 5. Auto-assign Next Matchups (MISSING)
-
-**Currently:** Admin manually clicks "Assign Next Players"
-**Required:** Automatic assignment when courts become available
-**Effort:** 1-2 hours (requires background job or webhook)
-**Note:** This is complex - may need to defer to Phase 2
+- Smaller bundle size
+- Better TypeScript support
+- More modern design
+- Better accessibility
+- Already installed in your project
 
 ---
 
-## REQUIREMENTS CHECKLIST
+## Files with alert() Usage
 
-### User-side Requirements
-
-- [x] Join event
-- [x] Enter skill level (in join dialog)
-- [x] Join or leave queue
-- [x] See who's up next
-- [x] Real-time updates of court assignments
-- [x] Web alerts when it's their turn (browser notifications)
-- [ ] Push notifications (Phase 2 - defer)
-- [ ] SMS/text alerts (Phase 2 - defer, needs Twilio)
-
-### Admin-side Requirements
-
-- [x] Create events
-- [x] Edit events
-- [x] End events (changes status, needs to clear data)
-- [x] Manage court count (in create/edit)
-- [x] Manage rotation logic (2-stay, 4-off, etc. - in create/edit)
-- [x] Force-remove users (UI done, needs database connection)
-- [x] Assign next match-ups (UI done, needs database connection)
-- [ ] AUTO-assign next match-ups (missing, complex)
-- [ ] End session deletes all event data (partially done, needs queue/assignment clearing)
-
-### Group Queue Requirements
-
-- [x] Duo (2 players)
-- [x] Triple (3 players)
-- [x] Quad (4 players)
-- [x] Groups display together
-- [x] Groups stay together in queue
-
-### Website Requirements
-
-- [x] About page
-- [ ] Google calendar page (MISSING)
-- [x] Membership feature (free vs paid)
-- [x] Auto monthly membership (Stripe integration complete)
-- [x] Free entry to events for paid members
-- [ ] Link to Shopify store (MISSING)
-- [x] Monthly maintenance fee (Stripe subscription)
+1. `app/admin/page.tsx` - 16 alerts (event CRUD operations)
+2. `app/admin/events/[id]/page.tsx` - 17 alerts (queue/court management)
+3. `app/admin/users/page.tsx` - 7 alerts (user management)
+4. `app/admin/users/[id]/page.tsx` - 9 alerts (user editing)
+5. `app/settings/membership/page.tsx` - 9 alerts (subscription management)
+6. `app/events/[id]/page.tsx` - 4 alerts (queue join/leave)
+7. `app/membership/checkout/page.tsx` - 2 alerts (checkout errors)
+8. `app/settings/notifications/page.tsx` - 1 alert (save settings)
 
 ---
 
-## MVP 3-WEEK PLAN STATUS
+## Implementation Plan
 
-### Week 1 (Oct 9-15) - COMPLETED
+### Phase 1: Setup Sonner (5 minutes)
 
-- [x] Days 1-2: Group Queue ✅
-- [x] Days 3-4: Stripe Setup ✅ (code done, needs API keys)
-- [x] Days 5-6: Membership Pages ✅
-- [x] Day 7: Webhook Handler ✅
+#### Step 1: Add Sonner Provider to Root Layout
 
-### Week 2 (Oct 16-22) - IN PROGRESS
+**File:** `app/layout.tsx`
 
-- [x] Days 8-9: Event Access Control ✅
-- [x] Days 10-11: Manage Membership Page ✅
-- [ ] Days 12-13: Admin Tools (UI done, database connection needed)
-- [ ] Day 14: Database Migration (Stripe tables need to be run)
+Add Toaster component:
 
-### Week 3 (Oct 23-31) - NOT STARTED
+```typescript
+import { Toaster } from "sonner";
 
-- [ ] Days 15-16: Content & Polish
-- [x] About Page ✅
-- [ ] Google Calendar page (MISSING)
-- Home page (could be better)
-- [ ] Days 17-18: Testing
-- [ ] Days 19-20: Production Setup
-- [ ] Days 21-22: Final Testing & Launch
+export default function RootLayout({ children }) {
+  return (
+    <html>
+      <body>
+        {children}
+        <Toaster position="top-right" richColors />
+      </body>
+    </html>
+  );
+}
+```
 
----
+#### Step 2: Create Toast Helper Utility
 
-## WHAT TO DO NEXT
+**File:** `lib/toast-helpers.ts`
 
-Since you're waiting on Stripe API keys, here's what can be done in parallel:
+Create wrapper functions for common patterns:
 
-### Priority 1 (Can do now - 1-2 hours)
+```typescript
+import { toast } from "sonner";
 
-1. Create Google Calendar page (app/calendar/page.tsx)
-2. Add Shopify link to Header
-3. Fix End Event to clear queue and assignments
-4. Connect admin event detail page to Supabase (remove mock data)
+export const showSuccess = (message: string, description?: string) => {
+  toast.success(message, { description });
+};
 
-### Priority 2 (After Stripe is configured - 1 hour)
+export const showError = (message: string, description?: string) => {
+  toast.error(message, { description });
+};
 
-1. Test full Stripe flow
-2. Run membership database migration (scripts/02-membership-tables.sql)
-3. Test membership access control
+export const showConfirm = (
+  message: string,
+  onConfirm: () => void,
+  onCancel?: () => void
+) => {
+  toast(message, {
+    action: {
+      label: "Confirm",
+      onClick: onConfirm,
+    },
+    cancel: {
+      label: "Cancel",
+      onClick: onCancel,
+    },
+  });
+};
 
-### Priority 3 (Nice to have - Phase 2)
+export const showLoading = (message: string) => {
+  return toast.loading(message);
+};
 
-1. Auto-assign next matchups (complex background job)
-2. SMS notifications (needs Twilio)
-3. Enhanced home page
-4. Push notifications
-
----
-
-## CRITICAL NOTES
-
-1. **Admin Event Detail Page**: Currently uses MOCK DATA (lines 136-142)
-
-- mockEvent, mockQueue, mockAssignments, mockUsers
-- Force remove and assign players work in UI but don't save to database
-- MUST connect to Supabase before launch
-
-2. **End Event Function**: Only changes status, doesn't:
-
-- Clear queue entries
-- Clear court assignments
-- Archive event data
-
-3. **Stripe**: All code ready, just needs:
-
-- API keys in .env.local
-- Create product in Stripe dashboard
-- Run scripts/02-membership-tables.sql
-- Set up webhook endpoint
-
-4. **Group Queue**: 
-
-- UI fully supports groups
-- Database schema supports group_id
-- Currently only authenticated user joins (other player names not persisted)
-- This is intentional - only registered users can join
+export const dismissToast = (id: string | number) => {
+  toast.dismiss(id);
+};
+```
 
 ---
 
-## SUMMARY
+### Phase 2: Replace Alerts in Admin Pages (30 minutes)
 
-**Overall Progress: ~85% complete**
+#### File 1: `app/admin/page.tsx` (16 alerts)
 
-**What's blocking launch:**
+**Replace patterns:**
 
-1. Google Calendar page (30 min)
-2. Shopify link (5 min)
-3. Admin tools database connection (2-3 hours)
-4. End Event clearing data (30 min)
-5. Stripe API configuration (your part)
+```typescript
+// BEFORE
+alert("Event created successfully!");
 
-**Estimated time to MVP:** 3-4 hours of dev work + your Stripe setup
+// AFTER
+import { toast } from "sonner";
+toast.success("Event created successfully!");
 
-**Phase 2 items (defer):**
+// BEFORE
+alert(`Failed to create event: ${error.message}`);
 
-- Auto-assign automation
-- SMS notifications
-- Push notifications
-- Advanced analytics
+// AFTER
+toast.error("Failed to create event", {
+  description: error.message
+});
+
+// BEFORE
+if (!confirm("Are you sure you want to delete this event?")) return;
+
+// AFTER
+toast("Delete this event?", {
+  description: "This action cannot be undone.",
+  action: {
+    label: "Delete",
+    onClick: () => handleDeleteConfirmed(eventId),
+  },
+  cancel: {
+    label: "Cancel",
+  },
+});
+```
+
+**Instances to replace:**
+
+1. Event created success
+2. Event creation error
+3. Event updated success
+4. Event update error
+5. Event ended success
+6. Event end error
+7. Delete confirmation
+8. Delete success
+9. Delete error
+
+10-16. Various validation errors
+
+---
+
+#### File 2: `app/admin/events/[id]/page.tsx` (17 alerts)
+
+**Replace patterns:**
+
+1. Assign players success/error
+2. Force remove confirmation
+3. Force remove success/error
+4. Clear queue confirmation
+5. Clear queue success/error
+6. End game confirmation
+7. End game success/error
+
+8-17. Various operation errors
+
+---
+
+#### File 3: `app/admin/users/page.tsx` (7 alerts)
+
+**Replace patterns:**
+
+1. Toggle admin confirmation
+2. Toggle admin success/error
+3. Delete user confirmation
+4. Delete user success/error
+
+5-7. Various errors
+
+---
+
+#### File 4: `app/admin/users/[id]/page.tsx` (9 alerts)
+
+**Replace patterns:**
+
+1. Update user success/error
+2. Toggle admin confirmation
+3. Toggle admin success/error
+4. Delete user confirmation
+5. Delete user success/error
+
+6-9. Various errors
+
+---
+
+### Phase 3: Replace Alerts in User Pages (15 minutes)
+
+#### File 5: `app/events/[id]/page.tsx` (4 alerts)
+
+**Replace patterns:**
+
+1. Join queue error
+2. Leave queue error
+3. Success notifications (already using custom notifications)
+
+---
+
+#### File 6: `app/settings/membership/page.tsx` (9 alerts)
+
+**Replace patterns:**
+
+1. Cancel subscription confirmation
+2. Cancel subscription success/error
+3. Reactivate subscription success/error
+4. Billing portal errors
+
+---
+
+#### File 7: `app/membership/checkout/page.tsx` (2 alerts)
+
+**Replace patterns:**
+
+1. Checkout session error
+2. Unexpected error
+
+---
+
+#### File 8: `app/settings/notifications/page.tsx` (1 alert)
+
+**Replace patterns:**
+
+1. Settings saved success
+
+---
+
+### Phase 4: Enhanced Patterns (10 minutes)
+
+#### Loading Toasts with Promise
+
+For async operations:
+
+```typescript
+// BEFORE
+setLoading(true);
+try {
+  await someOperation();
+  alert("Success!");
+} catch (error) {
+  alert("Failed!");
+} finally {
+  setLoading(false);
+}
+
+// AFTER
+toast.promise(someOperation(), {
+  loading: "Processing...",
+  success: "Success!",
+  error: "Failed!",
+});
+```
+
+#### Confirmation Dialogs
+
+For destructive actions:
+
+```typescript
+// BEFORE
+if (!confirm("Are you sure?")) return;
+await deleteItem();
+
+// AFTER
+toast("Are you sure?", {
+  description: "This action cannot be undone.",
+  action: {
+    label: "Delete",
+    onClick: async () => {
+      await deleteItem();
+      toast.success("Deleted successfully!");
+    },
+  },
+  cancel: { label: "Cancel" },
+});
+```
+
+---
+
+## Migration Strategy
+
+### Step 1: Setup (Do First)
+
+1. Add Toaster to layout
+2. Create toast helper utilities
+3. Test basic toast works
+
+### Step 2: Admin Pages (High Priority)
+
+Replace alerts in admin pages first:
+
+- Most alerts are here
+- Admins need good feedback
+- Critical operations
+
+### Step 3: User Pages (Medium Priority)
+
+Replace alerts in user-facing pages:
+
+- Better UX for end users
+- Queue operations
+- Membership management
+
+### Step 4: Cleanup (Final)
+
+- Remove any remaining alerts
+- Test all flows
+- Verify no console errors
+
+---
+
+## Expected Results
+
+### Before:
+
+- 65 native alert() calls
+- Blocking dialogs
+- Poor mobile UX
+- No styling
+- No error context
+
+### After:
+
+- 0 native alerts
+- Non-blocking toasts
+- Beautiful UI
+- Color-coded (success=green, error=red)
+- Dismissible
+- Stackable
+- Mobile-optimized
+
+---
+
+## Configuration Options
+
+### Toaster Props
+
+```typescript
+<Toaster 
+  position="top-right"    // or "bottom-right", "top-center"
+  richColors              // Use semantic colors
+  closeButton             // Show X button
+  duration={4000}         // Auto-dismiss after 4s
+  expand={true}           // Expand on hover
+  visibleToasts={5}       // Max visible at once
+/>
+```
+
+### Toast Variants
+
+```typescript
+toast.success("Success!");
+toast.error("Error!");
+toast.warning("Warning!");
+toast.info("Info!");
+toast.loading("Loading...");
+toast.promise(promise, { ... });
+```
+
+---
+
+## Benefits
+
+### User Experience
+
+✅ Non-blocking - users can continue working
+
+✅ Beautiful design - matches your app theme
+
+✅ Color-coded - instant visual feedback
+
+✅ Dismissible - users can close early
+
+✅ Stackable - multiple notifications visible
+
+✅ Mobile-friendly - proper touch targets
+
+### Developer Experience
+
+✅ Simple API - `toast.success("Done!")`
+
+✅ Promise support - automatic loading states
+
+✅ TypeScript - full type safety
+
+✅ Customizable - per-toast options
+
+✅ Already installed - no new dependencies
+
+### Performance
+
+✅ Lightweight - ~3KB gzipped
+
+✅ No layout shift - fixed positioning
+
+✅ Optimized animations - smooth 60fps
+
+✅ Lazy loaded - doesn't block initial render
+
+---
+
+## Testing Checklist
+
+After implementation:
+
+- [ ] Success toasts show green
+- [ ] Error toasts show red
+- [ ] Toasts auto-dismiss after 4s
+- [ ] Can manually dismiss toasts
+- [ ] Multiple toasts stack properly
+- [ ] Works on mobile
+- [ ] Accessible (keyboard navigation)
+- [ ] No console errors
+- [ ] All 65 alerts replaced
+
+---
+
+## Timeline
+
+**Phase 1 (Setup):** 5 minutes
+
+**Phase 2 (Admin pages):** 30 minutes
+
+**Phase 3 (User pages):** 15 minutes
+
+**Phase 4 (Testing):** 10 minutes
+
+**Total:** ~1 hour to replace all 65 alerts
+
+---
+
+## Summary
+
+**Current:** 65 native alert() calls blocking UI
+
+**Solution:** Sonner toast notifications (already installed!)
+
+**Benefit:** Modern, non-blocking, beautiful notifications
+
+**Time:** ~1 hour to implement
+
+**Result:** Professional notification system across entire app
 
 ### To-dos
 
-- [ ] Create Google Calendar page with embedded calendar
-- [ ] Add Shopify store link to Header navigation
-- [ ] Update End Event to delete queue entries and court assignments
-- [ ] Connect admin event detail page to Supabase (remove mock data)
-- [ ] Connect force remove to Supabase leaveQueue action
-- [ ] Connect assign players to Supabase court_assignments table
+- [ ] Add Sonner Toaster to root layout and create toast helper utilities
+- [ ] Replace 16 alerts in app/admin/page.tsx with Sonner toasts
+- [ ] Replace 17 alerts in app/admin/events/[id]/page.tsx with Sonner toasts
+- [ ] Replace 7 alerts in app/admin/users/page.tsx with Sonner toasts
+- [ ] Replace 9 alerts in app/admin/users/[id]/page.tsx with Sonner toasts
+- [ ] Replace 9 alerts in app/settings/membership/page.tsx with Sonner toasts
+- [ ] Replace 4 alerts in app/events/[id]/page.tsx with Sonner toasts
+- [ ] Replace 2 alerts in app/membership/checkout/page.tsx with Sonner toasts
+- [ ] Replace 1 alert in app/settings/notifications/page.tsx with Sonner toast
+- [ ] Test all toast notifications across the app

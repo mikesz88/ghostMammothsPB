@@ -13,6 +13,7 @@ import {
   ExternalLink,
   Loader2,
 } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -24,9 +25,9 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { CreateEventDialog } from "@/components/create-event-dialog";
 import { EditEventDialog } from "@/components/edit-event-dialog";
+import { Header } from "@/components/ui/header";
 import { createClient } from "@/lib/supabase/client";
 import type { Event } from "@/lib/types";
-import Image from "next/image";
 
 export default function AdminPage() {
   const [events, setEvents] = useState<Event[]>([]);
@@ -59,6 +60,7 @@ export default function AdminPage() {
             : new Date(event.date),
         courtCount:
           parseInt(event.court_count) || parseInt(event.num_courts) || 0,
+        teamSize: event.team_size || 2,
         rotationType: event.rotation_type,
         createdAt: new Date(event.created_at),
         updatedAt: event.updated_at ? new Date(event.updated_at) : new Date(),
@@ -97,6 +99,7 @@ export default function AdminPage() {
           time: timeOnly, // TIME type - just the time part
           num_courts: eventData.courtCount.toString(), // TEXT type
           court_count: eventData.courtCount, // SMALLINT type
+          team_size: eventData.teamSize,
           rotation_type: eventData.rotationType,
           status: eventData.status,
         })
@@ -105,21 +108,21 @@ export default function AdminPage() {
 
       if (error) {
         console.error("Error creating event:", error);
-        alert(`Failed to create event: ${error.message}`);
+        toast.error("Failed to create event", {
+          description: error.message,
+        });
         return;
       }
 
       console.log("Event created successfully:", data);
       await fetchEvents(); // Refresh the list
       setShowCreateDialog(false);
-      alert("Event created successfully!");
+      toast.success("Event created successfully!");
     } catch (err) {
       console.error("Unexpected error creating event:", err);
-      alert(
-        `Unexpected error: ${
-          err instanceof Error ? err.message : "Unknown error"
-        }`
-      );
+      toast.error("Unexpected error", {
+        description: err instanceof Error ? err.message : "Unknown error",
+      });
     }
   };
 
@@ -147,6 +150,7 @@ export default function AdminPage() {
           time: timeOnly, // TIME type - just the time part
           num_courts: eventData.courtCount.toString(), // TEXT type
           court_count: eventData.courtCount, // SMALLINT type
+          team_size: eventData.teamSize,
           rotation_type: eventData.rotationType,
           status: eventData.status,
         })
@@ -154,124 +158,140 @@ export default function AdminPage() {
 
       if (error) {
         console.error("Error updating event:", error);
-        alert(`Failed to update event: ${error.message}`);
+        toast.error("Failed to update event", {
+          description: error.message,
+        });
         return;
       }
 
       console.log("Event updated successfully");
       await fetchEvents(); // Refresh the list
       setEditingEvent(null);
-      alert("Event updated successfully!");
+      toast.success("Event updated successfully!");
     } catch (err) {
       console.error("Unexpected error updating event:", err);
-      alert(
-        `Unexpected error: ${
-          err instanceof Error ? err.message : "Unknown error"
-        }`
-      );
+      toast.error("Unexpected error", {
+        description: err instanceof Error ? err.message : "Unknown error",
+      });
     }
   };
 
   const handleEndEvent = async (eventId: string) => {
-    if (
-      !confirm(
-        "Are you sure you want to end this event? This will clear all queue entries and court assignments."
-      )
-    )
-      return;
+    toast("End this event?", {
+      description: "This will clear all queue entries and court assignments.",
+      action: {
+        label: "End Event",
+        onClick: async () => {
+          try {
+            const supabase = createClient();
 
-    try {
-      const supabase = createClient();
+            console.log("Ending event:", eventId);
 
-      console.log("Ending event:", eventId);
+            // Delete all queue entries for this event
+            const { error: queueError } = await supabase
+              .from("queue_entries")
+              .delete()
+              .eq("event_id", eventId);
 
-      // Delete all queue entries for this event
-      const { error: queueError } = await supabase
-        .from("queue_entries")
-        .delete()
-        .eq("event_id", eventId);
+            if (queueError) {
+              console.error("Error clearing queue:", queueError);
+              toast.error("Failed to clear queue", {
+                description: queueError.message,
+              });
+              return;
+            }
 
-      if (queueError) {
-        console.error("Error clearing queue:", queueError);
-        alert(`Failed to clear queue: ${queueError.message}`);
-        return;
-      }
+            // Delete all court assignments for this event
+            const { error: assignmentsError } = await supabase
+              .from("court_assignments")
+              .delete()
+              .eq("event_id", eventId);
 
-      // Delete all court assignments for this event
-      const { error: assignmentsError } = await supabase
-        .from("court_assignments")
-        .delete()
-        .eq("event_id", eventId);
+            if (assignmentsError) {
+              console.error("Error clearing assignments:", assignmentsError);
+              toast.error("Failed to clear assignments", {
+                description: assignmentsError.message,
+              });
+              return;
+            }
 
-      if (assignmentsError) {
-        console.error("Error clearing assignments:", assignmentsError);
-        alert(`Failed to clear assignments: ${assignmentsError.message}`);
-        return;
-      }
+            // Update event status to ended
+            const { error } = await supabase
+              .from("events")
+              .update({ status: "ended" })
+              .eq("id", eventId);
 
-      // Update event status to ended
-      const { error } = await supabase
-        .from("events")
-        .update({ status: "ended" })
-        .eq("id", eventId);
+            if (error) {
+              console.error("Error ending event:", error);
+              toast.error("Failed to end event", {
+                description: error.message,
+              });
+              return;
+            }
 
-      if (error) {
-        console.error("Error ending event:", error);
-        alert(`Failed to end event: ${error.message}`);
-        return;
-      }
-
-      console.log("Event ended successfully - queue and assignments cleared");
-      await fetchEvents(); // Refresh the list
-      alert(
-        "Event ended successfully! All queue entries and assignments cleared."
-      );
-    } catch (err) {
-      console.error("Unexpected error ending event:", err);
-      alert(
-        `Unexpected error: ${
-          err instanceof Error ? err.message : "Unknown error"
-        }`
-      );
-    }
+            console.log(
+              "Event ended successfully - queue and assignments cleared"
+            );
+            await fetchEvents(); // Refresh the list
+            toast.success("Event ended successfully!", {
+              description: "All queue entries and assignments cleared.",
+            });
+          } catch (err) {
+            console.error("Unexpected error ending event:", err);
+            toast.error("Unexpected error", {
+              description: err instanceof Error ? err.message : "Unknown error",
+            });
+          }
+        },
+      },
+      cancel: {
+        label: "Cancel",
+        onClick: () => {},
+      },
+    });
   };
 
   const handleDeleteEvent = async (eventId: string) => {
-    if (
-      !confirm(
-        "Are you sure you want to delete this event? This will remove all queue entries and court assignments."
-      )
-    ) {
-      return;
-    }
+    toast("Delete this event?", {
+      description:
+        "This will remove all queue entries and court assignments. This action cannot be undone.",
+      action: {
+        label: "Delete",
+        onClick: async () => {
+          try {
+            const supabase = createClient();
 
-    try {
-      const supabase = createClient();
+            console.log("Deleting event:", eventId);
 
-      console.log("Deleting event:", eventId);
+            const { error } = await supabase
+              .from("events")
+              .delete()
+              .eq("id", eventId);
 
-      const { error } = await supabase
-        .from("events")
-        .delete()
-        .eq("id", eventId);
+            if (error) {
+              console.error("Error deleting event:", error);
+              toast.error("Failed to delete event", {
+                description: error.message,
+              });
+              return;
+            }
 
-      if (error) {
-        console.error("Error deleting event:", error);
-        alert(`Failed to delete event: ${error.message}`);
-        return;
-      }
-
-      console.log("Event deleted successfully");
-      await fetchEvents(); // Refresh the list
-      alert("Event deleted successfully!");
-    } catch (err) {
-      console.error("Unexpected error deleting event:", err);
-      alert(
-        `Unexpected error: ${
-          err instanceof Error ? err.message : "Unknown error"
-        }`
-      );
-    }
+            console.log("Event deleted successfully");
+            await fetchEvents(); // Refresh the list
+            toast.success("Event deleted successfully!");
+          } catch (err) {
+            console.error("Unexpected error deleting event:", err);
+            toast.error("Unexpected error", {
+              description: err instanceof Error ? err.message : "Unknown error",
+            });
+          }
+        },
+      },
+      cancel: {
+        label: "Cancel",
+        onClick: () => {},
+      },
+    });
   };
 
   const activeEvents = events.filter((e) => e.status === "active");
@@ -280,21 +300,7 @@ export default function AdminPage() {
   if (loading) {
     return (
       <div className="min-h-screen bg-background">
-        <header className="border-b border-border">
-          <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-            <Link href="/" className="flex items-center gap-2">
-              <Image
-                src="/icon-32x32.png"
-                alt="Ghost Mammoths PB"
-                width={38}
-                height={38}
-              />
-              <span className="text-xl font-bold text-foreground">
-                Ghost Mammoths PB
-              </span>
-            </Link>
-          </div>
-        </header>
+        <Header variant="admin" />
         <div className="container mx-auto px-4 py-20">
           <div className="flex items-center justify-center">
             <Loader2 className="w-8 h-8 animate-spin mr-2" />
@@ -307,42 +313,7 @@ export default function AdminPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="border-b border-border">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2">
-            <Image
-              src="/icon-32x32.png"
-              alt="Ghost Mammoths PB"
-              width={38}
-              height={38}
-            />
-            {/* <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
-              <Trophy className="w-6 h-6 text-primary-foreground" />
-            </div> */}
-            <span className="text-xl font-bold text-foreground">
-              Ghost Mammoths PB
-            </span>
-          </Link>
-          <nav className="flex items-center gap-4">
-            <Link
-              href="/events"
-              className="text-muted-foreground hover:text-foreground transition-colors"
-            >
-              Events
-            </Link>
-            <Link href="/admin" className="text-foreground font-medium">
-              Dashboard
-            </Link>
-            <Link
-              href="/admin/users"
-              className="text-muted-foreground hover:text-foreground transition-colors"
-            >
-              Users
-            </Link>
-          </nav>
-        </div>
-      </header>
+      <Header variant="admin" />
 
       {/* Page Content */}
       <div className="container mx-auto px-4 py-12">

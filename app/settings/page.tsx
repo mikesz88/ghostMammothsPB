@@ -207,10 +207,12 @@ export default function SettingsPage() {
                   {membership.isPaid ? (
                     <Badge variant="default">
                       <Crown className="w-3 h-3 mr-1" />
-                      Monthly Member
+                      {membership.tierDisplayName}
                     </Badge>
                   ) : (
-                    <Badge variant="secondary">Free Member</Badge>
+                    <Badge variant="secondary">
+                      {membership.tierDisplayName}
+                    </Badge>
                   )}
                 </div>
               </CardHeader>
@@ -221,9 +223,14 @@ export default function SettingsPage() {
                       Current Plan
                     </p>
                     <p className="font-medium text-foreground">
-                      {membership.tierName === "free"
-                        ? "Free Membership"
-                        : "Monthly Membership - $35/month"}
+                      {membership.tierDisplayName}
+                      {membership.isPaid &&
+                        ` - ${new Intl.NumberFormat("en-US", {
+                          style: "currency",
+                          currency: "USD",
+                        }).format(membership.tierPrice)}/${
+                          membership.tierBillingPeriod
+                        }`}
                     </p>
                     {membership.isPaid && membership.currentPeriodEnd && (
                       <p className="text-sm text-muted-foreground mt-1">
@@ -324,7 +331,7 @@ export default function SettingsPage() {
                 >
                   <Link href="/membership">
                     <Crown className="w-4 h-4 mr-2" />
-                    Upgrade to Monthly
+                    Upgrade Membership
                   </Link>
                 </Button>
               )}
