@@ -2,6 +2,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
+import { sendQueueNotification } from "./notifications";
 
 export async function getQueue(eventId: string) {
   const supabase = await createClient();
@@ -73,6 +74,11 @@ export async function joinQueue(
     return { error: error.message };
   }
 
+  // Send email notification (async, don't await to avoid blocking)
+  sendQueueNotification(userId, eventId, position, "join").catch((err) =>
+    console.error("Failed to send join email:", err)
+  );
+
   revalidatePath(`/events/${eventId}`);
   return { data, error: null };
 }
@@ -127,13 +133,48 @@ export async function reorderQueue(eventId: string) {
     .order("joined_at");
 
   if (queue) {
+    // Track notifications to avoid spamming
+    const upNextNotifications: Promise<any>[] = [];
+    const positionUpdateNotifications: Promise<any>[] = [];
+
     // Update positions
     for (let i = 0; i < queue.length; i++) {
+      const newPosition = i + 1;
+      const oldPosition = queue[i].position;
+
       await supabase
         .from("queue_entries")
-        .update({ position: i + 1 })
+        .update({ position: newPosition })
         .eq("id", queue[i].id);
+
+      // Send "up next" email if they just entered top 4
+      if (newPosition <= 4 && oldPosition > 4) {
+        upNextNotifications.push(
+          sendQueueNotification(
+            queue[i].user_id,
+            eventId,
+            newPosition,
+            "up-next"
+          )
+        );
+      }
+      // Send position update if they moved up significantly (3+ positions)
+      else if (oldPosition - newPosition >= 3) {
+        positionUpdateNotifications.push(
+          sendQueueNotification(
+            queue[i].user_id,
+            eventId,
+            newPosition,
+            "position-update"
+          )
+        );
+      }
     }
+
+    // Send notifications without blocking
+    Promise.all([...upNextNotifications, ...positionUpdateNotifications]).catch(
+      (err) => console.error("Error sending position update emails:", err)
+    );
   }
 }
 

@@ -22,6 +22,7 @@ import { CourtStatus } from "@/components/court-status";
 import { Header } from "@/components/ui/header";
 import { createClient } from "@/lib/supabase/client";
 import { leaveQueue, adminRemoveFromQueue } from "@/app/actions/queue";
+import { sendQueueNotification } from "@/app/actions/notifications";
 import type { Event, QueueEntry, CourtAssignment } from "@/lib/types";
 import { toast } from "sonner";
 
@@ -364,6 +365,17 @@ export default function AdminEventDetailPage(props: {
         } else {
           console.log(`Updated player ${player.id} to playing`);
         }
+
+        // Send court assignment email notification
+        sendQueueNotification(
+          player.userId,
+          id,
+          player.position,
+          "court-assignment",
+          availableCourt
+        ).catch((err) =>
+          console.error("Failed to send court assignment email:", err)
+        );
       }
 
       toast.success(
