@@ -30,6 +30,7 @@ export function useRealtimeEvents() {
               : new Date(event.date),
           courtCount:
             parseInt(event.court_count) || parseInt(event.num_courts) || 0,
+          teamSize: event.team_size || 2,
           rotationType: event.rotation_type,
           createdAt: new Date(event.created_at),
           updatedAt: event.updated_at ? new Date(event.updated_at) : new Date(),
