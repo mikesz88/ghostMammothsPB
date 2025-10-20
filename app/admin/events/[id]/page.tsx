@@ -19,11 +19,13 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { QueueList } from "@/components/queue-list";
 import { CourtStatus } from "@/components/court-status";
+import { TestControls } from "./test-controls";
 import { Header } from "@/components/ui/header";
 import { createClient } from "@/lib/supabase/client";
 import { leaveQueue, adminRemoveFromQueue } from "@/app/actions/queue";
 import { sendQueueNotification } from "@/app/actions/notifications";
 import type { Event, QueueEntry, CourtAssignment } from "@/lib/types";
+import { QueueManager } from "@/lib/queue-manager";
 import { toast } from "sonner";
 
 export default function AdminEventDetailPage(props: {
@@ -36,6 +38,7 @@ export default function AdminEventDetailPage(props: {
   const [assignments, setAssignments] = useState<CourtAssignment[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isTestEvent, setIsTestEvent] = useState(false);
 
   // Fetch event data
   useEffect(() => {
@@ -62,7 +65,7 @@ export default function AdminEventDetailPage(props: {
           eventDate.setHours(parseInt(timeParts[0]), parseInt(timeParts[1]));
         }
 
-        setEvent({
+        const eventData = {
           id: data.id,
           name: data.name,
           location: data.location,
@@ -74,7 +77,14 @@ export default function AdminEventDetailPage(props: {
           status: data.status,
           createdAt: new Date(data.created_at),
           updatedAt: new Date(data.updated_at || data.created_at),
-        });
+        };
+
+        setEvent(eventData);
+
+        // Check if this is a test event (name contains "DYNAMIC ADMIN TEST EVENT")
+        setIsTestEvent(
+          data.name.toUpperCase().includes("DYNAMIC ADMIN TEST EVENT")
+        );
       }
       setLoading(false);
     };
@@ -289,10 +299,17 @@ export default function AdminEventDetailPage(props: {
       return;
     }
 
-    // Find an available court - reuse ended court numbers
-    const availableCourt = (() => {
+    // Find an available court - check database directly for fresh data
+    const availableCourt = await (async () => {
+      const supabase = createClient();
+      const { data: activeAssignments } = await supabase
+        .from("court_assignments")
+        .select("court_number")
+        .eq("event_id", id)
+        .is("ended_at", null);
+
       const activeCourts = new Set(
-        assignments.filter((a) => !a.endedAt).map((a) => a.courtNumber)
+        activeAssignments?.map((a) => a.court_number) || []
       );
 
       // Find first court number that's not in use
@@ -301,7 +318,6 @@ export default function AdminEventDetailPage(props: {
           return i;
         }
       }
-
       return null; // All courts occupied
     })();
 
@@ -314,6 +330,14 @@ export default function AdminEventDetailPage(props: {
 
     try {
       const supabase = createClient();
+
+      // Delete any ended assignments for this court to avoid unique constraint violation
+      await supabase
+        .from("court_assignments")
+        .delete()
+        .eq("event_id", id)
+        .eq("court_number", availableCourt)
+        .not("ended_at", "is", null);
 
       // Create court assignment with dynamic player slots
       const assignmentData: any = {
@@ -466,7 +490,7 @@ export default function AdminEventDetailPage(props: {
       action: {
         label: "End Game",
         onClick: async () => {
-          await performEndGame(assignmentId);
+          await performEndGame(assignmentId, winningTeam);
         },
       },
       cancel: {
@@ -476,30 +500,43 @@ export default function AdminEventDetailPage(props: {
     });
   };
 
-  const performEndGame = async (assignmentId: string) => {
+  const performEndGame = async (
+    assignmentId: string,
+    winningTeam: "team1" | "team2"
+  ) => {
     try {
-      const supabase = createClient();
+      if (!event) return;
 
-      // Delete the assignment (simpler approach - no history kept)
+      const supabase = createClient();
+      const assignment = assignments.find((a) => a.id === assignmentId);
+      if (!assignment) {
+        toast.error("Assignment not found");
+        return;
+      }
+
+      // Use QueueManager to determine who stays and who rotates
+      const { playersToStay, playersToQueue } =
+        QueueManager.handleGameCompletion(
+          assignment,
+          event.rotationType,
+          winningTeam,
+          queue
+        );
+
+      // 1. Mark the game as ended
       const { error: endError } = await supabase
         .from("court_assignments")
-        .delete()
+        .update({ ended_at: new Date().toISOString() })
         .eq("id", assignmentId);
 
       if (endError) {
         console.error("Error ending game:", endError);
-        toast.error("Failed to end game", {
-          description: endError.message,
-        });
+        toast.error("Failed to end game");
         return;
       }
 
-      // Get the assignment to find player IDs
-      const assignment = assignments.find((a) => a.id === assignmentId);
-      if (!assignment) return;
-
-      // Remove players from queue (support up to 8 players)
-      const playerIds = [
+      // 2. Get all players from this game
+      const allPlayers = [
         assignment.player1Id,
         assignment.player2Id,
         assignment.player3Id,
@@ -508,17 +545,86 @@ export default function AdminEventDetailPage(props: {
         assignment.player6Id,
         assignment.player7Id,
         assignment.player8Id,
-      ].filter(Boolean);
+      ].filter(Boolean) as string[];
 
-      for (const playerId of playerIds) {
-        await supabase
+      // 3. Get current max position in queue
+      const { data: maxPosData } = await supabase
+        .from("queue_entries")
+        .select("position")
+        .eq("event_id", id)
+        .order("position", { ascending: false })
+        .limit(1);
+
+      const maxPosition = maxPosData?.[0]?.position || 0;
+
+      // 4. Update all players to 'waiting' status first
+      for (const playerId of allPlayers) {
+        const { data: existingEntry } = await supabase
           .from("queue_entries")
-          .delete()
+          .select("id")
           .eq("event_id", id)
-          .eq("user_id", playerId);
+          .eq("user_id", playerId)
+          .single();
+
+        if (existingEntry) {
+          await supabase
+            .from("queue_entries")
+            .update({ status: "waiting" })
+            .eq("id", existingEntry.id);
+        } else {
+          // Player not in queue, add them to the back
+          await supabase.from("queue_entries").insert({
+            event_id: id,
+            user_id: playerId,
+            position: maxPosition + allPlayers.indexOf(playerId) + 1,
+            status: "waiting",
+            group_size: 1,
+          });
+        }
       }
 
-      toast.success("Game ended successfully");
+      // 5. Move winners to front of queue
+      for (let i = 0; i < playersToStay.length; i++) {
+        await supabase
+          .from("queue_entries")
+          .update({ position: i + 1 })
+          .eq("event_id", id)
+          .eq("user_id", playersToStay[i]);
+      }
+
+      // 6. Shift other waiting players down
+      const { data: otherPlayers } = await supabase
+        .from("queue_entries")
+        .select("id, user_id")
+        .eq("event_id", id)
+        .eq("status", "waiting")
+        .not("user_id", "in", `(${allPlayers.join(",")})`);
+
+      if (otherPlayers) {
+        for (let i = 0; i < otherPlayers.length; i++) {
+          await supabase
+            .from("queue_entries")
+            .update({ position: playersToStay.length + i + 1 })
+            .eq("id", otherPlayers[i].id);
+        }
+      }
+
+      // 7. Move losers to back of queue
+      const newMaxPosition = playersToStay.length + (otherPlayers?.length || 0);
+      for (let i = 0; i < playersToQueue.length; i++) {
+        await supabase
+          .from("queue_entries")
+          .update({ position: newMaxPosition + i + 1 })
+          .eq("event_id", id)
+          .eq("user_id", playersToQueue[i]);
+      }
+
+      toast.success(
+        `Game ended! ${playersToStay.length} player(s) moved to front of queue.`,
+        {
+          description: "Use 'Assign Next' to start the next game.",
+        }
+      );
     } catch (err) {
       console.error("Error ending game:", err);
       toast.error("Failed to end game");
@@ -565,6 +671,16 @@ export default function AdminEventDetailPage(props: {
       />
 
       <div className="container mx-auto px-4 py-8">
+        {/* Test Mode Controls */}
+        {isTestEvent && (
+          <div className="mb-8">
+            <TestControls
+              eventId={id}
+              currentRotationType={event.rotationType}
+            />
+          </div>
+        )}
+
         {/* Event Header */}
         <Card className="border-border mb-8">
           <CardContent className="p-6">
