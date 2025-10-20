@@ -299,10 +299,17 @@ export default function AdminEventDetailPage(props: {
       return;
     }
 
-    // Find an available court - reuse ended court numbers
-    const availableCourt = (() => {
+    // Find an available court - check database directly for fresh data
+    const availableCourt = await (async () => {
+      const supabase = createClient();
+      const { data: activeAssignments } = await supabase
+        .from("court_assignments")
+        .select("court_number")
+        .eq("event_id", id)
+        .is("ended_at", null);
+
       const activeCourts = new Set(
-        assignments.filter((a) => !a.endedAt).map((a) => a.courtNumber)
+        activeAssignments?.map((a) => a.court_number) || []
       );
 
       // Find first court number that's not in use
@@ -311,7 +318,6 @@ export default function AdminEventDetailPage(props: {
           return i;
         }
       }
-
       return null; // All courts occupied
     })();
 
@@ -324,6 +330,14 @@ export default function AdminEventDetailPage(props: {
 
     try {
       const supabase = createClient();
+
+      // Delete any ended assignments for this court to avoid unique constraint violation
+      await supabase
+        .from("court_assignments")
+        .delete()
+        .eq("event_id", id)
+        .eq("court_number", availableCourt)
+        .not("ended_at", "is", null);
 
       // Create court assignment with dynamic player slots
       const assignmentData: any = {
@@ -500,7 +514,7 @@ export default function AdminEventDetailPage(props: {
         return;
       }
 
-      // Use QueueManager to determine rotation logic
+      // Use QueueManager to determine who stays and who rotates
       const { playersToStay, playersToQueue } =
         QueueManager.handleGameCompletion(
           assignment,
@@ -509,7 +523,7 @@ export default function AdminEventDetailPage(props: {
           queue
         );
 
-      // 1. End the current game (set ended_at timestamp)
+      // 1. Mark the game as ended
       const { error: endError } = await supabase
         .from("court_assignments")
         .update({ ended_at: new Date().toISOString() })
@@ -521,77 +535,96 @@ export default function AdminEventDetailPage(props: {
         return;
       }
 
-      // 2. Move losing players back to queue
-      for (const playerId of playersToQueue) {
-        // Get the highest position in queue
-        const { data: maxPos } = await supabase
-          .from("queue_entries")
-          .select("position")
-          .eq("event_id", id)
-          .order("position", { ascending: false })
-          .limit(1);
+      // 2. Get all players from this game
+      const allPlayers = [
+        assignment.player1Id,
+        assignment.player2Id,
+        assignment.player3Id,
+        assignment.player4Id,
+        assignment.player5Id,
+        assignment.player6Id,
+        assignment.player7Id,
+        assignment.player8Id,
+      ].filter(Boolean) as string[];
 
-        const nextPosition = (maxPos?.[0]?.position || 0) + 1;
+      // 3. Get current max position in queue
+      const { data: maxPosData } = await supabase
+        .from("queue_entries")
+        .select("position")
+        .eq("event_id", id)
+        .order("position", { ascending: false })
+        .limit(1);
 
-        // Check if player already has a queue entry
-        const { data: existing } = await supabase
+      const maxPosition = maxPosData?.[0]?.position || 0;
+
+      // 4. Update all players to 'waiting' status first
+      for (const playerId of allPlayers) {
+        const { data: existingEntry } = await supabase
           .from("queue_entries")
           .select("id")
           .eq("event_id", id)
           .eq("user_id", playerId)
           .single();
 
-        if (!existing) {
-          // Add player back to queue
+        if (existingEntry) {
+          await supabase
+            .from("queue_entries")
+            .update({ status: "waiting" })
+            .eq("id", existingEntry.id);
+        } else {
+          // Player not in queue, add them to the back
           await supabase.from("queue_entries").insert({
             event_id: id,
             user_id: playerId,
-            position: nextPosition,
+            position: maxPosition + allPlayers.indexOf(playerId) + 1,
             status: "waiting",
             group_size: 1,
           });
         }
       }
 
-      // 3. If winners stay, create new game with winners + next from queue
-      if (playersToStay.length > 0) {
-        const result = QueueManager.createNextAssignment(
-          assignment.courtNumber,
-          playersToStay,
-          queue,
-          id,
-          event.teamSize
-        );
-
-        if (result) {
-          // Create new court assignment
-          const { error: createError } = await supabase
-            .from("court_assignments")
-            .insert(result.assignment);
-
-          if (createError) {
-            console.error("Error creating next assignment:", createError);
-            toast.error("Failed to create next game");
-            return;
-          }
-
-          // Update queue entries to "playing" status
-          for (const entry of result.assignedQueueEntries) {
-            await supabase
-              .from("queue_entries")
-              .update({ status: "playing" })
-              .eq("id", entry.id);
-          }
-
-          toast.success(
-            `Game ended! ${playersToStay.length} player(s) stay on court.`
-          );
-        } else {
-          toast.success("Game ended. Not enough players for next game.");
-        }
-      } else {
-        toast.success("Game ended. All players returned to queue.");
+      // 5. Move winners to front of queue
+      for (let i = 0; i < playersToStay.length; i++) {
+        await supabase
+          .from("queue_entries")
+          .update({ position: i + 1 })
+          .eq("event_id", id)
+          .eq("user_id", playersToStay[i]);
       }
+
+      // 6. Shift other waiting players down
+      const { data: otherPlayers } = await supabase
+        .from("queue_entries")
+        .select("id, user_id")
+        .eq("event_id", id)
+        .eq("status", "waiting")
+        .not("user_id", "in", `(${allPlayers.join(",")})`);
+
+      if (otherPlayers) {
+        for (let i = 0; i < otherPlayers.length; i++) {
+          await supabase
+            .from("queue_entries")
+            .update({ position: playersToStay.length + i + 1 })
+            .eq("id", otherPlayers[i].id);
+        }
+      }
+
+      // 7. Move losers to back of queue
+      const newMaxPosition = playersToStay.length + (otherPlayers?.length || 0);
+      for (let i = 0; i < playersToQueue.length; i++) {
+        await supabase
+          .from("queue_entries")
+          .update({ position: newMaxPosition + i + 1 })
+          .eq("event_id", id)
+          .eq("user_id", playersToQueue[i]);
+      }
+
+      toast.success(
+        `Game ended! ${playersToStay.length} player(s) moved to front of queue.`,
+        {
+          description: "Use 'Assign Next' to start the next game.",
+        }
+      );
     } catch (err) {
       console.error("Error ending game:", err);
       toast.error("Failed to end game");

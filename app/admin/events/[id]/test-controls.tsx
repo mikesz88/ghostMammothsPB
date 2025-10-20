@@ -50,7 +50,7 @@ export function TestControls({
           description: "Dummy users reloaded to queue",
         });
       } else {
-        toast.error("Failed to reset event");
+        toast.error(result.error || "Failed to reset event");
       }
     } catch (err) {
       console.error(err);
@@ -84,7 +84,7 @@ export function TestControls({
       if (result.success) {
         toast.success(`Added ${result.added} users to queue`);
       } else {
-        toast.error("Failed to add users");
+        toast.error(result.error || "Failed to add users");
       }
     } catch (err) {
       console.error(err);

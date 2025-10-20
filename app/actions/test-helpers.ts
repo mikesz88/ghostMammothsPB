@@ -43,18 +43,28 @@ export async function resetTestEvent(eventId: string) {
   // 3. Add first 8 test users to queue
   const usersToAdd = TEST_USER_IDS.slice(0, 8);
 
+  let successCount = 0;
   for (let i = 0; i < usersToAdd.length; i++) {
-    await supabase.from("queue_entries").insert({
+    const { error } = await supabase.from("queue_entries").insert({
       event_id: eventId,
       user_id: usersToAdd[i],
       position: i + 1,
       status: "waiting",
       group_size: 1,
     });
+
+    if (error) {
+      console.error(`Failed to insert user ${usersToAdd[i]}:`, error);
+    } else {
+      successCount++;
+    }
   }
 
   revalidatePath(`/admin/events/${eventId}`);
-  return { success: true };
+  return {
+    success: successCount > 0,
+    error: successCount === 0 ? "Failed to reset event" : null,
+  };
 }
 
 export async function addDummyUsersToQueue(eventId: string, count: number = 4) {
@@ -81,18 +91,30 @@ export async function addDummyUsersToQueue(eventId: string, count: number = 4) {
 
   const usersToAdd = availableUsers.slice(0, count);
 
+  // Check for insert errors
+  let successCount = 0;
   for (let i = 0; i < usersToAdd.length; i++) {
-    await supabase.from("queue_entries").insert({
+    const { error } = await supabase.from("queue_entries").insert({
       event_id: eventId,
       user_id: usersToAdd[i],
       position: startPosition + i,
       status: "waiting",
       group_size: 1,
     });
+
+    if (error) {
+      console.error(`Failed to insert user ${usersToAdd[i]}:`, error);
+    } else {
+      successCount++;
+    }
   }
 
   revalidatePath(`/admin/events/${eventId}`);
-  return { success: true, added: usersToAdd.length };
+  return {
+    success: successCount > 0,
+    added: successCount,
+    error: successCount === 0 ? "Failed to add users to queue" : null,
+  };
 }
 
 export async function clearTestEvent(eventId: string) {
