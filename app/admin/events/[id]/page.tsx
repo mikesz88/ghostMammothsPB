@@ -280,11 +280,19 @@ export default function AdminEventDetailPage(props: {
     if (!event) return;
 
     const playersPerCourt = event.teamSize * 2;
-    const nextPlayers = queue
-      .filter((e) => e.status === "waiting")
-      .slice(0, playersPerCourt);
+    const waitingQueue = queue.filter((e) => e.status === "waiting");
+    const nextPlayers = QueueManager.getNextPlayers(
+      waitingQueue,
+      playersPerCourt
+    );
 
-    if (nextPlayers.length < playersPerCourt) {
+    // Count total players (considering group_size)
+    const totalPlayerCount = nextPlayers.reduce(
+      (sum, entry) => sum + (entry.groupSize || 1),
+      0
+    );
+
+    if (totalPlayerCount < playersPerCourt) {
       toast.error("Not enough players in queue", {
         description: `Need ${playersPerCourt} players for ${
           event.teamSize === 1
@@ -346,15 +354,25 @@ export default function AdminEventDetailPage(props: {
         started_at: new Date().toISOString(),
       };
 
-      // Assign players to slots based on team size
-      if (nextPlayers[0]) assignmentData.player1_id = nextPlayers[0].userId;
-      if (nextPlayers[1]) assignmentData.player2_id = nextPlayers[1].userId;
-      if (nextPlayers[2]) assignmentData.player3_id = nextPlayers[2].userId;
-      if (nextPlayers[3]) assignmentData.player4_id = nextPlayers[3].userId;
-      if (nextPlayers[4]) assignmentData.player5_id = nextPlayers[4].userId;
-      if (nextPlayers[5]) assignmentData.player6_id = nextPlayers[5].userId;
-      if (nextPlayers[6]) assignmentData.player7_id = nextPlayers[6].userId;
-      if (nextPlayers[7]) assignmentData.player8_id = nextPlayers[7].userId;
+      // Expand queue entries to individual player slots (handling group_size)
+      const playerSlots: string[] = [];
+      for (const entry of nextPlayers) {
+        const groupSize = entry.groupSize || 1;
+        // Add the user_id for each slot the group occupies
+        for (let i = 0; i < groupSize; i++) {
+          playerSlots.push(entry.userId);
+        }
+      }
+
+      // Assign players to slots
+      if (playerSlots[0]) assignmentData.player1_id = playerSlots[0];
+      if (playerSlots[1]) assignmentData.player2_id = playerSlots[1];
+      if (playerSlots[2]) assignmentData.player3_id = playerSlots[2];
+      if (playerSlots[3]) assignmentData.player4_id = playerSlots[3];
+      if (playerSlots[4]) assignmentData.player5_id = playerSlots[4];
+      if (playerSlots[5]) assignmentData.player6_id = playerSlots[5];
+      if (playerSlots[6]) assignmentData.player7_id = playerSlots[6];
+      if (playerSlots[7]) assignmentData.player8_id = playerSlots[7];
 
       const { error: assignmentError } = await supabase
         .from("court_assignments")
