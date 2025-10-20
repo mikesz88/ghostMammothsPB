@@ -83,9 +83,14 @@ export function QueueList({
                           </Badge>
                         </div>
                         <div className="flex flex-wrap gap-2 text-sm text-muted-foreground">
-                          {entries.map((entry) => (
-                            <span key={entry.id}>{entry.user?.name}</span>
-                          ))}
+                          {firstEntry.player_names &&
+                          firstEntry.player_names.length > 0
+                            ? firstEntry.player_names.map((player, idx) => (
+                                <span key={idx}>{player.name}</span>
+                              ))
+                            : entries.map((entry) => (
+                                <span key={entry.id}>{entry.user?.name}</span>
+                              ))}
                         </div>
                       </>
                     ) : (

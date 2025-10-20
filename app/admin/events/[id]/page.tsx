@@ -119,6 +119,7 @@ export default function AdminEventDetailPage(props: {
           userId: entry.user_id,
           groupSize: entry.group_size || 1,
           groupId: entry.group_id,
+          player_names: entry.player_names || [],
           position: entry.position,
           status: entry.status,
           joinedAt: new Date(entry.joined_at),
@@ -198,6 +199,7 @@ export default function AdminEventDetailPage(props: {
           player2Id: assignment.player2_id,
           player3Id: assignment.player3_id,
           player4Id: assignment.player4_id,
+          player_names: assignment.player_names || [],
           startedAt: new Date(assignment.started_at),
           endedAt: assignment.ended_at
             ? new Date(assignment.ended_at)
@@ -352,27 +354,61 @@ export default function AdminEventDetailPage(props: {
         event_id: id,
         court_number: availableCourt,
         started_at: new Date().toISOString(),
+        player_names: [], // Will be populated below
       };
 
       // Expand queue entries to individual player slots (handling group_size)
-      const playerSlots: string[] = [];
+      // Track both userId and names for proper display
+      const playerSlots: Array<{
+        userId: string;
+        name: string;
+        skillLevel: string;
+      }> = [];
+
       for (const entry of nextPlayers) {
         const groupSize = entry.groupSize || 1;
-        // Add the user_id for each slot the group occupies
-        for (let i = 0; i < groupSize; i++) {
-          playerSlots.push(entry.userId);
+        const playerNames = entry.player_names || [];
+
+        // If we have player_names stored, use those
+        if (playerNames.length > 0) {
+          for (let i = 0; i < groupSize; i++) {
+            playerSlots.push({
+              userId: entry.userId,
+              name: playerNames[i]?.name || entry.user?.name || "Player",
+              skillLevel:
+                playerNames[i]?.skillLevel ||
+                entry.user?.skillLevel ||
+                "intermediate",
+            });
+          }
+        } else {
+          // Fallback: use the user's name for all slots
+          for (let i = 0; i < groupSize; i++) {
+            playerSlots.push({
+              userId: entry.userId,
+              name: entry.user?.name || "Player",
+              skillLevel: entry.user?.skillLevel || "intermediate",
+            });
+          }
         }
       }
 
-      // Assign players to slots
-      if (playerSlots[0]) assignmentData.player1_id = playerSlots[0];
-      if (playerSlots[1]) assignmentData.player2_id = playerSlots[1];
-      if (playerSlots[2]) assignmentData.player3_id = playerSlots[2];
-      if (playerSlots[3]) assignmentData.player4_id = playerSlots[3];
-      if (playerSlots[4]) assignmentData.player5_id = playerSlots[4];
-      if (playerSlots[5]) assignmentData.player6_id = playerSlots[5];
-      if (playerSlots[6]) assignmentData.player7_id = playerSlots[6];
-      if (playerSlots[7]) assignmentData.player8_id = playerSlots[7];
+      // Store player names for display
+      console.log(
+        "Assigning players to court:",
+        playerSlots.map((p) => p.name)
+      );
+      assignmentData.player_names = playerSlots.map((p) => p.name);
+
+      // Assign players to slots (using userId for database)
+      if (playerSlots[0]) assignmentData.player1_id = playerSlots[0].userId;
+      if (playerSlots[1]) assignmentData.player2_id = playerSlots[1].userId;
+      if (playerSlots[2]) assignmentData.player3_id = playerSlots[2].userId;
+      if (playerSlots[3]) assignmentData.player4_id = playerSlots[3].userId;
+      if (playerSlots[4]) assignmentData.player5_id = playerSlots[4].userId;
+      if (playerSlots[5]) assignmentData.player6_id = playerSlots[5].userId;
+      if (playerSlots[6]) assignmentData.player7_id = playerSlots[6].userId;
+      if (playerSlots[7]) assignmentData.player8_id = playerSlots[7].userId;
 
       const { error: assignmentError } = await supabase
         .from("court_assignments")
