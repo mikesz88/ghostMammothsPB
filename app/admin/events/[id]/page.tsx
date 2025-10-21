@@ -582,7 +582,8 @@ export default function AdminEventDetailPage(props: {
           assignment,
           event.rotationType,
           winningTeam,
-          queue
+          queue,
+          event.teamSize
         );
 
       // 1. Mark the game as ended
@@ -651,35 +652,56 @@ export default function AdminEventDetailPage(props: {
         return;
       }
 
-      // 5. Separate entries into: winners, losers, and others
-      const allPlayers = [
-        assignment.player1Id,
-        assignment.player2Id,
-        assignment.player3Id,
-        assignment.player4Id,
-        assignment.player5Id,
-        assignment.player6Id,
-        assignment.player7Id,
-        assignment.player8Id,
-      ].filter(Boolean) as string[];
+      // 5. Determine which queue entries belong to which team
+      // Since queue entries fill slots sequentially, we can determine team membership
+      // by looking at which slots they filled
+      const playersPerTeam = event.teamSize;
 
-      // Map user_ids to queue entry IDs (handling duplicates from groups)
+      // Create a map of which queue entries contributed to which team
+      const queueEntryToTeam = new Map<string, "team1" | "team2">();
+
+      // Track which player slots each queue entry filled
+      let slotIndex = 0;
+      for (const entryId of queueEntryIds) {
+        const entry = allQueueEntries.find((e) => e.id === entryId);
+        if (entry) {
+          const groupSize = entry.group_size || 1;
+          // Determine which team this entry's slots belong to
+          // Slots 0 to (playersPerTeam-1) = team1
+          // Slots playersPerTeam to (2*playersPerTeam-1) = team2
+          const startSlot = slotIndex;
+          const endSlot = slotIndex + groupSize - 1;
+
+          // If all slots are in team1 range or team2 range, assign accordingly
+          if (endSlot < playersPerTeam) {
+            queueEntryToTeam.set(entryId, "team1");
+          } else if (startSlot >= playersPerTeam) {
+            queueEntryToTeam.set(entryId, "team2");
+          } else {
+            // Entry spans both teams (shouldn't happen with proper assignment)
+            console.warn(`Queue entry ${entryId} spans both teams!`);
+            // Assign to team with more slots
+            if (playersPerTeam - startSlot >= endSlot - playersPerTeam + 1) {
+              queueEntryToTeam.set(entryId, "team1");
+            } else {
+              queueEntryToTeam.set(entryId, "team2");
+            }
+          }
+
+          slotIndex += groupSize;
+        }
+      }
+
+      // Separate entries into: winners, losers, and others
       const winnerEntryIds = new Set<string>();
       const loserEntryIds = new Set<string>();
 
-      // For each player who should stay/queue, find their queue entry
-      for (const userId of playersToStay) {
-        const entry = allQueueEntries.find(
-          (e) => e.user_id === userId && queueEntryIds.includes(e.id)
-        );
-        if (entry) winnerEntryIds.add(entry.id);
-      }
-
-      for (const userId of playersToQueue) {
-        const entry = allQueueEntries.find(
-          (e) => e.user_id === userId && queueEntryIds.includes(e.id)
-        );
-        if (entry) loserEntryIds.add(entry.id);
+      for (const [entryId, team] of queueEntryToTeam.entries()) {
+        if (team === winningTeam) {
+          winnerEntryIds.add(entryId);
+        } else {
+          loserEntryIds.add(entryId);
+        }
       }
 
       // Get entries that weren't in this game
@@ -693,6 +715,18 @@ export default function AdminEventDetailPage(props: {
         "Others:",
         otherEntries.map((e) => e.id)
       );
+
+      // Safety check: ensure all entries are categorized
+      const categorizedIds = new Set([
+        ...Array.from(winnerEntryIds),
+        ...Array.from(loserEntryIds),
+        ...otherEntries.map((e) => e.id),
+      ]);
+      const allEntryIds = allQueueEntries.map((e) => e.id);
+      const uncategorized = allEntryIds.filter((id) => !categorizedIds.has(id));
+      if (uncategorized.length > 0) {
+        console.warn("Uncategorized queue entries:", uncategorized);
+      }
 
       // 6. Reposition entries based on rotation type
       let position = 1;
@@ -723,6 +757,11 @@ export default function AdminEventDetailPage(props: {
           .eq("id", entryId);
         position++;
       }
+
+      console.log(`Repositioned ${position - 1} queue entries`);
+
+      // Final cleanup: reorder queue to ensure no gaps or duplicates
+      await reorderQueue(id);
 
       const stayCount = Array.from(winnerEntryIds).length;
       toast.success(
