@@ -58,6 +58,8 @@ export function TestControls({
         toast.success("Test event reset!", {
           description: "Dummy users reloaded to queue",
         });
+        // Reload page to show updated queue
+        setTimeout(() => window.location.reload(), 500);
       } else {
         toast.error(result.error || "Failed to reset event");
       }
@@ -77,6 +79,8 @@ export function TestControls({
         toast.success(`Rotation type changed to ${newType}`, {
           description: "Takes effect on next game",
         });
+        // Reload page to reflect changes
+        setTimeout(() => window.location.reload(), 500);
       } else {
         toast.error("Failed to update rotation type");
       }
@@ -103,6 +107,8 @@ export function TestControls({
         toast.success(`Team size changed to ${sizeText}`, {
           description: "Event updated for testing",
         });
+        // Reload page to reflect changes in court display
+        setTimeout(() => window.location.reload(), 500);
       } else {
         toast.error("Failed to update team size");
       }
@@ -121,6 +127,8 @@ export function TestControls({
         toast.success(`Court count changed to ${count}`, {
           description: "Event updated for testing",
         });
+        // Reload page to reflect changes in court display
+        setTimeout(() => window.location.reload(), 500);
       } else {
         toast.error("Failed to update court count");
       }

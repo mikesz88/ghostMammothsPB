@@ -460,8 +460,7 @@ export default function AdminEventDetailPage(props: {
         `Assigned ${playersPerCourt} players to Court ${availableCourt}`
       );
 
-      // Force page refresh to show updated data
-      window.location.reload();
+      // Real-time subscriptions will automatically update the UI
     } catch (err) {
       console.error("Error assigning players:", err);
       toast.error("Failed to assign players");
