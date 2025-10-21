@@ -76,16 +76,21 @@ export function QueueList({
                       <>
                         <div className="flex items-center gap-2 mb-1">
                           <p className="font-medium text-foreground">
-                            Group of {entries.length}
+                            Group of {firstEntry.groupSize || entries.length}
                           </p>
                           <Badge variant="outline" className="text-xs">
                             {firstEntry.user?.skillLevel}
                           </Badge>
                         </div>
                         <div className="flex flex-wrap gap-2 text-sm text-muted-foreground">
-                          {entries.map((entry) => (
-                            <span key={entry.id}>{entry.user?.name}</span>
-                          ))}
+                          {firstEntry.player_names &&
+                          firstEntry.player_names.length > 0
+                            ? firstEntry.player_names.map((player, idx) => (
+                                <span key={idx}>{player.name}</span>
+                              ))
+                            : entries.map((entry) => (
+                                <span key={entry.id}>{entry.user?.name}</span>
+                              ))}
                         </div>
                       </>
                     ) : (
@@ -93,11 +98,10 @@ export function QueueList({
                         <p className="font-medium text-foreground">
                           {firstEntry.user?.name}
                         </p>
-                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <div className="text-sm text-muted-foreground">
                           <Badge variant="outline" className="text-xs">
                             {firstEntry.user?.skillLevel}
                           </Badge>
-                          <span>Solo</span>
                         </div>
                       </>
                     )}

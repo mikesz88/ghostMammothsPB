@@ -36,6 +36,7 @@ export interface QueueEntry {
   userId: string;
   groupId?: string;
   groupSize: GroupSize;
+  player_names?: Array<{ name: string; skillLevel: string }>;
   position: number;
   status: QueueStatus;
   joinedAt: Date;
@@ -54,6 +55,7 @@ export interface CourtAssignment {
   player6Id?: string;
   player7Id?: string;
   player8Id?: string;
+  player_names?: string[];
   startedAt: Date;
   endedAt?: Date;
   player1?: User;

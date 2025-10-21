@@ -130,6 +130,7 @@ export default function EventDetailPage(props: {
           player6Id: assignment.player6_id,
           player7Id: assignment.player7_id,
           player8Id: assignment.player8_id,
+          player_names: assignment.player_names || [],
           startedAt: new Date(assignment.started_at),
           endedAt: assignment.ended_at
             ? new Date(assignment.ended_at)
@@ -355,10 +356,14 @@ export default function EventDetailPage(props: {
       const groupId = groupSize > 1 ? crypto.randomUUID() : undefined;
 
       // Add the current user to the queue with group information
-      // Note: Currently only the authenticated user is added to the database
-      // The other player names are stored in the dialog but not persisted
-      // This is intentional - only registered users can join the queue
-      const { error } = await joinQueue(id, user.id, groupSize, groupId);
+      // Now storing all player names in the database for display on courts
+      const { error } = await joinQueue(
+        id,
+        user.id,
+        groupSize,
+        groupId,
+        players
+      );
 
       if (error) {
         console.error("Error joining queue:", error);

@@ -31,7 +31,8 @@ export async function joinQueue(
   eventId: string,
   userId: string,
   groupSize: number,
-  groupId?: string
+  groupId?: string,
+  playerNames?: Array<{ name: string; skillLevel: string }>
 ) {
   const supabase = await createClient();
 
@@ -63,6 +64,7 @@ export async function joinQueue(
       user_id: userId,
       group_id: groupId,
       group_size: groupSize,
+      player_names: playerNames || [],
       position: position,
       status: "waiting",
     })

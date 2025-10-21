@@ -68,31 +68,61 @@ export class QueueManager {
 
   /**
    * Gets next N players from queue, respecting groups
+   * Counts actual player count using group_size field
    */
-  private static getNextPlayers(
-    queue: QueueEntry[],
-    count: number
-  ): QueueEntry[] {
+  static getNextPlayers(queue: QueueEntry[], count: number): QueueEntry[] {
     const selected: QueueEntry[] = [];
     const processedGroups = new Set<string>();
+    const skippedGroups: QueueEntry[][] = [];
 
+    // Helper to count total players (considering group_size)
+    const countPlayers = (entries: QueueEntry[]): number => {
+      return entries.reduce((sum, entry) => sum + (entry.groupSize || 1), 0);
+    };
+
+    let currentPlayerCount = 0;
+
+    // First pass: try to fill with groups and solo players in order
     for (const entry of queue) {
-      if (selected.length >= count) break;
+      if (currentPlayerCount >= count) break;
 
-      // If part of a group, get all group members
       if (entry.groupId && !processedGroups.has(entry.groupId)) {
         const groupMembers = queue.filter((e) => e.groupId === entry.groupId);
-        if (selected.length + groupMembers.length <= count) {
+        const groupPlayerCount = countPlayers(groupMembers);
+
+        if (currentPlayerCount + groupPlayerCount <= count) {
+          // Group fits, add it
           selected.push(...groupMembers);
+          currentPlayerCount += groupPlayerCount;
+          processedGroups.add(entry.groupId);
+        } else {
+          // Group doesn't fit, skip for now
+          skippedGroups.push(groupMembers);
           processedGroups.add(entry.groupId);
         }
       } else if (!entry.groupId) {
-        // Solo player
-        selected.push(entry);
+        // Solo player, add if space
+        const playerCount = entry.groupSize || 1;
+        if (currentPlayerCount + playerCount <= count) {
+          selected.push(entry);
+          currentPlayerCount += playerCount;
+        }
       }
     }
 
-    return selected.slice(0, count);
+    // Second pass: if we didn't fill completely, try smaller skipped groups
+    if (currentPlayerCount < count) {
+      for (const group of skippedGroups) {
+        const groupPlayerCount = countPlayers(group);
+        if (currentPlayerCount + groupPlayerCount <= count) {
+          selected.push(...group);
+          currentPlayerCount += groupPlayerCount;
+        }
+        if (currentPlayerCount >= count) break;
+      }
+    }
+
+    return selected;
   }
 
   /**

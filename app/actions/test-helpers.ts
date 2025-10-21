@@ -40,17 +40,45 @@ export async function resetTestEvent(eventId: string) {
     .eq("event_id", eventId)
     .is("ended_at", null);
 
-  // 3. Add first 8 test users to queue
+  // 3. Add first 8 test users to queue with a mix of group sizes for testing
   const usersToAdd = TEST_USER_IDS.slice(0, 8);
+  const groupSizes = [1, 2, 1, 2, 3, 1, 1, 4]; // Mix of solos and groups
+  const dummyNames = [
+    "Alice",
+    "Bob",
+    "Charlie",
+    "Diana",
+    "Eve",
+    "Frank",
+    "Grace",
+    "Henry",
+  ];
+  const skillLevels = ["beginner", "intermediate", "advanced", "pro"];
 
   let successCount = 0;
   for (let i = 0; i < usersToAdd.length; i++) {
+    const groupSize = groupSizes[i] || 1;
+
+    // Generate player_names array
+    const playerNames = [];
+    for (let j = 0; j < groupSize; j++) {
+      const nameIndex = (i * 4 + j) % dummyNames.length;
+      playerNames.push({
+        name: `Test ${dummyNames[nameIndex]}`,
+        skillLevel: skillLevels[j % skillLevels.length],
+      });
+    }
+
+    const groupId = groupSize > 1 ? crypto.randomUUID() : null;
+
     const { error } = await supabase.from("queue_entries").insert({
       event_id: eventId,
       user_id: usersToAdd[i],
       position: i + 1,
       status: "waiting",
-      group_size: 1,
+      group_size: groupSize,
+      group_id: groupId,
+      player_names: playerNames,
     });
 
     if (error) {
@@ -67,7 +95,11 @@ export async function resetTestEvent(eventId: string) {
   };
 }
 
-export async function addDummyUsersToQueue(eventId: string, count: number = 4) {
+export async function addDummyUsersToQueue(
+  eventId: string,
+  count: number = 1,
+  groupSize: number = 1
+) {
   const supabase = await createClient();
 
   // Get current max position
@@ -89,17 +121,50 @@ export async function addDummyUsersToQueue(eventId: string, count: number = 4) {
   const usedUserIds = new Set(currentQueue?.map((q) => q.user_id) || []);
   const availableUsers = TEST_USER_IDS.filter((id) => !usedUserIds.has(id));
 
+  // For groups, only take 'count' users (each becomes a group leader)
   const usersToAdd = availableUsers.slice(0, count);
+
+  // Dummy names for group members
+  const dummyNames = [
+    "Alice",
+    "Bob",
+    "Charlie",
+    "Diana",
+    "Eve",
+    "Frank",
+    "Grace",
+    "Henry",
+    "Ivy",
+    "Jack",
+    "Kate",
+    "Leo",
+  ];
+
+  const skillLevels = ["beginner", "intermediate", "advanced", "pro"];
 
   // Check for insert errors
   let successCount = 0;
   for (let i = 0; i < usersToAdd.length; i++) {
+    // Generate player_names array for the group
+    const playerNames = [];
+    for (let j = 0; j < groupSize; j++) {
+      const nameIndex = (i * groupSize + j) % dummyNames.length;
+      playerNames.push({
+        name: `Test ${dummyNames[nameIndex]}`,
+        skillLevel: skillLevels[j % skillLevels.length],
+      });
+    }
+
+    const groupId = groupSize > 1 ? crypto.randomUUID() : null;
+
     const { error } = await supabase.from("queue_entries").insert({
       event_id: eventId,
       user_id: usersToAdd[i],
       position: startPosition + i,
       status: "waiting",
-      group_size: 1,
+      group_size: groupSize,
+      group_id: groupId,
+      player_names: playerNames,
     });
 
     if (error) {
@@ -143,6 +208,33 @@ export async function updateEventRotationType(
   const { error } = await supabase
     .from("events")
     .update({ rotation_type: rotationType })
+    .eq("id", eventId);
+
+  revalidatePath(`/admin/events/${eventId}`);
+  return { success: !error, error };
+}
+
+export async function updateEventTeamSize(eventId: string, teamSize: number) {
+  const supabase = await createClient();
+
+  const { error } = await supabase
+    .from("events")
+    .update({ team_size: teamSize })
+    .eq("id", eventId);
+
+  revalidatePath(`/admin/events/${eventId}`);
+  return { success: !error, error };
+}
+
+export async function updateEventCourtCount(
+  eventId: string,
+  courtCount: number
+) {
+  const supabase = await createClient();
+
+  const { error } = await supabase
+    .from("events")
+    .update({ court_count: courtCount })
     .eq("id", eventId);
 
   revalidatePath(`/admin/events/${eventId}`);
