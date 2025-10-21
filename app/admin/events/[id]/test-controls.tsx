@@ -93,6 +93,12 @@ export function TestControls({
   const handleTeamSizeChange = async (newSize: string) => {
     const size = Number(newSize);
     setTeamSize(size);
+
+    // Reset group size if it exceeds new team size
+    if (groupSize > size) {
+      setGroupSize(size);
+    }
+
     try {
       const result = await updateEventTeamSize(eventId, size);
       if (result.success) {
@@ -141,6 +147,27 @@ export function TestControls({
   const handleAddDummyToQueue = async (size?: number) => {
     setLoading(true);
     const addGroupSize = size || groupSize;
+
+    // Validate group size doesn't exceed team size
+    if (addGroupSize > currentTeamSize) {
+      toast.error(
+        `Group size (${addGroupSize}) cannot exceed team size (${currentTeamSize})`,
+        {
+          description: `For ${
+            currentTeamSize === 1
+              ? "solo"
+              : currentTeamSize === 2
+              ? "doubles"
+              : currentTeamSize === 3
+              ? "triplets"
+              : "quads"
+          }, max group size is ${currentTeamSize}`,
+        }
+      );
+      setLoading(false);
+      return;
+    }
+
     try {
       const result = await addDummyUsersToQueue(eventId, 1, addGroupSize);
       if (result.success) {
@@ -283,9 +310,15 @@ export function TestControls({
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="1">Solo (1 player)</SelectItem>
-              <SelectItem value="2">Duo (2 players)</SelectItem>
-              <SelectItem value="3">Triple (3 players)</SelectItem>
-              <SelectItem value="4">Quad (4 players)</SelectItem>
+              {currentTeamSize >= 2 && (
+                <SelectItem value="2">Duo (2 players)</SelectItem>
+              )}
+              {currentTeamSize >= 3 && (
+                <SelectItem value="3">Triple (3 players)</SelectItem>
+              )}
+              {currentTeamSize >= 4 && (
+                <SelectItem value="4">Quad (4 players)</SelectItem>
+              )}
             </SelectContent>
           </Select>
         </div>
@@ -304,7 +337,7 @@ export function TestControls({
             </Button>
             <Button
               onClick={() => handleAddDummyToQueue(2)}
-              disabled={loading}
+              disabled={loading || currentTeamSize < 2}
               variant="outline"
               size="sm"
             >
@@ -312,7 +345,7 @@ export function TestControls({
             </Button>
             <Button
               onClick={() => handleAddDummyToQueue(3)}
-              disabled={loading}
+              disabled={loading || currentTeamSize < 3}
               variant="outline"
               size="sm"
             >
@@ -320,7 +353,7 @@ export function TestControls({
             </Button>
             <Button
               onClick={() => handleAddDummyToQueue(4)}
-              disabled={loading}
+              disabled={loading || currentTeamSize < 4}
               variant="outline"
               size="sm"
             >
