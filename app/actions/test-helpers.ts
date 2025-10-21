@@ -43,30 +43,57 @@ export async function resetTestEvent(eventId: string) {
   // 3. Add first 8 test users to queue with a mix of group sizes for testing
   const usersToAdd = TEST_USER_IDS.slice(0, 8);
   const groupSizes = [1, 2, 1, 2, 3, 1, 1, 4]; // Mix of solos and groups
-  const dummyNames = [
-    "Alice",
-    "Bob",
-    "Charlie",
-    "Diana",
-    "Eve",
-    "Frank",
-    "Grace",
-    "Henry",
+
+  // Fetch actual user data from database
+  const { data: usersData } = await supabase
+    .from("users")
+    .select("id, name, skill_level")
+    .in("id", usersToAdd);
+
+  const usersMap = new Map(usersData?.map((u) => [u.id, u]) || []);
+
+  // Names for additional group members
+  const friendNames = [
+    "Friend A",
+    "Friend B",
+    "Friend C",
+    "Friend D",
+    "Friend E",
+    "Friend F",
+    "Friend G",
+    "Friend H",
   ];
   const skillLevels = ["beginner", "intermediate", "advanced", "pro"];
 
   let successCount = 0;
+  let friendIndex = 0;
+
   for (let i = 0; i < usersToAdd.length; i++) {
     const groupSize = groupSizes[i] || 1;
+    const userData = usersMap.get(usersToAdd[i]);
 
-    // Generate player_names array
+    if (!userData) {
+      console.error(`User ${usersToAdd[i]} not found in database`);
+      continue;
+    }
+
+    // Generate player_names array with user's name first, then unique friend names
     const playerNames = [];
     for (let j = 0; j < groupSize; j++) {
-      const nameIndex = (i * 4 + j) % dummyNames.length;
-      playerNames.push({
-        name: `Test ${dummyNames[nameIndex]}`,
-        skillLevel: skillLevels[j % skillLevels.length],
-      });
+      if (j === 0) {
+        // First player uses the actual user's name
+        playerNames.push({
+          name: userData.name,
+          skillLevel: userData.skill_level || "intermediate",
+        });
+      } else {
+        // Additional players get unique friend names
+        playerNames.push({
+          name: friendNames[friendIndex % friendNames.length],
+          skillLevel: skillLevels[(friendIndex + j) % skillLevels.length],
+        });
+        friendIndex++;
+      }
     }
 
     const groupId = groupSize > 1 ? crypto.randomUUID() : null;
@@ -124,35 +151,53 @@ export async function addDummyUsersToQueue(
   // For groups, only take 'count' users (each becomes a group leader)
   const usersToAdd = availableUsers.slice(0, count);
 
-  // Dummy names for group members
-  const dummyNames = [
-    "Alice",
-    "Bob",
-    "Charlie",
-    "Diana",
-    "Eve",
-    "Frank",
-    "Grace",
-    "Henry",
-    "Ivy",
-    "Jack",
-    "Kate",
-    "Leo",
-  ];
+  // Fetch actual user data from database
+  const { data: usersData } = await supabase
+    .from("users")
+    .select("id, name, skill_level")
+    .in("id", usersToAdd);
 
+  const usersMap = new Map(usersData?.map((u) => [u.id, u]) || []);
+
+  // Names for additional group members
+  const friendNames = [
+    "Friend A",
+    "Friend B",
+    "Friend C",
+    "Friend D",
+    "Friend E",
+    "Friend F",
+    "Friend G",
+    "Friend H",
+  ];
   const skillLevels = ["beginner", "intermediate", "advanced", "pro"];
 
   // Check for insert errors
   let successCount = 0;
   for (let i = 0; i < usersToAdd.length; i++) {
-    // Generate player_names array for the group
+    const userData = usersMap.get(usersToAdd[i]);
+
+    if (!userData) {
+      console.error(`User ${usersToAdd[i]} not found in database`);
+      continue;
+    }
+
+    // Generate player_names array with user's name first, then unique friend names
     const playerNames = [];
     for (let j = 0; j < groupSize; j++) {
-      const nameIndex = (i * groupSize + j) % dummyNames.length;
-      playerNames.push({
-        name: `Test ${dummyNames[nameIndex]}`,
-        skillLevel: skillLevels[j % skillLevels.length],
-      });
+      if (j === 0) {
+        // First player uses the actual user's name
+        playerNames.push({
+          name: userData.name,
+          skillLevel: userData.skill_level || "intermediate",
+        });
+      } else {
+        // Additional players get unique friend names
+        playerNames.push({
+          name: friendNames[(i + j - 1) % friendNames.length],
+          skillLevel: skillLevels[(i + j) % skillLevels.length],
+        });
+      }
     }
 
     const groupId = groupSize > 1 ? crypto.randomUUID() : null;
@@ -297,17 +342,54 @@ export async function fillAllCourts(eventId: string) {
       event_id: eventId,
       court_number: courtNum,
       started_at: new Date().toISOString(),
+      player_names: [], // Will be populated below
     };
 
+    // Expand queue entries to individual player slots (handling group_size)
+    const playerSlots: Array<{ userId: string; name: string }> = [];
+
+    for (const entry of playersForCourt) {
+      const groupSize = entry.group_size || 1;
+      const playerNames = entry.player_names || [];
+
+      // If we have player_names stored, use those
+      if (playerNames.length > 0) {
+        for (let i = 0; i < groupSize; i++) {
+          if (playerSlots.length < playersPerCourt) {
+            playerSlots.push({
+              userId: entry.user_id,
+              name: playerNames[i]?.name || "Player",
+            });
+          }
+        }
+      } else {
+        // Fallback: use a generic name
+        for (let i = 0; i < groupSize; i++) {
+          if (playerSlots.length < playersPerCourt) {
+            playerSlots.push({
+              userId: entry.user_id,
+              name: "Player",
+            });
+          }
+        }
+      }
+
+      // Stop if we've filled all slots for this court
+      if (playerSlots.length >= playersPerCourt) break;
+    }
+
+    // Store player names for display
+    assignment.player_names = playerSlots.map((p) => p.name);
+
     // Assign players based on team size
-    if (playersForCourt[0]) assignment.player1_id = playersForCourt[0].user_id;
-    if (playersForCourt[1]) assignment.player2_id = playersForCourt[1].user_id;
-    if (playersForCourt[2]) assignment.player3_id = playersForCourt[2].user_id;
-    if (playersForCourt[3]) assignment.player4_id = playersForCourt[3].user_id;
-    if (playersForCourt[4]) assignment.player5_id = playersForCourt[4].user_id;
-    if (playersForCourt[5]) assignment.player6_id = playersForCourt[5].user_id;
-    if (playersForCourt[6]) assignment.player7_id = playersForCourt[6].user_id;
-    if (playersForCourt[7]) assignment.player8_id = playersForCourt[7].user_id;
+    if (playerSlots[0]) assignment.player1_id = playerSlots[0].userId;
+    if (playerSlots[1]) assignment.player2_id = playerSlots[1].userId;
+    if (playerSlots[2]) assignment.player3_id = playerSlots[2].userId;
+    if (playerSlots[3]) assignment.player4_id = playerSlots[3].userId;
+    if (playerSlots[4]) assignment.player5_id = playerSlots[4].userId;
+    if (playerSlots[5]) assignment.player6_id = playerSlots[5].userId;
+    if (playerSlots[6]) assignment.player7_id = playerSlots[6].userId;
+    if (playerSlots[7]) assignment.player8_id = playerSlots[7].userId;
 
     await supabase.from("court_assignments").insert(assignment);
 
