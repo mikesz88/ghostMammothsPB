@@ -24,6 +24,8 @@ import {
   clearTestEvent,
   fillAllCourts,
   updateEventRotationType,
+  updateEventTeamSize,
+  updateEventCourtCount,
 } from "@/app/actions/test-helpers";
 import { toast } from "sonner";
 import { RefreshCw, Users, Trash2, Play } from "lucide-react";
@@ -31,15 +33,22 @@ import { RefreshCw, Users, Trash2, Play } from "lucide-react";
 interface TestControlsProps {
   eventId: string;
   currentRotationType: RotationType;
+  currentTeamSize: number;
+  currentCourtCount: number;
 }
 
 export function TestControls({
   eventId,
   currentRotationType,
+  currentTeamSize,
+  currentCourtCount,
 }: TestControlsProps) {
   const [loading, setLoading] = useState(false);
   const [rotationType, setRotationType] =
     useState<RotationType>(currentRotationType);
+  const [teamSize, setTeamSize] = useState<number>(currentTeamSize);
+  const [courtCount, setCourtCount] = useState<number>(currentCourtCount);
+  const [groupSize, setGroupSize] = useState<number>(1);
 
   const handleReset = async () => {
     setLoading(true);
@@ -77,12 +86,59 @@ export function TestControls({
     }
   };
 
-  const handleAddDummyToQueue = async () => {
-    setLoading(true);
+  const handleTeamSizeChange = async (newSize: string) => {
+    const size = Number(newSize);
+    setTeamSize(size);
     try {
-      const result = await addDummyUsersToQueue(eventId, 4);
+      const result = await updateEventTeamSize(eventId, size);
       if (result.success) {
-        toast.success(`Added ${result.added} users to queue`);
+        const sizeText =
+          size === 1
+            ? "Solo (1v1)"
+            : size === 2
+            ? "Doubles (2v2)"
+            : size === 3
+            ? "Triplets (3v3)"
+            : "Quads (4v4)";
+        toast.success(`Team size changed to ${sizeText}`, {
+          description: "Event updated for testing",
+        });
+      } else {
+        toast.error("Failed to update team size");
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error("Error updating team size");
+    }
+  };
+
+  const handleCourtCountChange = async (newCount: string) => {
+    const count = Number(newCount);
+    setCourtCount(count);
+    try {
+      const result = await updateEventCourtCount(eventId, count);
+      if (result.success) {
+        toast.success(`Court count changed to ${count}`, {
+          description: "Event updated for testing",
+        });
+      } else {
+        toast.error("Failed to update court count");
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error("Error updating court count");
+    }
+  };
+
+  const handleAddDummyToQueue = async (size?: number) => {
+    setLoading(true);
+    const addGroupSize = size || groupSize;
+    try {
+      const result = await addDummyUsersToQueue(eventId, 1, addGroupSize);
+      if (result.success) {
+        const groupText =
+          addGroupSize === 1 ? "solo player" : `group of ${addGroupSize}`;
+        toast.success(`Added ${groupText} to queue`);
       } else {
         toast.error(result.error || "Failed to add users");
       }
@@ -150,6 +206,48 @@ export function TestControls({
           Reset Event (Reload 8 Dummy Users)
         </Button>
 
+        {/* Court Count Selector */}
+        <div className="space-y-2">
+          <Label htmlFor="court-count">Number of Courts</Label>
+          <Select
+            value={courtCount.toString()}
+            onValueChange={handleCourtCountChange}
+          >
+            <SelectTrigger id="court-count">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="1">1 Court</SelectItem>
+              <SelectItem value="2">2 Courts</SelectItem>
+              <SelectItem value="3">3 Courts</SelectItem>
+              <SelectItem value="4">4 Courts</SelectItem>
+              <SelectItem value="5">5 Courts</SelectItem>
+              <SelectItem value="6">6 Courts</SelectItem>
+              <SelectItem value="8">8 Courts</SelectItem>
+              <SelectItem value="10">10 Courts</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* Team Size Selector */}
+        <div className="space-y-2">
+          <Label htmlFor="team-size">Change Team Size (Court Type)</Label>
+          <Select
+            value={teamSize.toString()}
+            onValueChange={handleTeamSizeChange}
+          >
+            <SelectTrigger id="team-size">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="1">Solo (1v1)</SelectItem>
+              <SelectItem value="2">Doubles (2v2)</SelectItem>
+              <SelectItem value="3">Triplets (3v3)</SelectItem>
+              <SelectItem value="4">Quads (4v4)</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
         {/* Rotation Type Selector */}
         <div className="space-y-2">
           <Label htmlFor="rotation-type">Change Rotation Type</Label>
@@ -165,16 +263,74 @@ export function TestControls({
           </Select>
         </div>
 
+        {/* Group Size Selector */}
+        <div className="space-y-2">
+          <Label htmlFor="group-size">Group Size for Testing</Label>
+          <Select
+            value={groupSize.toString()}
+            onValueChange={(val) => setGroupSize(Number(val))}
+          >
+            <SelectTrigger id="group-size">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="1">Solo (1 player)</SelectItem>
+              <SelectItem value="2">Duo (2 players)</SelectItem>
+              <SelectItem value="3">Triple (3 players)</SelectItem>
+              <SelectItem value="4">Quad (4 players)</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* Quick Test Buttons - Add by Group Size */}
+        <div className="space-y-2">
+          <Label>Quick Add by Group Size</Label>
+          <div className="grid grid-cols-4 gap-2">
+            <Button
+              onClick={() => handleAddDummyToQueue(1)}
+              disabled={loading}
+              variant="outline"
+              size="sm"
+            >
+              Solo
+            </Button>
+            <Button
+              onClick={() => handleAddDummyToQueue(2)}
+              disabled={loading}
+              variant="outline"
+              size="sm"
+            >
+              Duo
+            </Button>
+            <Button
+              onClick={() => handleAddDummyToQueue(3)}
+              disabled={loading}
+              variant="outline"
+              size="sm"
+            >
+              Triple
+            </Button>
+            <Button
+              onClick={() => handleAddDummyToQueue(4)}
+              disabled={loading}
+              variant="outline"
+              size="sm"
+            >
+              Quad
+            </Button>
+          </div>
+        </div>
+
         {/* Quick Actions */}
         <div className="grid grid-cols-2 gap-2">
           <Button
-            onClick={handleAddDummyToQueue}
+            onClick={() => handleAddDummyToQueue()}
             disabled={loading}
             variant="outline"
             size="sm"
           >
             <Users className="w-4 h-4 mr-2" />
-            Add 4 to Queue
+            Add {groupSize === 1 ? "Solo" : `Group of ${groupSize}`}
           </Button>
           <Button
             onClick={handleClearAll}

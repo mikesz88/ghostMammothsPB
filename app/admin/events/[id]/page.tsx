@@ -731,6 +731,8 @@ export default function AdminEventDetailPage(props: {
             <TestControls
               eventId={id}
               currentRotationType={event.rotationType}
+              currentTeamSize={event.teamSize}
+              currentCourtCount={event.courtCount}
             />
           </div>
         )}
