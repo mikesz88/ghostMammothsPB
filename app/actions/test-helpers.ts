@@ -40,9 +40,28 @@ export async function resetTestEvent(eventId: string) {
     .eq("event_id", eventId)
     .is("ended_at", null);
 
+  // Get event details to determine max group size
+  const { data: event } = await supabase
+    .from("events")
+    .select("team_size")
+    .eq("id", eventId)
+    .single();
+
+  const maxGroupSize = event?.team_size || 4;
+
   // 3. Add first 8 test users to queue with a mix of group sizes for testing
   const usersToAdd = TEST_USER_IDS.slice(0, 8);
-  const groupSizes = [1, 2, 1, 2, 3, 1, 1, 4]; // Mix of solos and groups
+  // Generate group sizes based on team size (respecting max group size)
+  const groupSizes = [
+    1,
+    Math.min(2, maxGroupSize),
+    1,
+    Math.min(2, maxGroupSize),
+    Math.min(3, maxGroupSize),
+    1,
+    1,
+    maxGroupSize, // Last one is max group size for that team type
+  ];
 
   // Fetch actual user data from database
   const { data: usersData } = await supabase
