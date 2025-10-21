@@ -67,62 +67,125 @@ export class QueueManager {
   }
 
   /**
-   * Gets next N players from queue, respecting groups
-   * Counts actual player count using group_size field
+   * Gets next N players from queue using optimal subset sum algorithm
+   * Finds best combination of groups that fills exactly 'count' players
+   * Prioritizes: 1) Exact match, 2) Fewer groups, 3) Earlier positions
+   *
+   * IMPORTANT: Groups are NEVER split - they are treated as atomic units.
+   * A group of 3 players will always be taken together or skipped entirely.
    */
   static getNextPlayers(queue: QueueEntry[], count: number): QueueEntry[] {
-    const selected: QueueEntry[] = [];
-    const processedGroups = new Set<string>();
-    const skippedGroups: QueueEntry[][] = [];
+    // Group entries by their group_id or as solo players
+    // Each group is treated as an atomic unit that cannot be split
+    const groups: QueueEntry[][] = [];
+    const processedGroupIds = new Set<string>();
 
-    // Helper to count total players (considering group_size)
+    for (const entry of queue) {
+      if (entry.groupId && !processedGroupIds.has(entry.groupId)) {
+        const groupMembers = queue.filter((e) => e.groupId === entry.groupId);
+        groups.push(groupMembers);
+        processedGroupIds.add(entry.groupId);
+      } else if (!entry.groupId) {
+        groups.push([entry]); // Solo player as single-member group
+      }
+    }
+
+    // Helper to count total players in a group
     const countPlayers = (entries: QueueEntry[]): number => {
       return entries.reduce((sum, entry) => sum + (entry.groupSize || 1), 0);
     };
 
-    let currentPlayerCount = 0;
+    // Calculate player counts for each group
+    const groupSizes = groups.map(countPlayers);
 
-    // First pass: try to fill with groups and solo players in order
-    for (const entry of queue) {
-      if (currentPlayerCount >= count) break;
+    // Find best combination using backtracking
+    const bestIndices = this.findBestCombination(groupSizes, count, 0, [], 0);
 
-      if (entry.groupId && !processedGroups.has(entry.groupId)) {
-        const groupMembers = queue.filter((e) => e.groupId === entry.groupId);
-        const groupPlayerCount = countPlayers(groupMembers);
-
-        if (currentPlayerCount + groupPlayerCount <= count) {
-          // Group fits, add it
-          selected.push(...groupMembers);
-          currentPlayerCount += groupPlayerCount;
-          processedGroups.add(entry.groupId);
-        } else {
-          // Group doesn't fit, skip for now
-          skippedGroups.push(groupMembers);
-          processedGroups.add(entry.groupId);
-        }
-      } else if (!entry.groupId) {
-        // Solo player, add if space
-        const playerCount = entry.groupSize || 1;
-        if (currentPlayerCount + playerCount <= count) {
-          selected.push(entry);
-          currentPlayerCount += playerCount;
-        }
-      }
+    if (bestIndices && bestIndices.length > 0) {
+      // Flatten selected groups into individual entries
+      return bestIndices.flatMap((idx) => groups[idx]);
     }
 
-    // Second pass: if we didn't fill completely, try smaller skipped groups
-    if (currentPlayerCount < count) {
-      for (const group of skippedGroups) {
-        const groupPlayerCount = countPlayers(group);
-        if (currentPlayerCount + groupPlayerCount <= count) {
-          selected.push(...group);
-          currentPlayerCount += groupPlayerCount;
-        }
-        if (currentPlayerCount >= count) break;
+    // Fallback: return empty if no valid combination found
+    return [];
+  }
+
+  /**
+   * Backtracking algorithm to find best subset of groups that sum to target
+   * Returns indices of groups that should be selected
+   * Prioritizes: 1) Exact match, 2) Fewer groups, 3) Earlier positions (lower indices)
+   */
+  private static findBestCombination(
+    groupSizes: number[],
+    target: number,
+    startIdx: number,
+    currentCombination: number[],
+    currentSum: number,
+    bestExact: number[] | null = null
+  ): number[] | null {
+    // Perfect match found
+    if (currentSum === target) {
+      if (!bestExact) {
+        return [...currentCombination];
       }
+      // Prefer fewer groups, or if same length, prefer earlier positions
+      if (currentCombination.length < bestExact.length) {
+        return [...currentCombination];
+      }
+      if (currentCombination.length === bestExact.length) {
+        // Same number of groups - prefer the one with lower sum of indices (closer to top)
+        const currentIndexSum = currentCombination.reduce((a, b) => a + b, 0);
+        const bestIndexSum = bestExact.reduce((a, b) => a + b, 0);
+        if (currentIndexSum < bestIndexSum) {
+          return [...currentCombination];
+        }
+      }
+      return bestExact;
     }
 
-    return selected;
+    // Exceeded target or reached end without exact match
+    if (currentSum > target || startIdx >= groupSizes.length) {
+      return bestExact;
+    }
+
+    // Try including current group (explores "take early groups" path first)
+    const withCurrent = this.findBestCombination(
+      groupSizes,
+      target,
+      startIdx + 1,
+      [...currentCombination, startIdx],
+      currentSum + groupSizes[startIdx],
+      bestExact
+    );
+
+    // If we found exact match with current, update bestExact
+    const updatedBest = withCurrent || bestExact;
+
+    // Try skipping current group
+    const withoutCurrent = this.findBestCombination(
+      groupSizes,
+      target,
+      startIdx + 1,
+      currentCombination,
+      currentSum,
+      updatedBest
+    );
+
+    // Return best result
+    if (withCurrent && withoutCurrent) {
+      // Prefer fewer groups
+      if (withCurrent.length !== withoutCurrent.length) {
+        return withCurrent.length < withoutCurrent.length
+          ? withCurrent
+          : withoutCurrent;
+      }
+      // Same length - prefer earlier positions (lower sum of indices)
+      const currentIndexSum = withCurrent.reduce((a, b) => a + b, 0);
+      const withoutIndexSum = withoutCurrent.reduce((a, b) => a + b, 0);
+      return currentIndexSum <= withoutIndexSum ? withCurrent : withoutCurrent;
+    }
+
+    return withCurrent || withoutCurrent;
   }
 
   /**
