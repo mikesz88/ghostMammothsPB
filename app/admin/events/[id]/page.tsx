@@ -22,7 +22,11 @@ import { CourtStatus } from "@/components/court-status";
 import { TestControls } from "./test-controls";
 import { Header } from "@/components/ui/header";
 import { createClient } from "@/lib/supabase/client";
-import { leaveQueue, adminRemoveFromQueue } from "@/app/actions/queue";
+import {
+  leaveQueue,
+  adminRemoveFromQueue,
+  reorderQueue,
+} from "@/app/actions/queue";
 import { sendQueueNotification } from "@/app/actions/notifications";
 import type { Event, QueueEntry, CourtAssignment } from "@/lib/types";
 import { QueueManager } from "@/lib/queue-manager";
@@ -461,6 +465,9 @@ export default function AdminEventDetailPage(props: {
       toast.success(
         `Assigned ${playersPerCourt} players to Court ${availableCourt}`
       );
+
+      // Reorder remaining waiting players to fill gaps in positions
+      await reorderQueue(id);
 
       // Real-time subscriptions will automatically update the UI
     } catch (err) {

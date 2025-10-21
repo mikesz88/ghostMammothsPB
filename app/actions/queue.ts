@@ -132,7 +132,7 @@ export async function reorderQueue(eventId: string) {
     .select("*")
     .eq("event_id", eventId)
     .eq("status", "waiting")
-    .order("joined_at");
+    .order("position");
 
   if (queue) {
     // Track notifications to avoid spamming
