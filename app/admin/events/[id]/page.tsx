@@ -22,7 +22,11 @@ import { CourtStatus } from "@/components/court-status";
 import { TestControls } from "./test-controls";
 import { Header } from "@/components/ui/header";
 import { createClient } from "@/lib/supabase/client";
-import { leaveQueue, adminRemoveFromQueue } from "@/app/actions/queue";
+import {
+  leaveQueue,
+  adminRemoveFromQueue,
+  reorderQueue,
+} from "@/app/actions/queue";
 import { sendQueueNotification } from "@/app/actions/notifications";
 import type { Event, QueueEntry, CourtAssignment } from "@/lib/types";
 import { QueueManager } from "@/lib/queue-manager";
@@ -244,6 +248,7 @@ export default function AdminEventDetailPage(props: {
                 createdAt: new Date(),
               }
             : undefined,
+          queueEntryIds: assignment.queue_entry_ids || [],
         }));
         setAssignments(courtAssignments);
       }
@@ -355,6 +360,7 @@ export default function AdminEventDetailPage(props: {
         court_number: availableCourt,
         started_at: new Date().toISOString(),
         player_names: [], // Will be populated below
+        queue_entry_ids: nextPlayers.map((p) => p.id), // Track which queue entries were assigned
       };
 
       // Expand queue entries to individual player slots (handling group_size)
@@ -459,6 +465,9 @@ export default function AdminEventDetailPage(props: {
       toast.success(
         `Assigned ${playersPerCourt} players to Court ${availableCourt}`
       );
+
+      // Reorder remaining waiting players to fill gaps in positions
+      await reorderQueue(id);
 
       // Real-time subscriptions will automatically update the UI
     } catch (err) {
@@ -573,7 +582,8 @@ export default function AdminEventDetailPage(props: {
           assignment,
           event.rotationType,
           winningTeam,
-          queue
+          queue,
+          event.teamSize
         );
 
       // 1. Mark the game as ended
@@ -588,92 +598,176 @@ export default function AdminEventDetailPage(props: {
         return;
       }
 
-      // 2. Get all players from this game
-      const allPlayers = [
-        assignment.player1Id,
-        assignment.player2Id,
-        assignment.player3Id,
-        assignment.player4Id,
-        assignment.player5Id,
-        assignment.player6Id,
-        assignment.player7Id,
-        assignment.player8Id,
-      ].filter(Boolean) as string[];
+      // 2. Get the queue entry IDs that were assigned to this court
+      // This is the key fix - we use the stored queue_entry_ids instead of user_ids
+      const queueEntryIds = (assignment as any).queueEntryIds || [];
 
-      // 3. Get current max position in queue
-      const { data: maxPosData } = await supabase
-        .from("queue_entries")
-        .select("position")
-        .eq("event_id", id)
-        .order("position", { ascending: false })
-        .limit(1);
+      if (queueEntryIds.length === 0) {
+        console.warn(
+          "No queue_entry_ids found in assignment, falling back to user_id lookup"
+        );
+        // Fallback for old assignments that don't have queue_entry_ids
+        const allPlayers = [
+          assignment.player1Id,
+          assignment.player2Id,
+          assignment.player3Id,
+          assignment.player4Id,
+          assignment.player5Id,
+          assignment.player6Id,
+          assignment.player7Id,
+          assignment.player8Id,
+        ].filter(Boolean) as string[];
 
-      const maxPosition = maxPosData?.[0]?.position || 0;
-
-      // 4. Update all players to 'waiting' status first
-      for (const playerId of allPlayers) {
-        const { data: existingEntry } = await supabase
+        const { data: entries } = await supabase
           .from("queue_entries")
           .select("id")
           .eq("event_id", id)
-          .eq("user_id", playerId)
-          .single();
+          .in("user_id", allPlayers);
 
-        if (existingEntry) {
-          await supabase
-            .from("queue_entries")
-            .update({ status: "waiting" })
-            .eq("id", existingEntry.id);
-        } else {
-          // Player not in queue, add them to the back
-          await supabase.from("queue_entries").insert({
-            event_id: id,
-            user_id: playerId,
-            position: maxPosition + allPlayers.indexOf(playerId) + 1,
-            status: "waiting",
-            group_size: 1,
-          });
+        if (entries) {
+          queueEntryIds.push(...entries.map((e) => e.id));
         }
       }
 
-      // 5. Move winners to front of queue
-      for (let i = 0; i < playersToStay.length; i++) {
+      console.log("Queue entries that played:", queueEntryIds);
+
+      // 3. Update all these queue entries to 'waiting' status
+      for (const entryId of queueEntryIds) {
         await supabase
           .from("queue_entries")
-          .update({ position: i + 1 })
-          .eq("event_id", id)
-          .eq("user_id", playersToStay[i]);
+          .update({ status: "waiting" })
+          .eq("id", entryId);
       }
 
-      // 6. Shift other waiting players down
-      const { data: otherPlayers } = await supabase
+      // 4. Get all current queue entries to determine positioning
+      const { data: allQueueEntries } = await supabase
         .from("queue_entries")
-        .select("id, user_id")
+        .select("id, user_id, group_size, position")
         .eq("event_id", id)
         .eq("status", "waiting")
-        .not("user_id", "in", `(${allPlayers.join(",")})`);
+        .order("position");
 
-      if (otherPlayers) {
-        for (let i = 0; i < otherPlayers.length; i++) {
-          await supabase
-            .from("queue_entries")
-            .update({ position: playersToStay.length + i + 1 })
-            .eq("id", otherPlayers[i].id);
+      if (!allQueueEntries) {
+        toast.error("Failed to fetch queue entries");
+        return;
+      }
+
+      // 5. Determine which queue entries belong to which team
+      // Since queue entries fill slots sequentially, we can determine team membership
+      // by looking at which slots they filled
+      const playersPerTeam = event.teamSize;
+
+      // Create a map of which queue entries contributed to which team
+      const queueEntryToTeam = new Map<string, "team1" | "team2">();
+
+      // Track which player slots each queue entry filled
+      let slotIndex = 0;
+      for (const entryId of queueEntryIds) {
+        const entry = allQueueEntries.find((e) => e.id === entryId);
+        if (entry) {
+          const groupSize = entry.group_size || 1;
+          // Determine which team this entry's slots belong to
+          // Slots 0 to (playersPerTeam-1) = team1
+          // Slots playersPerTeam to (2*playersPerTeam-1) = team2
+          const startSlot = slotIndex;
+          const endSlot = slotIndex + groupSize - 1;
+
+          // If all slots are in team1 range or team2 range, assign accordingly
+          if (endSlot < playersPerTeam) {
+            queueEntryToTeam.set(entryId, "team1");
+          } else if (startSlot >= playersPerTeam) {
+            queueEntryToTeam.set(entryId, "team2");
+          } else {
+            // Entry spans both teams (shouldn't happen with proper assignment)
+            console.warn(`Queue entry ${entryId} spans both teams!`);
+            // Assign to team with more slots
+            if (playersPerTeam - startSlot >= endSlot - playersPerTeam + 1) {
+              queueEntryToTeam.set(entryId, "team1");
+            } else {
+              queueEntryToTeam.set(entryId, "team2");
+            }
+          }
+
+          slotIndex += groupSize;
         }
       }
 
-      // 7. Move losers to back of queue
-      const newMaxPosition = playersToStay.length + (otherPlayers?.length || 0);
-      for (let i = 0; i < playersToQueue.length; i++) {
-        await supabase
-          .from("queue_entries")
-          .update({ position: newMaxPosition + i + 1 })
-          .eq("event_id", id)
-          .eq("user_id", playersToQueue[i]);
+      // Separate entries into: winners, losers, and others
+      const winnerEntryIds = new Set<string>();
+      const loserEntryIds = new Set<string>();
+
+      for (const [entryId, team] of queueEntryToTeam.entries()) {
+        if (team === winningTeam) {
+          winnerEntryIds.add(entryId);
+        } else {
+          loserEntryIds.add(entryId);
+        }
       }
 
+      // Get entries that weren't in this game
+      const otherEntries = allQueueEntries.filter(
+        (e) => !queueEntryIds.includes(e.id)
+      );
+
+      console.log("Winners:", Array.from(winnerEntryIds));
+      console.log("Losers:", Array.from(loserEntryIds));
+      console.log(
+        "Others:",
+        otherEntries.map((e) => e.id)
+      );
+
+      // Safety check: ensure all entries are categorized
+      const categorizedIds = new Set([
+        ...Array.from(winnerEntryIds),
+        ...Array.from(loserEntryIds),
+        ...otherEntries.map((e) => e.id),
+      ]);
+      const allEntryIds = allQueueEntries.map((e) => e.id);
+      const uncategorized = allEntryIds.filter((id) => !categorizedIds.has(id));
+      if (uncategorized.length > 0) {
+        console.warn("Uncategorized queue entries:", uncategorized);
+      }
+
+      // 6. Reposition entries based on rotation type
+      let position = 1;
+
+      // Winners go to front
+      for (const entryId of winnerEntryIds) {
+        await supabase
+          .from("queue_entries")
+          .update({ position })
+          .eq("id", entryId);
+        position++;
+      }
+
+      // Other players (not in this game) stay in their relative order
+      for (const entry of otherEntries) {
+        await supabase
+          .from("queue_entries")
+          .update({ position })
+          .eq("id", entry.id);
+        position++;
+      }
+
+      // Losers go to back
+      for (const entryId of loserEntryIds) {
+        await supabase
+          .from("queue_entries")
+          .update({ position })
+          .eq("id", entryId);
+        position++;
+      }
+
+      console.log(`Repositioned ${position - 1} queue entries`);
+
+      // Final cleanup: reorder queue to ensure no gaps or duplicates
+      await reorderQueue(id);
+
+      const stayCount = Array.from(winnerEntryIds).length;
       toast.success(
-        `Game ended! ${playersToStay.length} player(s) moved to front of queue.`,
+        `Game ended! ${stayCount} queue entr${
+          stayCount === 1 ? "y" : "ies"
+        } moved to front.`,
         {
           description: "Use 'Assign Next' to start the next game.",
         }

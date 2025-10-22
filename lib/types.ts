@@ -56,6 +56,7 @@ export interface CourtAssignment {
   player7Id?: string;
   player8Id?: string;
   player_names?: string[];
+  queueEntryIds?: string[]; // Track which queue entries were assigned to this court
   startedAt: Date;
   endedAt?: Date;
   player1?: User;
