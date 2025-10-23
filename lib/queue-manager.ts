@@ -113,7 +113,10 @@ export class QueueManager {
   /**
    * Backtracking algorithm to find best subset of groups that sum to target
    * Returns indices of groups that should be selected
-   * Prioritizes: 1) Exact match, 2) Fewer groups, 3) Earlier positions (lower indices)
+   * Prioritizes: 1) Exact match, 2) Fewer groups, 3) Sequential groups, 4) Earlier positions
+   *
+   * IMPORTANT: This algorithm explores ALL possible combinations to find the optimal one.
+   * It doesn't stop at the first valid solution - it continues to find the best sequential match.
    */
   private static findBestCombination(
     groupSizes: number[],
@@ -125,22 +128,48 @@ export class QueueManager {
   ): number[] | null {
     // Perfect match found
     if (currentSum === target) {
+      console.log(
+        "🎯 Found exact match:",
+        currentCombination,
+        "sum:",
+        currentSum
+      );
       if (!bestExact) {
-        return [...currentCombination];
-      }
-      // Prefer fewer groups, or if same length, prefer earlier positions
-      if (currentCombination.length < bestExact.length) {
-        return [...currentCombination];
-      }
-      if (currentCombination.length === bestExact.length) {
-        // Same number of groups - prefer the one with lower sum of indices (closer to top)
-        const currentIndexSum = currentCombination.reduce((a, b) => a + b, 0);
-        const bestIndexSum = bestExact.reduce((a, b) => a + b, 0);
-        if (currentIndexSum < bestIndexSum) {
-          return [...currentCombination];
+        bestExact = [...currentCombination];
+        console.log("✅ Set as best:", bestExact);
+      } else {
+        // Compare with current best and update if this is better
+        let isBetter = false;
+
+        // Prioritize sequential groups over fewer groups
+        const currentIsSequential = this.isSequential(currentCombination);
+        const bestIsSequential = this.isSequential(bestExact);
+
+        if (currentIsSequential && !bestIsSequential) {
+          // Current is sequential, best is not - prefer current
+          isBetter = true;
+        } else if (!currentIsSequential && bestIsSequential) {
+          // Current is not sequential, best is - keep best
+          isBetter = false;
+        } else if (currentCombination.length < bestExact.length) {
+          // Both have same sequential status - prefer fewer groups
+          isBetter = true;
+        } else if (currentCombination.length === bestExact.length) {
+          // Same number of groups and same sequential status - prefer earlier positions
+          const currentIndexSum = currentCombination.reduce((a, b) => a + b, 0);
+          const bestIndexSum = bestExact.reduce((a, b) => a + b, 0);
+          if (currentIndexSum < bestIndexSum) {
+            isBetter = true;
+          }
+        }
+
+        if (isBetter) {
+          bestExact = [...currentCombination];
         }
       }
-      return bestExact;
+
+      // Continue exploring to find even better solutions
+      // Don't return early - keep searching for optimal sequential solution
     }
 
     // Exceeded target or reached end without exact match
@@ -179,13 +208,40 @@ export class QueueManager {
           ? withCurrent
           : withoutCurrent;
       }
-      // Same length - prefer earlier positions (lower sum of indices)
+      // Same length - prefer sequential groups
+      const withSequential = this.isSequential(withCurrent);
+      const withoutSequential = this.isSequential(withoutCurrent);
+
+      if (withSequential && !withoutSequential) {
+        return withCurrent;
+      }
+      if (!withSequential && withoutSequential) {
+        return withoutCurrent;
+      }
+
+      // If both are sequential or both aren't, prefer earlier positions (lower sum of indices)
       const currentIndexSum = withCurrent.reduce((a, b) => a + b, 0);
       const withoutIndexSum = withoutCurrent.reduce((a, b) => a + b, 0);
       return currentIndexSum <= withoutIndexSum ? withCurrent : withoutCurrent;
     }
 
     return withCurrent || withoutCurrent;
+  }
+
+  /**
+   * Helper method to check if indices are sequential (consecutive)
+   * Returns true if all indices are consecutive numbers
+   */
+  private static isSequential(indices: number[]): boolean {
+    if (indices.length <= 1) return true;
+
+    const sorted = [...indices].sort((a, b) => a - b);
+    for (let i = 1; i < sorted.length; i++) {
+      if (sorted[i] !== sorted[i - 1] + 1) {
+        return false;
+      }
+    }
+    return true;
   }
 
   /**
