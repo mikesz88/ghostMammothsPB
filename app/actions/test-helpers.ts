@@ -319,111 +319,23 @@ export async function fillAllCourts(eventId: string) {
     return { success: false, error: "Event not found" };
   }
 
-  const playersPerCourt = event.team_size * 2;
+  // Import the new server action
+  const { assignPlayersToNextCourt } = await import("./queue");
 
-  // Get active assignments
-  const { data: activeAssignments } = await supabase
-    .from("court_assignments")
-    .select("court_number")
-    .eq("event_id", eventId)
-    .is("ended_at", null);
-
-  const occupiedCourts = new Set(
-    activeAssignments?.map((a) => a.court_number) || []
-  );
-
-  // Get waiting players
-  const { data: waitingPlayers } = await supabase
-    .from("queue_entries")
-    .select("*")
-    .eq("event_id", eventId)
-    .eq("status", "waiting")
-    .order("position", { ascending: true });
-
-  if (!waitingPlayers || waitingPlayers.length < playersPerCourt) {
-    return { success: false, error: "Not enough players in queue" };
-  }
-
-  let playerIndex = 0;
   let courtsCreated = 0;
+  let hasMoreCourts = true;
 
-  // Fill available courts
-  for (let courtNum = 1; courtNum <= event.court_count; courtNum++) {
-    if (occupiedCourts.has(courtNum)) continue;
-    if (playerIndex + playersPerCourt > waitingPlayers.length) break;
+  // Keep assigning players to courts until all courts are filled or no more players
+  while (hasMoreCourts) {
+    const result = await assignPlayersToNextCourt(eventId);
 
-    const playersForCourt = waitingPlayers.slice(
-      playerIndex,
-      playerIndex + playersPerCourt
-    );
-
-    const assignment: any = {
-      event_id: eventId,
-      court_number: courtNum,
-      started_at: new Date().toISOString(),
-      player_names: [], // Will be populated below
-    };
-
-    // Expand queue entries to individual player slots (handling group_size)
-    const playerSlots: Array<{ userId: string; name: string }> = [];
-
-    for (const entry of playersForCourt) {
-      const groupSize = entry.group_size || 1;
-      const playerNames = entry.player_names || [];
-
-      // If we have player_names stored, use those
-      if (playerNames.length > 0) {
-        for (let i = 0; i < groupSize; i++) {
-          if (playerSlots.length < playersPerCourt) {
-            playerSlots.push({
-              userId: entry.user_id,
-              name: playerNames[i]?.name || "Player",
-            });
-          }
-        }
-      } else {
-        // Fallback: use a generic name
-        for (let i = 0; i < groupSize; i++) {
-          if (playerSlots.length < playersPerCourt) {
-            playerSlots.push({
-              userId: entry.user_id,
-              name: "Player",
-            });
-          }
-        }
-      }
-
-      // Stop if we've filled all slots for this court
-      if (playerSlots.length >= playersPerCourt) break;
+    if (result.success) {
+      courtsCreated++;
+    } else {
+      // Stop if no more courts available or not enough players
+      hasMoreCourts = false;
     }
-
-    // Store player names for display
-    assignment.player_names = playerSlots.map((p) => p.name);
-
-    // Assign players based on team size
-    if (playerSlots[0]) assignment.player1_id = playerSlots[0].userId;
-    if (playerSlots[1]) assignment.player2_id = playerSlots[1].userId;
-    if (playerSlots[2]) assignment.player3_id = playerSlots[2].userId;
-    if (playerSlots[3]) assignment.player4_id = playerSlots[3].userId;
-    if (playerSlots[4]) assignment.player5_id = playerSlots[4].userId;
-    if (playerSlots[5]) assignment.player6_id = playerSlots[5].userId;
-    if (playerSlots[6]) assignment.player7_id = playerSlots[6].userId;
-    if (playerSlots[7]) assignment.player8_id = playerSlots[7].userId;
-
-    await supabase.from("court_assignments").insert(assignment);
-
-    // Update queue entries to "playing"
-    for (const player of playersForCourt) {
-      await supabase
-        .from("queue_entries")
-        .update({ status: "playing" })
-        .eq("id", player.id);
-    }
-
-    playerIndex += playersPerCourt;
-    courtsCreated++;
   }
 
-  revalidatePath(`/admin/events/${eventId}`);
   return { success: true, courtsCreated };
 }
