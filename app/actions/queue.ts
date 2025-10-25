@@ -180,6 +180,219 @@ export async function reorderQueue(eventId: string) {
   }
 }
 
+export async function assignPlayersToNextCourt(eventId: string) {
+  const supabase = await createClient();
+
+  // Get event details
+  const { data: event, error: eventError } = await supabase
+    .from("events")
+    .select("*")
+    .eq("id", eventId)
+    .single();
+
+  if (eventError || !event) {
+    return { success: false, error: "Event not found" };
+  }
+
+  const playersPerCourt = event.team_size * 2;
+
+  // Get waiting queue entries with user data
+  const { data: queueData, error: queueError } = await supabase
+    .from("queue_entries")
+    .select(
+      `
+      *,
+      user:users(id, name, email, skill_level)
+    `
+    )
+    .eq("event_id", eventId)
+    .eq("status", "waiting")
+    .order("position");
+
+  if (queueError) {
+    return { success: false, error: "Failed to fetch queue" };
+  }
+
+  // Import QueueManager dynamically to use getNextPlayers
+  const { QueueManager } = await import("@/lib/queue-manager");
+
+  // Map to QueueEntry type
+  const waitingQueue = (queueData || []).map((entry: any) => ({
+    id: entry.id,
+    eventId: entry.event_id,
+    userId: entry.user_id,
+    groupId: entry.group_id,
+    groupSize: entry.group_size || 1,
+    player_names: entry.player_names || [],
+    position: entry.position,
+    status: entry.status,
+    joinedAt: new Date(entry.joined_at),
+    user: entry.user
+      ? {
+          id: entry.user.id,
+          name: entry.user.name,
+          email: entry.user.email,
+          skillLevel: entry.user.skill_level,
+          isAdmin: false,
+          createdAt: new Date(),
+        }
+      : undefined,
+  }));
+
+  const nextPlayers = QueueManager.getNextPlayers(
+    waitingQueue,
+    playersPerCourt
+  );
+
+  // Count total players (considering group_size)
+  const totalPlayerCount = nextPlayers.reduce(
+    (sum, entry) => sum + (entry.groupSize || 1),
+    0
+  );
+
+  if (totalPlayerCount < playersPerCourt) {
+    return {
+      success: false,
+      error: `Not enough players in queue. Need ${playersPerCourt} players.`,
+    };
+  }
+
+  // Find an available court
+  const { data: activeAssignments } = await supabase
+    .from("court_assignments")
+    .select("court_number")
+    .eq("event_id", eventId)
+    .is("ended_at", null);
+
+  const activeCourts = new Set(
+    activeAssignments?.map((a) => a.court_number) || []
+  );
+
+  let availableCourt: number | null = null;
+  for (let i = 1; i <= event.court_count; i++) {
+    if (!activeCourts.has(i)) {
+      availableCourt = i;
+      break;
+    }
+  }
+
+  if (availableCourt === null) {
+    return { success: false, error: "No available courts" };
+  }
+
+  // Delete any ended assignments for this court to avoid unique constraint violation
+  await supabase
+    .from("court_assignments")
+    .delete()
+    .eq("event_id", eventId)
+    .eq("court_number", availableCourt)
+    .not("ended_at", "is", null);
+
+  // Create court assignment with dynamic player slots
+  const assignmentData: any = {
+    event_id: eventId,
+    court_number: availableCourt,
+    started_at: new Date().toISOString(),
+    player_names: [],
+    queue_entry_ids: nextPlayers.map((p) => p.id),
+  };
+
+  // Expand queue entries to individual player slots (handling group_size)
+  const playerSlots: Array<{
+    userId: string;
+    name: string;
+    skillLevel: string;
+  }> = [];
+
+  for (const entry of nextPlayers) {
+    const groupSize = entry.groupSize || 1;
+    const playerNames = entry.player_names || [];
+
+    // If we have player_names stored, use those
+    if (playerNames.length > 0) {
+      for (let i = 0; i < groupSize; i++) {
+        playerSlots.push({
+          userId: entry.userId,
+          name: playerNames[i]?.name || entry.user?.name || "Player",
+          skillLevel:
+            playerNames[i]?.skillLevel ||
+            entry.user?.skillLevel ||
+            "intermediate",
+        });
+      }
+    } else {
+      // Fallback: use the user's name for all slots
+      for (let i = 0; i < groupSize; i++) {
+        playerSlots.push({
+          userId: entry.userId,
+          name: entry.user?.name || "Player",
+          skillLevel: entry.user?.skillLevel || "intermediate",
+        });
+      }
+    }
+  }
+
+  // Store player names for display
+  assignmentData.player_names = playerSlots.map((p) => p.name);
+
+  // Assign players to slots (using userId for database)
+  if (playerSlots[0]) assignmentData.player1_id = playerSlots[0].userId;
+  if (playerSlots[1]) assignmentData.player2_id = playerSlots[1].userId;
+  if (playerSlots[2]) assignmentData.player3_id = playerSlots[2].userId;
+  if (playerSlots[3]) assignmentData.player4_id = playerSlots[3].userId;
+  if (playerSlots[4]) assignmentData.player5_id = playerSlots[4].userId;
+  if (playerSlots[5]) assignmentData.player6_id = playerSlots[5].userId;
+  if (playerSlots[6]) assignmentData.player7_id = playerSlots[6].userId;
+  if (playerSlots[7]) assignmentData.player8_id = playerSlots[7].userId;
+
+  const { error: assignmentError } = await supabase
+    .from("court_assignments")
+    .insert(assignmentData);
+
+  if (assignmentError) {
+    console.error("Error creating assignment:", assignmentError);
+    return {
+      success: false,
+      error: `Failed to assign players: ${assignmentError.message}`,
+    };
+  }
+
+  // Update queue entries to "playing"
+  for (const player of nextPlayers) {
+    const { error: updateError } = await supabase
+      .from("queue_entries")
+      .update({ status: "playing" })
+      .eq("id", player.id);
+
+    if (updateError) {
+      console.error(`Failed to update player ${player.id}:`, updateError);
+    }
+
+    // Send court assignment email notification
+    sendQueueNotification(
+      player.userId,
+      eventId,
+      player.position,
+      "court-assignment",
+      availableCourt
+    ).catch((err) =>
+      console.error("Failed to send court assignment email:", err)
+    );
+  }
+
+  // Reorder remaining waiting players to fill gaps in positions
+  await reorderQueue(eventId);
+
+  revalidatePath(`/events/${eventId}`);
+  revalidatePath(`/admin/events/${eventId}`);
+
+  return {
+    success: true,
+    courtNumber: availableCourt,
+    playersAssigned: playersPerCourt,
+  };
+}
+
 export async function adminRemoveFromQueue(
   queueEntryId: string,
   reason?: string

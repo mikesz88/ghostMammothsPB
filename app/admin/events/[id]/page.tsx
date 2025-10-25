@@ -26,6 +26,7 @@ import {
   leaveQueue,
   adminRemoveFromQueue,
   reorderQueue,
+  assignPlayersToNextCourt,
 } from "@/app/actions/queue";
 import { sendQueueNotification } from "@/app/actions/notifications";
 import type { Event, QueueEntry, CourtAssignment } from "@/lib/types";
@@ -286,190 +287,30 @@ export default function AdminEventDetailPage(props: {
   const handleAssignNext = async () => {
     if (!event) return;
 
-    const playersPerCourt = event.teamSize * 2;
-    const waitingQueue = queue.filter((e) => e.status === "waiting");
-    const nextPlayers = QueueManager.getNextPlayers(
-      waitingQueue,
-      playersPerCourt
-    );
+    try {
+      const result = await assignPlayersToNextCourt(id);
 
-    // Count total players (considering group_size)
-    const totalPlayerCount = nextPlayers.reduce(
-      (sum, entry) => sum + (entry.groupSize || 1),
-      0
-    );
-
-    if (totalPlayerCount < playersPerCourt) {
-      toast.error("Not enough players in queue", {
-        description: `Need ${playersPerCourt} players for ${
+      if (result.success) {
+        const teamSizeText =
           event.teamSize === 1
             ? "solo"
             : event.teamSize === 2
             ? "doubles"
             : event.teamSize === 3
             ? "triplets"
-            : "quads"
-        }`,
-      });
-      return;
-    }
+            : "quads";
 
-    // Find an available court - check database directly for fresh data
-    const availableCourt = await (async () => {
-      const supabase = createClient();
-      const { data: activeAssignments } = await supabase
-        .from("court_assignments")
-        .select("court_number")
-        .eq("event_id", id)
-        .is("ended_at", null);
-
-      const activeCourts = new Set(
-        activeAssignments?.map((a) => a.court_number) || []
-      );
-
-      // Find first court number that's not in use
-      for (let i = 1; i <= event.courtCount; i++) {
-        if (!activeCourts.has(i)) {
-          return i;
-        }
-      }
-      return null; // All courts occupied
-    })();
-
-    if (availableCourt === null) {
-      toast.error("No available courts", {
-        description: "End a game first to free up a court.",
-      });
-      return;
-    }
-
-    try {
-      const supabase = createClient();
-
-      // Delete any ended assignments for this court to avoid unique constraint violation
-      await supabase
-        .from("court_assignments")
-        .delete()
-        .eq("event_id", id)
-        .eq("court_number", availableCourt)
-        .not("ended_at", "is", null);
-
-      // Create court assignment with dynamic player slots
-      const assignmentData: any = {
-        event_id: id,
-        court_number: availableCourt,
-        started_at: new Date().toISOString(),
-        player_names: [], // Will be populated below
-        queue_entry_ids: nextPlayers.map((p) => p.id), // Track which queue entries were assigned
-      };
-
-      // Expand queue entries to individual player slots (handling group_size)
-      // Track both userId and names for proper display
-      const playerSlots: Array<{
-        userId: string;
-        name: string;
-        skillLevel: string;
-      }> = [];
-
-      for (const entry of nextPlayers) {
-        const groupSize = entry.groupSize || 1;
-        const playerNames = entry.player_names || [];
-
-        // If we have player_names stored, use those
-        if (playerNames.length > 0) {
-          for (let i = 0; i < groupSize; i++) {
-            playerSlots.push({
-              userId: entry.userId,
-              name: playerNames[i]?.name || entry.user?.name || "Player",
-              skillLevel:
-                playerNames[i]?.skillLevel ||
-                entry.user?.skillLevel ||
-                "intermediate",
-            });
+        toast.success(
+          `Assigned ${result.playersAssigned} players to Court ${result.courtNumber}`,
+          {
+            description: `${teamSizeText} game started`,
           }
-        } else {
-          // Fallback: use the user's name for all slots
-          for (let i = 0; i < groupSize; i++) {
-            playerSlots.push({
-              userId: entry.userId,
-              name: entry.user?.name || "Player",
-              skillLevel: entry.user?.skillLevel || "intermediate",
-            });
-          }
-        }
-      }
-
-      // Store player names for display
-      console.log(
-        "Assigning players to court:",
-        playerSlots.map((p) => p.name)
-      );
-      assignmentData.player_names = playerSlots.map((p) => p.name);
-
-      // Assign players to slots (using userId for database)
-      if (playerSlots[0]) assignmentData.player1_id = playerSlots[0].userId;
-      if (playerSlots[1]) assignmentData.player2_id = playerSlots[1].userId;
-      if (playerSlots[2]) assignmentData.player3_id = playerSlots[2].userId;
-      if (playerSlots[3]) assignmentData.player4_id = playerSlots[3].userId;
-      if (playerSlots[4]) assignmentData.player5_id = playerSlots[4].userId;
-      if (playerSlots[5]) assignmentData.player6_id = playerSlots[5].userId;
-      if (playerSlots[6]) assignmentData.player7_id = playerSlots[6].userId;
-      if (playerSlots[7]) assignmentData.player8_id = playerSlots[7].userId;
-
-      const { error: assignmentError } = await supabase
-        .from("court_assignments")
-        .insert(assignmentData);
-
-      if (assignmentError) {
-        console.error("Error creating assignment:", assignmentError);
-        toast.error("Failed to assign players", {
-          description: assignmentError.message,
-        });
-        return;
-      }
-
-      // Update queue entries to "playing"
-      console.log(
-        "Updating queue entries to playing:",
-        nextPlayers.map((p) => ({
-          id: p.id,
-          userId: p.userId,
-          name: p.user?.name,
-        }))
-      );
-
-      for (const player of nextPlayers) {
-        const { error: updateError } = await supabase
-          .from("queue_entries")
-          .update({ status: "playing" })
-          .eq("id", player.id);
-
-        if (updateError) {
-          console.error(`Failed to update player ${player.id}:`, updateError);
-        } else {
-          console.log(`Updated player ${player.id} to playing`);
-        }
-
-        // Send court assignment email notification
-        sendQueueNotification(
-          player.userId,
-          id,
-          player.position,
-          "court-assignment",
-          availableCourt
-        ).catch((err) =>
-          console.error("Failed to send court assignment email:", err)
         );
+      } else {
+        toast.error("Failed to assign players", {
+          description: result.error,
+        });
       }
-
-      toast.success(
-        `Assigned ${playersPerCourt} players to Court ${availableCourt}`
-      );
-
-      // Reorder remaining waiting players to fill gaps in positions
-      await reorderQueue(id);
-
-      // Real-time subscriptions will automatically update the UI
     } catch (err) {
       console.error("Error assigning players:", err);
       toast.error("Failed to assign players");
