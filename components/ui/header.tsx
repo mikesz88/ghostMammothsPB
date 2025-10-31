@@ -98,16 +98,7 @@ export const Header = ({
   );
 
   // Default navigation
-  const DefaultNav = () => (
-    <nav className="flex items-center gap-4">
-      <Link
-        href="/"
-        className="text-muted-foreground hover:text-foreground transition-colors"
-      >
-        Events
-      </Link>
-    </nav>
-  );
+  const DefaultNav = () => null;
 
   // Admin navigation
   const AdminNav = () => (
@@ -160,37 +151,29 @@ export const Header = ({
           <DropdownMenuSeparator />
 
           {/* Mobile Navigation Links - Only show on mobile */}
-          <div className="md:hidden">
-            <DropdownMenuLabel className="text-xs text-muted-foreground">
-              Navigation
-            </DropdownMenuLabel>
-            {variant === "admin" ? (
-              <>
-                <DropdownMenuItem asChild>
-                  <Link href="/events" className="cursor-pointer">
-                    Events
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link href="/admin" className="cursor-pointer">
-                    Dashboard
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link href="/admin/users" className="cursor-pointer">
-                    Users
-                  </Link>
-                </DropdownMenuItem>
-              </>
-            ) : (
+          {variant === "admin" && (
+            <div className="md:hidden">
+              <DropdownMenuLabel className="text-xs text-muted-foreground">
+                Navigation
+              </DropdownMenuLabel>
               <DropdownMenuItem asChild>
-                <Link href="/" className="cursor-pointer">
+                <Link href="/events" className="cursor-pointer">
                   Events
                 </Link>
               </DropdownMenuItem>
-            )}
-            <DropdownMenuSeparator />
-          </div>
+              <DropdownMenuItem asChild>
+                <Link href="/admin" className="cursor-pointer">
+                  Dashboard
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link href="/admin/users" className="cursor-pointer">
+                  Users
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+            </div>
+          )}
 
           <DropdownMenuItem asChild>
             <Link href="/settings" className="cursor-pointer">
