@@ -19,7 +19,6 @@ export async function sendQueueNotification(
 ) {
   const supabase = await createClient();
 
-  // Get user data
   const { data: user } = await supabase
     .from("users")
     .select("email, name")
@@ -31,7 +30,6 @@ export async function sendQueueNotification(
     return { success: false, error: "User email not found" };
   }
 
-  // Get event data
   const { data: event } = await supabase
     .from("events")
     .select("name, location, date, time, court_count, team_size")
@@ -43,7 +41,6 @@ export async function sendQueueNotification(
     return { success: false, error: "Event not found" };
   }
 
-  // Format time in 12-hour format
   let formattedTime = "";
   if (event.time) {
     try {
@@ -89,7 +86,6 @@ export async function sendQueueNotification(
       return { success: false, error: "Invalid notification type" };
   }
 
-  // Log the email notification for tracking
   await supabase.from("email_logs").insert({
     user_id: userId,
     event_id: eventId,
@@ -113,13 +109,11 @@ function calculateEstimatedWait(
   return roundsToWait * avgGameMinutes;
 }
 
-// Admin function to get email statistics
 export async function getEmailStats(
   timeRange: "today" | "week" | "month" | "all" = "week"
 ) {
   const supabase = await createClient();
 
-  // Verify admin
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -135,7 +129,6 @@ export async function getEmailStats(
     return { error: "Unauthorized" };
   }
 
-  // Calculate date filter
   let dateFilter = new Date();
   switch (timeRange) {
     case "today":
@@ -162,12 +155,10 @@ export async function getEmailStats(
     return { error: error.message };
   }
 
-  // Calculate statistics
   const total = logs?.length || 0;
   const successful = logs?.filter((log) => log.success).length || 0;
   const failed = total - successful;
 
-  // Group by notification type
   const byType =
     logs?.reduce((acc: Record<string, number>, log) => {
       acc[log.notification_type] = (acc[log.notification_type] || 0) + 1;

@@ -44,7 +44,6 @@ export async function joinQueue(
     return { error: "Not authenticated" };
   }
 
-  // Get current queue length to determine position
   const { data: currentQueue } = await supabase
     .from("queue_entries")
     .select("position")
