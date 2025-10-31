@@ -28,6 +28,8 @@ export type Database = {
           player6_id: string | null
           player7_id: string | null
           player8_id: string | null
+          player_names: Json | null
+          queue_entry_ids: Json | null
           started_at: string | null
         }
         Insert: {
@@ -43,6 +45,8 @@ export type Database = {
           player6_id?: string | null
           player7_id?: string | null
           player8_id?: string | null
+          player_names?: Json | null
+          queue_entry_ids?: Json | null
           started_at?: string | null
         }
         Update: {
@@ -58,6 +62,8 @@ export type Database = {
           player6_id?: string | null
           player7_id?: string | null
           player8_id?: string | null
+          player_names?: Json | null
+          queue_entry_ids?: Json | null
           started_at?: string | null
         }
         Relationships: [
@@ -120,6 +126,51 @@ export type Database = {
           {
             foreignKeyName: "court_assignments_player8_id_fkey"
             columns: ["player8_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      email_logs: {
+        Row: {
+          error_message: string | null
+          event_id: string | null
+          id: string
+          notification_type: string
+          sent_at: string
+          success: boolean | null
+          user_id: string | null
+        }
+        Insert: {
+          error_message?: string | null
+          event_id?: string | null
+          id?: string
+          notification_type: string
+          sent_at?: string
+          success?: boolean | null
+          user_id?: string | null
+        }
+        Update: {
+          error_message?: string | null
+          event_id?: string | null
+          id?: string
+          notification_type?: string
+          sent_at?: string
+          success?: boolean | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_logs_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "email_logs_user_id_fkey"
+            columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "users"
             referencedColumns: ["id"]
@@ -201,6 +252,7 @@ export type Database = {
           status: string
           team_size: number
           time: string
+          updated_at: string | null
         }
         Insert: {
           court_count: number
@@ -218,6 +270,7 @@ export type Database = {
           status: string
           team_size?: number
           time: string
+          updated_at?: string | null
         }
         Update: {
           court_count?: number
@@ -235,6 +288,7 @@ export type Database = {
           status?: string
           team_size?: number
           time?: string
+          updated_at?: string | null
         }
         Relationships: []
       }
@@ -350,6 +404,7 @@ export type Database = {
           group_size: number
           id: string
           joined_at: string
+          player_names: Json | null
           position: number
           status: string
           user_id: string
@@ -361,6 +416,7 @@ export type Database = {
           group_size?: number
           id?: string
           joined_at?: string
+          player_names?: Json | null
           position: number
           status?: string
           user_id: string
@@ -372,6 +428,7 @@ export type Database = {
           group_size?: number
           id?: string
           joined_at?: string
+          player_names?: Json | null
           position?: number
           status?: string
           user_id?: string
@@ -464,7 +521,7 @@ export type Database = {
           is_admin: boolean
           membership_status: string | null
           name: string
-          phone: string
+          phone: string | null
           skill_level: string
           stripe_customer_id: string | null
         }
@@ -475,7 +532,7 @@ export type Database = {
           is_admin: boolean
           membership_status?: string | null
           name: string
-          phone: string
+          phone?: string | null
           skill_level: string
           stripe_customer_id?: string | null
         }
@@ -486,7 +543,7 @@ export type Database = {
           is_admin?: boolean
           membership_status?: string | null
           name?: string
-          phone?: string
+          phone?: string | null
           skill_level?: string
           stripe_customer_id?: string | null
         }

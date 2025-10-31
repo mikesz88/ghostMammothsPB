@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { stripe } from "@/lib/stripe/server";
+import Stripe from "stripe";
 
 export async function GET(request: NextRequest) {
   try {
@@ -86,12 +87,8 @@ export async function GET(request: NextRequest) {
         const subscription = await stripe.subscriptions.retrieve(
           subscriptionId!
         );
-        currentPeriodStart = new Date(
-          (subscription as any).current_period_start * 1000
-        ).toISOString();
-        currentPeriodEnd = new Date(
-          (subscription as any).current_period_end * 1000
-        ).toISOString();
+        currentPeriodStart = (subscription as unknown as { current_period_start?: number }).current_period_start ? new Date((subscription as unknown as { current_period_start: number }).current_period_start * 1000).toISOString() : undefined;
+        currentPeriodEnd = (subscription as unknown as { current_period_end?: number }).current_period_end ? new Date((subscription as unknown as { current_period_end: number }).current_period_end * 1000).toISOString() : undefined;
         console.log("✅ Subscription details retrieved:", {
           id: subscription.id,
           status: subscription.status,

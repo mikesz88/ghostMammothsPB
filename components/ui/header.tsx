@@ -5,8 +5,8 @@ import { useState, useEffect } from "react";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/auth-context";
-import { signOut } from "@/app/actions/auth";
 import { createClient } from "@/lib/supabase/client";
+import { useRouter } from "next/navigation";
 import { User, LogOut, Settings, ArrowLeft, Shield } from "lucide-react";
 import {
   DropdownMenu,
@@ -33,8 +33,14 @@ export const Header = ({
   hideNav = false,
   customNav,
 }: HeaderProps = {}) => {
-  const { user, loading } = useAuth();
+  const { user, loading, signOut } = useAuth();
+  const router = useRouter();
   const [isAdmin, setIsAdmin] = useState(false);
+
+  const handleSignOut = async () => {
+    await signOut();
+    router.push("/login");
+  };
 
   useEffect(() => {
     const checkAdmin = async () => {
@@ -95,30 +101,10 @@ export const Header = ({
   const DefaultNav = () => (
     <nav className="flex items-center gap-4">
       <Link
-        href="/events"
+        href="/"
         className="text-muted-foreground hover:text-foreground transition-colors"
       >
         Events
-      </Link>
-      <Link
-        href="/calendar"
-        className="text-muted-foreground hover:text-foreground transition-colors"
-      >
-        Calendar
-      </Link>
-      <Link
-        href="/about"
-        className="text-muted-foreground hover:text-foreground transition-colors"
-      >
-        About
-      </Link>
-      <Link
-        href="https://ghost-mammoths-pb.myshopify.com"
-        target="_blank"
-        rel="noopener noreferrer"
-        className="text-muted-foreground hover:text-foreground transition-colors"
-      >
-        Shop
       </Link>
     </nav>
   );
@@ -197,33 +183,11 @@ export const Header = ({
                 </DropdownMenuItem>
               </>
             ) : (
-              <>
-                <DropdownMenuItem asChild>
-                  <Link href="/events" className="cursor-pointer">
-                    Events
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link href="/calendar" className="cursor-pointer">
-                    Calendar
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link href="/about" className="cursor-pointer">
-                    About
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link
-                    href="https://ghost-mammoths-pb.myshopify.com"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="cursor-pointer"
-                  >
-                    Shop
-                  </Link>
-                </DropdownMenuItem>
-              </>
+              <DropdownMenuItem asChild>
+                <Link href="/" className="cursor-pointer">
+                  Events
+                </Link>
+              </DropdownMenuItem>
             )}
             <DropdownMenuSeparator />
           </div>
@@ -243,16 +207,9 @@ export const Header = ({
             </DropdownMenuItem>
           )}
           <DropdownMenuSeparator />
-          <DropdownMenuItem asChild>
-            <form action={signOut} className="w-full">
-              <button
-                type="submit"
-                className="w-full text-left flex items-center cursor-pointer"
-              >
-                <LogOut className="w-4 h-4 mr-2" />
-                Sign Out
-              </button>
-            </form>
+          <DropdownMenuItem onClick={handleSignOut}>
+            <LogOut className="w-4 h-4 mr-2" />
+            Sign Out
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>

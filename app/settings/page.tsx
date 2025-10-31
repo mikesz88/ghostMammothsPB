@@ -2,17 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import {
-  User,
-  Bell,
-  CreditCard,
-  Crown,
-  Mail,
-  Calendar,
-  Shield,
-  ChevronRight,
-  Loader2,
-} from "lucide-react";
+import { User, Mail, Calendar, Shield, Loader2 } from "lucide-react";
 import { Header } from "@/components/ui/header";
 import {
   Card,
@@ -25,13 +15,13 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/auth-context";
 import { createClient } from "@/lib/supabase/client";
-import { getUserMembership } from "@/lib/membership-helpers";
-import type { UserMembershipInfo } from "@/lib/membership-helpers";
+import type { Database } from "@/supabase/supa-schema";
+
+type UserRow = Database["public"]["Tables"]["users"]["Row"];
 
 export default function SettingsPage() {
   const { user } = useAuth();
-  const [membership, setMembership] = useState<UserMembershipInfo | null>(null);
-  const [userDetails, setUserDetails] = useState<any>(null);
+  const [userDetails, setUserDetails] = useState<UserRow | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -53,9 +43,6 @@ export default function SettingsPage() {
       setUserDetails(userData);
 
       // Fetch membership info
-      const membershipInfo = await getUserMembership(user.id);
-      setMembership(membershipInfo);
-
       setLoading(false);
     };
 
@@ -191,122 +178,6 @@ export default function SettingsPage() {
             </CardContent>
           </Card>
 
-          {/* Membership Status Card */}
-          {membership && (
-            <Card className="border-border mb-6">
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <CardTitle className="text-foreground">
-                      Membership Status
-                    </CardTitle>
-                    <CardDescription>
-                      Your current subscription plan
-                    </CardDescription>
-                  </div>
-                  {membership.isPaid ? (
-                    <Badge variant="default">
-                      <Crown className="w-3 h-3 mr-1" />
-                      {membership.tierDisplayName}
-                    </Badge>
-                  ) : (
-                    <Badge variant="secondary">
-                      {membership.tierDisplayName}
-                    </Badge>
-                  )}
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-muted-foreground text-sm mb-1">
-                      Current Plan
-                    </p>
-                    <p className="font-medium text-foreground">
-                      {membership.tierDisplayName}
-                      {membership.isPaid &&
-                        ` - ${new Intl.NumberFormat("en-US", {
-                          style: "currency",
-                          currency: "USD",
-                        }).format(membership.tierPrice)}/${
-                          membership.tierBillingPeriod
-                        }`}
-                    </p>
-                    {membership.isPaid && membership.currentPeriodEnd && (
-                      <p className="text-sm text-muted-foreground mt-1">
-                        {membership.cancelAtPeriodEnd
-                          ? `Cancels on ${membership.currentPeriodEnd.toLocaleDateString()}`
-                          : `Renews on ${membership.currentPeriodEnd.toLocaleDateString()}`}
-                      </p>
-                    )}
-                  </div>
-                  <Button variant="outline" asChild>
-                    <Link href="/settings/membership">
-                      Manage Membership
-                      <ChevronRight className="w-4 h-4 ml-1" />
-                    </Link>
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Settings Navigation */}
-          <div className="space-y-3">
-            <h2 className="text-xl font-semibold text-foreground mb-4">
-              Settings & Preferences
-            </h2>
-
-            {/* Membership Settings */}
-            <Link href="/settings/membership">
-              <Card className="border-border hover:border-primary transition-colors cursor-pointer">
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
-                        <CreditCard className="w-6 h-6 text-primary" />
-                      </div>
-                      <div>
-                        <h3 className="font-semibold text-foreground mb-1">
-                          Membership & Billing
-                        </h3>
-                        <p className="text-sm text-muted-foreground">
-                          Manage your subscription, billing, and payment methods
-                        </p>
-                      </div>
-                    </div>
-                    <ChevronRight className="w-5 h-5 text-muted-foreground" />
-                  </div>
-                </CardContent>
-              </Card>
-            </Link>
-
-            {/* Notification Settings */}
-            <Link href="/settings/notifications">
-              <Card className="border-border hover:border-primary transition-colors cursor-pointer">
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
-                        <Bell className="w-6 h-6 text-primary" />
-                      </div>
-                      <div>
-                        <h3 className="font-semibold text-foreground mb-1">
-                          Notifications
-                        </h3>
-                        <p className="text-sm text-muted-foreground">
-                          Configure alerts for queue updates and court
-                          assignments
-                        </p>
-                      </div>
-                    </div>
-                    <ChevronRight className="w-5 h-5 text-muted-foreground" />
-                  </div>
-                </CardContent>
-              </Card>
-            </Link>
-          </div>
-
           {/* Quick Actions */}
           <Card className="border-border mt-6">
             <CardHeader>
@@ -323,18 +194,6 @@ export default function SettingsPage() {
                   Browse Events
                 </Link>
               </Button>
-              {!membership?.isPaid && (
-                <Button
-                  variant="default"
-                  className="w-full justify-start"
-                  asChild
-                >
-                  <Link href="/membership">
-                    <Crown className="w-4 h-4 mr-2" />
-                    Upgrade Membership
-                  </Link>
-                </Button>
-              )}
               {userDetails?.is_admin && (
                 <Button
                   variant="outline"

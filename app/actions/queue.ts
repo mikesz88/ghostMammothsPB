@@ -3,6 +3,21 @@
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { sendQueueNotification } from "./notifications";
+import type { Database } from "@/supabase/supa-schema";
+import type { GroupSize } from "@/lib/types";
+
+type QueueEntryRow = Database["public"]["Tables"]["queue_entries"]["Row"];
+type CourtAssignmentInsert = Database["public"]["Tables"]["court_assignments"]["Insert"];
+
+// Custom type for the query result with partial user data
+type QueueEntryWithUser = QueueEntryRow & { 
+  user: {
+    id: string;
+    name: string;
+    email: string;
+    skill_level: string;
+  } | null;
+};
 
 export async function getQueue(eventId: string) {
   const supabase = await createClient();
@@ -216,27 +231,40 @@ export async function assignPlayersToNextCourt(eventId: string) {
   const { QueueManager } = await import("@/lib/queue-manager");
 
   // Map to QueueEntry type
-  const waitingQueue = (queueData || []).map((entry: any) => ({
-    id: entry.id,
-    eventId: entry.event_id,
-    userId: entry.user_id,
-    groupId: entry.group_id,
-    groupSize: entry.group_size || 1,
-    player_names: entry.player_names || [],
-    position: entry.position,
-    status: entry.status,
-    joinedAt: new Date(entry.joined_at),
-    user: entry.user
-      ? {
-          id: entry.user.id,
-          name: entry.user.name,
-          email: entry.user.email,
-          skillLevel: entry.user.skill_level,
-          isAdmin: false,
-          createdAt: new Date(),
-        }
-      : undefined,
-  }));
+  const waitingQueue = (queueData || []).map((entry: QueueEntryWithUser) => {
+    // Parse player_names JSON if it exists
+    let playerNamesArray: Array<{ name: string; skillLevel: string }> = [];
+    if (entry.player_names) {
+      try {
+        const parsed = entry.player_names as unknown as Array<{ name: string; skillLevel: string }>;
+        playerNamesArray = Array.isArray(parsed) ? parsed : [];
+      } catch {
+        playerNamesArray = [];
+      }
+    }
+    
+    return {
+      id: entry.id,
+      eventId: entry.event_id,
+      userId: entry.user_id,
+      groupId: entry.group_id || undefined,
+      groupSize: (entry.group_size || 1) as GroupSize,
+      player_names: playerNamesArray,
+      position: entry.position,
+      status: entry.status as "waiting" | "playing" | "completed",
+      joinedAt: new Date(entry.joined_at),
+      user: entry.user
+        ? {
+            id: entry.user.id,
+            name: entry.user.name,
+            email: entry.user.email,
+            skillLevel: entry.user.skill_level as "beginner" | "intermediate" | "advanced" | "pro",
+            isAdmin: false,
+            createdAt: new Date(),
+          }
+        : undefined,
+    };
+  });
 
   const nextPlayers = QueueManager.getNextPlayers(
     waitingQueue,
@@ -288,7 +316,7 @@ export async function assignPlayersToNextCourt(eventId: string) {
     .not("ended_at", "is", null);
 
   // Create court assignment with dynamic player slots
-  const assignmentData: any = {
+  const assignmentData: CourtAssignmentInsert = {
     event_id: eventId,
     court_number: availableCourt,
     started_at: new Date().toISOString(),

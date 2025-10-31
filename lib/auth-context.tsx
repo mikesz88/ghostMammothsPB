@@ -2,18 +2,18 @@
 
 import { createContext, useContext, useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
-import type { User, Session } from "@supabase/supabase-js";
+import type { User, Session, AuthError } from "@supabase/supabase-js";
 
 interface AuthContextType {
   user: User | null;
   session: Session | null;
   loading: boolean;
-  signIn: (email: string, password: string) => Promise<{ error: any }>;
+  signIn: (email: string, password: string) => Promise<{ error: AuthError | null }>;
   signUp: (
     email: string,
     password: string,
     userData: { name: string; skillLevel: string; phone?: string }
-  ) => Promise<{ error: any }>;
+  ) => Promise<{ error: AuthError | null }>;
   signOut: () => Promise<void>;
 }
 
@@ -106,9 +106,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (data.user.identities && data.user.identities.length === 0) {
         // User already exists
         return {
-          error: new Error(
-            "An account with this email already exists. Please log in instead."
-          ),
+          error: {
+            message: "An account with this email already exists. Please log in instead.",
+            status: 400,
+            code: "user_already_exists",
+            __isAuthError: true,
+          } as unknown as AuthError,
         };
       }
 

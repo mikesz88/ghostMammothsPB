@@ -135,7 +135,6 @@ export async function createCustomerPortalSession(
 
     console.log("Customer verified in Stripe:", {
       id: customer.id,
-      email: (customer as any).email,
     });
 
     const session = await stripe.billingPortal.sessions.create({

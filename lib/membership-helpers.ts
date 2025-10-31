@@ -94,7 +94,7 @@ export async function getUserMembership(
   const isPaid = membership.tier.price > 0; // Any tier with price > 0 is paid
 
   return {
-    status: membership.status,
+    status: membership.status as MembershipStatus,
     tierName: membership.tier.name,
     tierDisplayName: membership.tier.display_name,
     tierPrice: membership.tier.price,
@@ -104,7 +104,7 @@ export async function getUserMembership(
     currentPeriodEnd: membership.current_period_end
       ? new Date(membership.current_period_end)
       : undefined,
-    cancelAtPeriodEnd: membership.cancel_at_period_end,
+    cancelAtPeriodEnd: membership.cancel_at_period_end || undefined,
   };
 }
 

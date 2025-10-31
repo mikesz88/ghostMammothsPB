@@ -3,6 +3,8 @@ import { stripe } from "@/lib/stripe/server";
 import { createClient } from "@/lib/supabase/server";
 import Stripe from "stripe";
 
+type SupabaseClient = Awaited<ReturnType<typeof createClient>>;
+
 export async function POST(request: NextRequest) {
   const body = await request.text();
   const signature = request.headers.get("stripe-signature");
@@ -86,7 +88,7 @@ export async function POST(request: NextRequest) {
 
 async function handleCheckoutCompleted(
   session: Stripe.Checkout.Session,
-  supabase: any
+  supabase: SupabaseClient
 ) {
   const userId = session.metadata?.user_id;
   const tierId = session.metadata?.tier_id;
@@ -117,6 +119,7 @@ async function handleCheckoutCompleted(
     price: tier.price,
   });
 
+  const sessionData = session as unknown as { customer?: string | { id?: string }; subscription?: string | { id?: string }; payment_intent?: string | { id?: string } };
   // Create or update user membership record
   const { error: membershipError } = await supabase
     .from("user_memberships")
@@ -125,8 +128,8 @@ async function handleCheckoutCompleted(
         user_id: userId,
         tier_id: tierId,
         status: "active",
-        stripe_customer_id: session.customer as string,
-        stripe_subscription_id: session.subscription as string,
+        stripe_customer_id: typeof sessionData.customer === 'string' ? sessionData.customer : sessionData.customer?.id || null,
+        stripe_subscription_id: typeof sessionData.subscription === 'string' ? sessionData.subscription : sessionData.subscription?.id || null,
         updated_at: new Date().toISOString(),
       },
       {
@@ -143,23 +146,23 @@ async function handleCheckoutCompleted(
     .from("users")
     .update({
       membership_status: tier.name,
-      stripe_customer_id: session.customer as string,
+      stripe_customer_id: typeof sessionData.customer === 'string' ? sessionData.customer : sessionData.customer?.id || null,
     })
     .eq("id", userId);
 
   // Record initial payment in payments table
-  if (session.amount_total && session.payment_intent) {
+  if (session.amount_total && sessionData.payment_intent) {
     await supabase.from("payments").insert({
       user_id: userId,
       amount: session.amount_total / 100, // Convert from cents
       currency: session.currency?.toUpperCase() || "USD",
       payment_type: "membership",
-      stripe_payment_intent_id: session.payment_intent as string,
+      stripe_payment_intent_id: typeof sessionData.payment_intent === 'string' ? sessionData.payment_intent : sessionData.payment_intent?.id || null,
       status: "succeeded",
       description: `${tier.display_name} - Initial subscription payment`,
       metadata: {
         checkout_session_id: session.id,
-        subscription_id: session.subscription,
+        subscription_id: typeof sessionData.subscription === 'string' ? sessionData.subscription : sessionData.subscription?.id || null,
         tier_id: tierId,
         tier_name: tier.name,
       },
@@ -175,7 +178,7 @@ async function handleCheckoutCompleted(
 
 async function handleSubscriptionUpdate(
   subscription: Stripe.Subscription,
-  supabase: any
+  supabase: SupabaseClient
 ) {
   const userId = subscription.metadata.user_id;
   const tierId = subscription.metadata.tier_id;
@@ -204,20 +207,17 @@ async function handleSubscriptionUpdate(
   }
 
   // Upsert user membership
+  const subscriptionData = subscription as unknown as { current_period_start?: number; current_period_end?: number; cancel_at_period_end?: boolean };
   const { error } = await supabase.from("user_memberships").upsert(
     {
       user_id: userId,
       tier_id: tierId,
       status: subscription.status,
-      stripe_customer_id: subscription.customer as string,
+      stripe_customer_id: typeof subscription.customer === 'string' ? subscription.customer : subscription.customer.id,
       stripe_subscription_id: subscription.id,
-      current_period_start: new Date(
-        (subscription as any).current_period_start * 1000
-      ).toISOString(),
-      current_period_end: new Date(
-        (subscription as any).current_period_end * 1000
-      ).toISOString(),
-      cancel_at_period_end: (subscription as any).cancel_at_period_end || false,
+      current_period_start: subscriptionData.current_period_start ? new Date(subscriptionData.current_period_start * 1000).toISOString() : null,
+      current_period_end: subscriptionData.current_period_end ? new Date(subscriptionData.current_period_end * 1000).toISOString() : null,
+      cancel_at_period_end: subscriptionData.cancel_at_period_end || false,
       updated_at: new Date().toISOString(),
     },
     {
@@ -235,7 +235,7 @@ async function handleSubscriptionUpdate(
     .from("users")
     .update({
       membership_status: tier.name,
-      stripe_customer_id: subscription.customer as string,
+      stripe_customer_id: typeof subscription.customer === 'string' ? subscription.customer : subscription.customer.id,
     })
     .eq("id", userId);
 
@@ -246,7 +246,7 @@ async function handleSubscriptionUpdate(
 
 async function handleSubscriptionDeleted(
   subscription: Stripe.Subscription,
-  supabase: any
+  supabase: SupabaseClient
 ) {
   const userId = subscription.metadata.user_id;
 
@@ -274,9 +274,10 @@ async function handleSubscriptionDeleted(
   console.log(`Subscription cancelled for user ${userId}`);
 }
 
-async function handlePaymentSucceeded(invoice: Stripe.Invoice, supabase: any) {
-  const subscription = (invoice as any).subscription;
-  const userId = (invoice as any).subscription_details?.metadata?.user_id;
+async function handlePaymentSucceeded(invoice: Stripe.Invoice, supabase: SupabaseClient) {
+  const invoiceData = invoice as unknown as { subscription?: string | { id?: string }; payment_intent?: string | { id?: string } };
+  const subscription = typeof invoiceData.subscription === 'string' ? invoiceData.subscription : invoiceData.subscription?.id || null;
+  const userId = invoice.lines.data[0]?.metadata?.user_id || null;
 
   if (!userId) {
     console.error("No user_id in invoice metadata");
@@ -293,12 +294,13 @@ async function handlePaymentSucceeded(invoice: Stripe.Invoice, supabase: any) {
   const tierName = membership?.tier?.display_name || "Membership";
 
   // Record payment
+  const paymentIntentId = typeof invoiceData.payment_intent === 'string' ? invoiceData.payment_intent : invoiceData.payment_intent?.id || null;
   await supabase.from("payments").insert({
     user_id: userId,
     amount: (invoice.amount_paid || 0) / 100, // Convert from cents
     currency: invoice.currency.toUpperCase(),
     payment_type: "membership",
-    stripe_payment_intent_id: (invoice as any).payment_intent as string,
+    stripe_payment_intent_id: paymentIntentId,
     status: "succeeded",
     description: `${tierName} payment`,
     metadata: {
@@ -312,8 +314,9 @@ async function handlePaymentSucceeded(invoice: Stripe.Invoice, supabase: any) {
   );
 }
 
-async function handlePaymentFailed(invoice: Stripe.Invoice, supabase: any) {
-  const userId = (invoice as any).subscription_details?.metadata?.user_id;
+async function handlePaymentFailed(invoice: Stripe.Invoice, supabase: SupabaseClient) {
+  const invoiceData = invoice as unknown as { subscription?: string | { id?: string } };
+  const userId = invoice.lines.data[0]?.metadata?.user_id || null;
 
   if (!userId) {
     console.error("No user_id in invoice metadata");
@@ -345,6 +348,7 @@ async function handlePaymentFailed(invoice: Stripe.Invoice, supabase: any) {
     .eq("id", userId);
 
   // Record failed payment
+  const subscriptionId = typeof invoiceData.subscription === 'string' ? invoiceData.subscription : invoiceData.subscription?.id || null;
   await supabase.from("payments").insert({
     user_id: userId,
     amount: (invoice.amount_due || 0) / 100,
@@ -354,7 +358,7 @@ async function handlePaymentFailed(invoice: Stripe.Invoice, supabase: any) {
     description: `Failed ${tierName} payment`,
     metadata: {
       invoice_id: invoice.id,
-      subscription_id: (invoice as any).subscription,
+      subscription_id: subscriptionId,
     },
   });
 

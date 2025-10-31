@@ -35,10 +35,10 @@ interface User {
   id: string;
   email: string;
   name: string;
-  phone?: string;
+  phone?: string | null;
   skill_level: string;
   is_admin: boolean;
-  membership_status?: string;
+  membership_status?: string | null;
   created_at: string;
 }
 

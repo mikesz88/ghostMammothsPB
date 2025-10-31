@@ -58,7 +58,9 @@ export async function createEvent(formData: FormData) {
     name: formData.get("name") as string,
     location: formData.get("location") as string,
     date: formData.get("date") as string,
+    time: "00:00:00", // Default time if not provided
     court_count: parseInt(formData.get("court_count") as string),
+    num_courts: formData.get("court_count") as string,
     team_size: parseInt(formData.get("team_size") as string),
     rotation_type: formData.get("rotation_type") as string,
     status: "active",

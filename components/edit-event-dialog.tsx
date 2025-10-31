@@ -44,6 +44,7 @@ export function EditEventDialog({ open, onOpenChange, event, onUpdate }: EditEve
         location,
         date: eventDate,
         courtCount: Number.parseInt(courtCount),
+        teamSize: event.teamSize,
         rotationType,
         status: event.status,
       })

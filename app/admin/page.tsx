@@ -28,7 +28,10 @@ import { CreateEventDialog } from "@/components/create-event-dialog";
 import { EditEventDialog } from "@/components/edit-event-dialog";
 import { Header } from "@/components/ui/header";
 import { createClient } from "@/lib/supabase/client";
-import type { Event } from "@/lib/types";
+import type { Event, TeamSize, RotationType, EventStatus } from "@/lib/types";
+import type { Database } from "@/supabase/supa-schema";
+
+type EventRow = Database["public"]["Tables"]["events"]["Row"];
 
 export default function AdminPage() {
   const [events, setEvents] = useState<Event[]>([]);
@@ -53,18 +56,21 @@ export default function AdminPage() {
       console.error("Error fetching events:", error);
     } else {
       // Convert date strings to Date objects and parse court_count
-      const eventsWithDates = (data || []).map((event: any) => ({
-        ...event,
+      const eventsWithDates = (data || []).map((event: EventRow) => ({
+        id: event.id,
+        name: event.name,
+        location: event.location,
         date:
           event.date && event.time
             ? new Date(`${event.date}T${event.time}`)
             : new Date(event.date),
         courtCount:
-          parseInt(event.court_count) || parseInt(event.num_courts) || 0,
-        teamSize: event.team_size || 2,
-        rotationType: event.rotation_type,
+          parseInt(event.court_count.toString()) || parseInt(event.num_courts) || 0,
+        teamSize: event.team_size as TeamSize || 2,
+        rotationType: event.rotation_type as RotationType,
+        status: event.status as EventStatus,
         createdAt: new Date(event.created_at),
-        updatedAt: event.updated_at ? new Date(event.updated_at) : new Date(),
+        updatedAt: event.updated_at ? new Date(event.updated_at) : undefined,
       }));
       setEvents(eventsWithDates);
     }

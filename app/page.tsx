@@ -1,9 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useEffect, Suspense } from "react";
-import { useSearchParams } from "next/navigation";
-import { Users, Calendar, Trophy, Zap, AlertCircle } from "lucide-react";
+import {
+  Calendar,
+  MapPin,
+  Users,
+  Trophy,
+  ArrowRight,
+  Loader2,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -12,195 +17,157 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
 import { Header } from "@/components/ui/header";
+import { useRealtimeEvents } from "@/lib/hooks/use-realtime-events";
 import { useAuth } from "@/lib/auth-context";
-import { createClient } from "@/lib/supabase/client";
 
-function HomeContent() {
+export default function HomePage() {
+  const { events, loading } = useRealtimeEvents();
   const { user } = useAuth();
-  const searchParams = useSearchParams();
-  const [isAdmin, setIsAdmin] = useState(false);
-  const [showAdminError, setShowAdminError] = useState(false);
 
-  useEffect(() => {
-    const checkAdmin = async () => {
-      if (user) {
-        const supabase = createClient();
-        const { data } = await supabase
-          .from("users")
-          .select("is_admin")
-          .eq("id", user.id)
-          .single();
-        setIsAdmin(data?.is_admin || false);
-      } else {
-        setIsAdmin(false);
-      }
-    };
-
-    checkAdmin();
-  }, [user]);
-
-  useEffect(() => {
-    if (searchParams.get("error") === "admin-access-required") {
-      setShowAdminError(true);
-      setTimeout(() => setShowAdminError(false), 5000);
-    }
-  }, [searchParams]);
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header />
+        <div className="container mx-auto px-4 py-20">
+          <div className="flex items-center justify-center">
+            <Loader2 className="w-8 h-8 animate-spin" />
+            <span className="ml-2 text-muted-foreground">
+              Loading events...
+            </span>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
       <Header />
 
-      {/* Hero Section */}
-      <section className="container mx-auto px-4 py-20 text-center">
-        {showAdminError && (
-          <div className="max-w-2xl mx-auto mb-6">
-            <Alert variant="destructive">
-              <AlertCircle className="w-4 h-4" />
-              <AlertDescription>
-                Admin access required. You don't have permission to access the
-                admin dashboard.
-              </AlertDescription>
-            </Alert>
-          </div>
-        )}
+      {/* Page Content */}
+      <div className="container mx-auto px-4 py-12">
+        <div className="mb-8">
+          <h1 className="text-4xl font-bold text-foreground mb-2">
+            Upcoming Events
+          </h1>
+          <p className="text-muted-foreground">
+            Join the queue for your favorite pickleball events
+          </p>
 
-        <h1 className="text-5xl font-bold text-foreground mb-6 text-balance">
-          Smart Queue Management for Pickleball Events
-        </h1>
-        <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto text-pretty">
-          Join the queue, track your position, and get notified when it's your
-          turn to play. Real-time court assignments and seamless rotation
-          management.
-        </p>
-        <div className="flex items-center justify-center gap-4">
-          {user ? (
-            <>
-              <Button size="lg" asChild>
-                <Link href="/events">View Events</Link>
-              </Button>
-              {isAdmin && (
-                <Button size="lg" variant="outline" asChild>
-                  <Link href="/admin">Admin Dashboard</Link>
-                </Button>
-              )}
-            </>
-          ) : (
-            <>
-              <Button size="lg" asChild>
-                <Link href="/signup">Sign Up to Join Events</Link>
-              </Button>
-              <Button size="lg" variant="outline" asChild>
-                <Link href="/login">Login</Link>
-              </Button>
-            </>
+          {/* Call-to-action for anonymous users */}
+          {!user && (
+            <div className="mt-6 p-4 bg-primary/10 border border-primary/20 rounded-lg">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div>
+                  <h3 className="text-lg font-semibold text-foreground mb-1">
+                    Ready to join the action?
+                  </h3>
+                  <p className="text-muted-foreground">
+                    Sign up to join event queues and start playing!
+                  </p>
+                </div>
+                <div className="flex gap-2">
+                  <Button variant="outline" asChild>
+                    <Link href="/login">Login</Link>
+                  </Button>
+                  <Button asChild>
+                    <Link href="/signup">Sign Up</Link>
+                  </Button>
+                </div>
+              </div>
+            </div>
           )}
         </div>
-      </section>
 
-      {/* Features Grid */}
-      <section className="container mx-auto px-4 py-16">
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <Card className="border-border bg-card">
-            <CardHeader>
-              <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-4">
-                <Users className="w-6 h-6 text-primary" />
-              </div>
-              <CardTitle className="text-foreground">Real-time Queue</CardTitle>
-              <CardDescription>
-                Join the queue and see your position update in real-time as
-                games progress
-              </CardDescription>
-            </CardHeader>
-          </Card>
-
-          <Card className="border-border bg-card">
-            <CardHeader>
-              <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-4">
-                <Zap className="w-6 h-6 text-primary" />
-              </div>
-              <CardTitle className="text-foreground">
-                Smart Assignments
-              </CardTitle>
-              <CardDescription>
-                Automatic court assignments with configurable rotation logic for
-                fair play
-              </CardDescription>
-            </CardHeader>
-          </Card>
-
-          <Card className="border-border bg-card">
-            <CardHeader>
-              <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-4">
-                <Calendar className="w-6 h-6 text-primary" />
-              </div>
-              <CardTitle className="text-foreground">
-                Event Management
-              </CardTitle>
-              <CardDescription>
-                Create and manage multiple events with custom court counts and
-                rules
-              </CardDescription>
-            </CardHeader>
-          </Card>
-
-          <Card className="border-border bg-card">
-            <CardHeader>
-              <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-4">
-                <Trophy className="w-6 h-6 text-primary" />
-              </div>
-              <CardTitle className="text-foreground">Group Support</CardTitle>
-              <CardDescription>
-                Join as singles, duos, triples, or full quads with your friends
-              </CardDescription>
-            </CardHeader>
-          </Card>
-        </div>
-      </section>
-
-      {/* CTA Section */}
-      <section className="container mx-auto px-4 py-20">
-        <Card className="border-border bg-card">
-          <CardContent className="p-12 text-center">
-            <h2 className="text-3xl font-bold text-foreground mb-4">
-              Ready to streamline your pickleball events?
-            </h2>
-            <p className="text-muted-foreground mb-8 max-w-xl mx-auto">
-              Get started today and experience hassle-free queue management with
-              real-time updates
+        {events.length === 0 ? (
+          <div className="text-center py-12">
+            <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
+              <Calendar className="w-8 h-8 text-muted-foreground" />
+            </div>
+            <h3 className="text-xl font-semibold text-foreground mb-2">
+              No Events Available
+            </h3>
+            <p className="text-muted-foreground mb-4">
+              Check back later for upcoming pickleball events.
             </p>
-            <Button size="lg" asChild>
-              <Link href="/events">Browse Events</Link>
-            </Button>
-          </CardContent>
-        </Card>
-      </section>
-
-      {/* Footer */}
-      <footer className="border-t border-border mt-20">
-        <div className="container mx-auto px-4 py-8 text-center text-muted-foreground">
-          <p>&copy; 2025 Ghost Mammoths Pickleball. All rights reserved.</p>
-        </div>
-      </footer>
-    </div>
-  );
-}
-
-export default function HomePage() {
-  return (
-    <Suspense
-      fallback={
-        <div className="min-h-screen bg-background">
-          <Header />
-          <div className="flex items-center justify-center py-20">
-            <div className="text-muted-foreground">Loading...</div>
+            {user && (
+              <Button asChild>
+                <Link href="/admin">Create Event</Link>
+              </Button>
+            )}
           </div>
-        </div>
-      }
-    >
-      <HomeContent />
-    </Suspense>
+        ) : (
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {events.map((event) => (
+              <Card
+                key={event.id}
+                className="border-border bg-card hover:shadow-md transition-shadow"
+              >
+                <CardHeader>
+                  <div className="flex items-start justify-between mb-2">
+                    <CardTitle className="text-foreground text-lg">
+                      {event.name}
+                    </CardTitle>
+                    <Badge variant="default" className="text-sm">
+                      {event.status}
+                    </Badge>
+                  </div>
+                  <CardDescription className="space-y-1">
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                      <MapPin className="w-4 h-4" />
+                      {event.location}
+                    </div>
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                      <Calendar className="w-4 h-4" />
+                      {new Date(event.date).toLocaleDateString()} at{" "}
+                      {new Date(event.date).toLocaleTimeString([], {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                    </div>
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex flex-col gap-2 text-sm text-muted-foreground">
+                      <div className="flex items-center gap-1">
+                        <Users className="w-4 h-4" />
+                        <span>
+                          {event.teamSize === 1
+                            ? "Solo (1v1)"
+                            : event.teamSize === 2
+                            ? "Doubles (2v2)"
+                            : event.teamSize === 3
+                            ? "Triplets (3v3)"
+                            : "Quads (4v4)"}{" "}
+                          • {event.courtCount} courts
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <Trophy className="w-4 h-4" />
+                        <span>
+                          {event.rotationType
+                            .replace("-", " ")
+                            .replace(/\b\w/g, (l) => l.toUpperCase())}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                  <Button asChild className="w-full">
+                    <Link href={`/events/${event.id}`}>
+                      View Event
+                      <ArrowRight className="w-4 h-4 ml-2" />
+                    </Link>
+                  </Button>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
   );
 }
