@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/auth-context";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
-import { User, LogOut, Settings, ArrowLeft, Shield } from "lucide-react";
+import { User, LogOut, Settings, ArrowLeft, Shield, Crown } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -98,7 +98,22 @@ export const Header = ({
   );
 
   // Default navigation
-  const DefaultNav = () => null;
+  const DefaultNav = () => (
+    <nav className="flex items-center gap-4">
+      <Link
+        href="/events"
+        className="text-muted-foreground hover:text-foreground transition-colors"
+      >
+        Events
+      </Link>
+      <Link
+        href="/membership"
+        className="text-muted-foreground hover:text-foreground transition-colors"
+      >
+        Membership
+      </Link>
+    </nav>
+  );
 
   // Admin navigation
   const AdminNav = () => (
@@ -179,6 +194,12 @@ export const Header = ({
             <Link href="/settings" className="cursor-pointer">
               <Settings className="w-4 h-4 mr-2" />
               Settings
+            </Link>
+          </DropdownMenuItem>
+          <DropdownMenuItem asChild>
+            <Link href="/settings/membership" className="cursor-pointer">
+              <Crown className="w-4 h-4 mr-2" />
+              Membership
             </Link>
           </DropdownMenuItem>
           {isAdmin && (

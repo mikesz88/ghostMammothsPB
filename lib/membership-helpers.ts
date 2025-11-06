@@ -140,6 +140,14 @@ export async function canUserJoinEvent(
   // Get user's membership
   const membership = await getUserMembership(userId);
 
+  if (!membership.isPaid || !membership.isActive) {
+    return {
+      canJoin: false,
+      reason: "A paid membership is required to join the queue.",
+      requiresPayment: false,
+    };
+  }
+
   // Check if user has already registered for this event
   const { data: registration } = await supabase
     .from("event_registrations")

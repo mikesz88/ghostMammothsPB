@@ -406,9 +406,26 @@ export default function EventDetailPage(props: {
 
       if (error) {
         console.error("Error joining queue:", error);
-        toast.error("Failed to join queue", {
-          description: "Please try again.",
-        });
+        const isMembershipError =
+          typeof error === "string" &&
+          error.toLowerCase().includes("membership");
+
+        if (isMembershipError) {
+          toast.error("Membership required", {
+            description:
+              "Upgrade your membership to join the queue for this event.",
+            action: {
+              label: "View Plans",
+              onClick: () => {
+                window.location.href = "/membership";
+              },
+            },
+          });
+        } else {
+          toast.error("Failed to join queue", {
+            description: "Please try again.",
+          });
+        }
       } else {
         setShowJoinDialog(false);
 

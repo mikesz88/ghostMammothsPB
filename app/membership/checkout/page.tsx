@@ -315,7 +315,7 @@ function CheckoutContent() {
           </Button>
 
           <p className="text-center text-sm text-muted-foreground mt-4">
-            You'll be redirected to Stripe's secure checkout page
+            You&apos;ll be redirected to Stripe&apos;s secure checkout page
           </p>
 
           {/* Cancel Link */}

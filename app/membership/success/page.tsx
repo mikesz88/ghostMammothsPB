@@ -109,7 +109,7 @@ function MembershipSuccessContent() {
                 Something went wrong
               </h2>
               <p className="text-muted-foreground mb-6">
-                We couldn't load your membership details.
+                We couldn&apos;t load your membership details.
               </p>
               <Button asChild>
                 <Link href="/membership">Back to Membership</Link>
@@ -175,7 +175,7 @@ function MembershipSuccessContent() {
                 )}
                 <li className="flex items-center justify-center gap-2">
                   <Check className="w-4 h-4 text-primary" />
-                  SMS & email notifications
+                  email notifications
                 </li>
                 <li className="flex items-center justify-center gap-2">
                   <Check className="w-4 h-4 text-primary" />
@@ -194,7 +194,8 @@ function MembershipSuccessContent() {
             </div>
 
             <p className="text-sm text-muted-foreground mt-6">
-              You'll receive a confirmation email with your receipt shortly.
+              You&apos;ll receive a confirmation email with your receipt
+              shortly.
             </p>
           </CardContent>
         </Card>
