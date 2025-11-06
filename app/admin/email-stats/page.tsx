@@ -15,8 +15,16 @@ import { Header } from "@/components/ui/header";
 import { Badge } from "@/components/ui/badge";
 import { getEmailStats } from "@/app/actions/notifications";
 
+type EmailStats = {
+  total: number;
+  successful: number;
+  failed: number;
+  byType: Record<string, number>;
+  logs: unknown[];
+};
+
 export default function EmailStatsPage() {
-  const [stats, setStats] = useState<any>(null);
+  const [stats, setStats] = useState<EmailStats | null>(null);
   const [timeRange, setTimeRange] = useState<
     "today" | "week" | "month" | "all"
   >("week");
@@ -29,7 +37,7 @@ export default function EmailStatsPage() {
   const fetchStats = async () => {
     setLoading(true);
     const result = await getEmailStats(timeRange);
-    if (!result.error) {
+    if (!result.error && result.total) {
       setStats(result);
     }
     setLoading(false);
@@ -224,7 +232,7 @@ export default function EmailStatsPage() {
                   </p>
                 </div>
               </div>
-              {timeRange === "week" && stats?.total > 0 && (
+              {timeRange === "week" && stats?.total && stats.total > 0 && (
                 <p className="text-sm text-muted-foreground mt-4">
                   Estimated monthly cost:{" "}
                   <strong>
@@ -236,7 +244,7 @@ export default function EmailStatsPage() {
                   </strong>
                 </p>
               )}
-              {timeRange === "today" && stats?.total > 0 && (
+              {timeRange === "today" && stats?.total && stats.total > 0 && (
                 <p className="text-sm text-muted-foreground mt-4">
                   If this daily rate continues, estimated monthly cost:{" "}
                   <strong>

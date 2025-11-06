@@ -7,10 +7,11 @@ import type { Database } from "@/supabase/supa-schema";
 import type { GroupSize } from "@/lib/types";
 
 type QueueEntryRow = Database["public"]["Tables"]["queue_entries"]["Row"];
-type CourtAssignmentInsert = Database["public"]["Tables"]["court_assignments"]["Insert"];
+type CourtAssignmentInsert =
+  Database["public"]["Tables"]["court_assignments"]["Insert"];
 
 // Custom type for the query result with partial user data
-type QueueEntryWithUser = QueueEntryRow & { 
+type QueueEntryWithUser = QueueEntryRow & {
   user: {
     id: string;
     name: string;
@@ -150,8 +151,8 @@ export async function reorderQueue(eventId: string) {
 
   if (queue) {
     // Track notifications to avoid spamming
-    const upNextNotifications: Promise<any>[] = [];
-    const positionUpdateNotifications: Promise<any>[] = [];
+    const upNextNotifications: Promise<unknown>[] = [];
+    const positionUpdateNotifications: Promise<unknown>[] = [];
 
     // Update positions
     for (let i = 0; i < queue.length; i++) {
@@ -236,13 +237,16 @@ export async function assignPlayersToNextCourt(eventId: string) {
     let playerNamesArray: Array<{ name: string; skillLevel: string }> = [];
     if (entry.player_names) {
       try {
-        const parsed = entry.player_names as unknown as Array<{ name: string; skillLevel: string }>;
+        const parsed = entry.player_names as unknown as Array<{
+          name: string;
+          skillLevel: string;
+        }>;
         playerNamesArray = Array.isArray(parsed) ? parsed : [];
       } catch {
         playerNamesArray = [];
       }
     }
-    
+
     return {
       id: entry.id,
       eventId: entry.event_id,
@@ -258,7 +262,11 @@ export async function assignPlayersToNextCourt(eventId: string) {
             id: entry.user.id,
             name: entry.user.name,
             email: entry.user.email,
-            skillLevel: entry.user.skill_level as "beginner" | "intermediate" | "advanced" | "pro",
+            skillLevel: entry.user.skill_level as
+              | "beginner"
+              | "intermediate"
+              | "advanced"
+              | "pro",
             isAdmin: false,
             createdAt: new Date(),
           }
