@@ -32,7 +32,7 @@ export interface MembershipTier {
   displayName: string;
   description?: string;
   price: number;
-  billingPeriod: "monthly" | "one-time" | "free";
+  billingPeriod: "monthly" | "annual" | "one-time" | "free";
   stripePriceId?: string;
   features: {
     eventAccess?: "pay_per_event" | "unlimited";

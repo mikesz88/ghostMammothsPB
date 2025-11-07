@@ -137,10 +137,20 @@ export async function canUserJoinEvent(
     };
   }
 
+  // Check if user is an admin (admins can bypass membership restrictions)
+  const { data: userRecord } = await supabase
+    .from("users")
+    .select("is_admin")
+    .eq("id", userId)
+    .single();
+
+  const isAdminUser = !!userRecord?.is_admin;
+
   // Get user's membership
   const membership = await getUserMembership(userId);
+  const hasActivePaidMembership = membership.isPaid && membership.isActive;
 
-  if (!membership.isPaid || !membership.isActive) {
+  if (!hasActivePaidMembership && !isAdminUser) {
     return {
       canJoin: false,
       reason: "A paid membership is required to join the queue.",
@@ -172,7 +182,7 @@ export async function canUserJoinEvent(
   }
 
   // Event requires membership
-  if (event.requires_membership && !membership.isPaid) {
+  if (event.requires_membership && !hasActivePaidMembership && !isAdminUser) {
     return {
       canJoin: false,
       reason: "This event requires a paid membership",
@@ -181,7 +191,7 @@ export async function canUserJoinEvent(
   }
 
   // Event is free for members and user has active paid membership
-  if (event.free_for_members && membership.isPaid && membership.isActive) {
+  if (event.free_for_members && (hasActivePaidMembership || isAdminUser)) {
     return {
       canJoin: true,
       requiresPayment: false,
@@ -189,11 +199,13 @@ export async function canUserJoinEvent(
   }
 
   // User needs to pay for this event
+  const requiresPayment = !isAdminUser;
+
   return {
     canJoin: true,
-    reason: "Payment required to join this event",
-    requiresPayment: true,
-    amount: event.price,
+    reason: requiresPayment ? "Payment required to join this event" : undefined,
+    requiresPayment,
+    amount: requiresPayment ? event.price : undefined,
   };
 }
 
@@ -239,6 +251,18 @@ export function getMembershipDisplayInfo(tierName: string) {
         "Exclusive events access",
         "10% merchandise discount",
         "Email & SMS notifications",
+      ],
+    },
+    annual: {
+      displayName: "Annual Member",
+      description: "All the perks with two months free",
+      color: "purple",
+      features: [
+        "Unlimited event access",
+        "Priority queue position",
+        "Exclusive events access",
+        "Merchandise discounts",
+        "Special member surprises",
       ],
     },
   };

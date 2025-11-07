@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { User, Mail, Calendar, Shield, Loader2 } from "lucide-react";
+import { User, Mail, Calendar, Shield, Loader2, Crown } from "lucide-react";
 import { Header } from "@/components/ui/header";
 import {
   Card,
@@ -184,6 +184,16 @@ export default function SettingsPage() {
               <CardTitle className="text-foreground">Quick Actions</CardTitle>
             </CardHeader>
             <CardContent className="space-y-2">
+              <Button
+                variant="outline"
+                className="w-full justify-start"
+                asChild
+              >
+                <Link href="/settings/membership">
+                  <Crown className="w-4 h-4 mr-2" />
+                  Manage Membership
+                </Link>
+              </Button>
               <Button
                 variant="outline"
                 className="w-full justify-start"

@@ -84,13 +84,16 @@ export async function joinQueue(
   if (!hasPaidMembership) {
     const { data: userRecord } = await supabase
       .from("users")
-      .select("membership_status")
+      .select("membership_status, is_admin")
       .eq("id", userId)
       .single();
 
+    const isAdminUser = !!userRecord?.is_admin;
+
     if (
-      userRecord?.membership_status &&
-      userRecord.membership_status !== "free"
+      isAdminUser ||
+      (userRecord?.membership_status &&
+        userRecord.membership_status !== "free")
     ) {
       hasPaidMembership = true;
     }
