@@ -26,8 +26,6 @@ export async function POST() {
 
     // If no subscription ID but we have customer ID, try to find it in Stripe
     if (!subscriptionId && membership?.stripe_customer_id) {
-      console.log("No subscription ID in DB, fetching from Stripe...");
-
       try {
         const subscriptions = await stripe.subscriptions.list({
           customer: membership.stripe_customer_id,
@@ -37,8 +35,6 @@ export async function POST() {
 
         if (subscriptions.data.length > 0) {
           subscriptionId = subscriptions.data[0].id;
-          console.log("Found active subscription in Stripe:", subscriptionId);
-
           // Update database with the subscription ID
           await supabase
             .from("user_memberships")
@@ -55,7 +51,6 @@ export async function POST() {
 
     if (!subscriptionId) {
       console.error("No subscription ID found for user:", user.id);
-      console.log("Membership data:", membership);
 
       return NextResponse.json(
         {

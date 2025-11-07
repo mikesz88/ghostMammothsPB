@@ -85,8 +85,6 @@ export function useNotifications() {
         ...options,
       });
     }
-
-    console.log("[v0] Notification triggered:", { type, title, settings });
   };
 
   const updateSettings = (newSettings: Partial<NotificationSettings>) => {

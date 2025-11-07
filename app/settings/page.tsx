@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { User, Mail, Calendar, Shield, Loader2, Crown } from "lucide-react";
 import { Header } from "@/components/ui/header";
 import {
@@ -16,13 +17,16 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/auth-context";
 import { createClient } from "@/lib/supabase/client";
 import type { Database } from "@/supabase/supa-schema";
+import { toast } from "sonner";
 
 type UserRow = Database["public"]["Tables"]["users"]["Row"];
 
 export default function SettingsPage() {
-  const { user } = useAuth();
+  const router = useRouter();
+  const { user, signOut } = useAuth();
   const [userDetails, setUserDetails] = useState<UserRow | null>(null);
   const [loading, setLoading] = useState(true);
+  const [deleteLoading, setDeleteLoading] = useState(false);
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -48,6 +52,57 @@ export default function SettingsPage() {
 
     fetchUserData();
   }, [user]);
+
+  const performDeleteAccount = async () => {
+    try {
+      setDeleteLoading(true);
+
+      const response = await fetch("/api/account", {
+        method: "DELETE",
+      });
+
+      if (!response.ok) {
+        const data = await response.json().catch(() => null);
+        throw new Error(data?.error || "Failed to delete account");
+      }
+
+      toast.success("Your account has been deleted.");
+      await signOut();
+      router.push("/");
+    } catch (error) {
+      console.error("Failed to delete account:", error);
+      toast.error(
+        "We couldn't delete your account. Please try again or contact support."
+      );
+    } finally {
+      setDeleteLoading(false);
+    }
+  };
+
+  const handleDeleteAccount = () => {
+    if (deleteLoading) {
+      return;
+    }
+
+    const deleteToastId = toast.warning("Delete your account?", {
+      description:
+        "This will cancel any active memberships and permanently remove your data.",
+      duration: Infinity,
+      action: {
+        label: "Delete",
+        onClick: () => {
+          toast.dismiss(deleteToastId);
+          void performDeleteAccount();
+        },
+      },
+      cancel: {
+        label: "Cancel",
+        onClick: () => {
+          toast.dismiss(deleteToastId);
+        },
+      },
+    });
+  };
 
   if (!user) {
     return (
@@ -216,6 +271,40 @@ export default function SettingsPage() {
                   </Link>
                 </Button>
               )}
+            </CardContent>
+          </Card>
+
+          {/* Account Controls */}
+          <Card className="border-border mt-6">
+            <CardHeader>
+              <CardTitle className="text-foreground">
+                Account Controls
+              </CardTitle>
+              <CardDescription>
+                Manage the status of your account and data.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <p className="text-sm text-muted-foreground">
+                Deleting your account will immediately cancel access, remove
+                your profile from events, and permanently erase your membership
+                history.
+              </p>
+              <Button
+                variant="destructive"
+                onClick={handleDeleteAccount}
+                disabled={deleteLoading}
+                className="w-full sm:w-auto"
+              >
+                {deleteLoading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Deleting account...
+                  </>
+                ) : (
+                  "Delete account"
+                )}
+              </Button>
             </CardContent>
           </Card>
         </div>

@@ -85,7 +85,6 @@ export async function sendQueueJoinEmail(data: QueueEmailData) {
       }\nWe'll notify you when you're up next!`,
     });
 
-    console.log("Email sent:", info.messageId);
     return { success: true, messageId: info.messageId };
   } catch (error) {
     console.error("Error sending queue join email:", error);
@@ -153,7 +152,6 @@ export async function sendPositionUpdateEmail(data: QueueEmailData) {
       }\nStay nearby - you'll be playing soon!`,
     });
 
-    console.log("Email sent:", info.messageId);
     return { success: true, messageId: info.messageId };
   } catch (error) {
     console.error("Error sending position update email:", error);
@@ -212,7 +210,6 @@ export async function sendUpNextEmail(data: QueueEmailData) {
       text: `Hi ${data.userName},\n\n🎾 YOU'RE UP NEXT!\n\nGet ready! You're one of the next players to be assigned to a court.\n\nEvent: ${data.eventName}\nLocation: ${data.eventLocation}\nYour Position: #${data.currentPosition}\n\nPlease make sure you're at the venue and ready to play!`,
     });
 
-    console.log("Email sent:", info.messageId);
     return { success: true, messageId: info.messageId };
   } catch (error) {
     console.error("Error sending up next email:", error);
@@ -279,7 +276,6 @@ export async function sendCourtAssignmentEmail(data: QueueEmailData) {
       text: `Hi ${data.userName},\n\n🎾 IT'S YOUR TURN TO PLAY!\n\nYou've been assigned to Court #${data.courtNumber}\n\nEvent: ${data.eventName}\nLocation: ${data.eventLocation}\n\nPlease head to Court #${data.courtNumber} now!\n\nHave a great game! 🏓`,
     });
 
-    console.log("Email sent:", info.messageId);
     return { success: true, messageId: info.messageId };
   } catch (error) {
     console.error("Error sending court assignment email:", error);

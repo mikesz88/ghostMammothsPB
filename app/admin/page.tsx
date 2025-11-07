@@ -83,15 +83,6 @@ export default function AdminPage() {
     try {
       const supabase = createClient();
 
-      console.log("Creating event with data:", {
-        name: eventData.name,
-        location: eventData.location,
-        date: eventData.date.toISOString(),
-        court_count: eventData.courtCount,
-        rotation_type: eventData.rotationType,
-        status: eventData.status,
-      });
-
       // Extract date and time from the date object
       const eventDateTime = new Date(eventData.date);
       const dateOnly = eventDateTime.toISOString().split("T")[0]; // YYYY-MM-DD
@@ -121,7 +112,6 @@ export default function AdminPage() {
         return;
       }
 
-      console.log("Event created successfully:", data);
       await fetchEvents(); // Refresh the list
       setShowCreateDialog(false);
       toast.success("Event created successfully!");
@@ -140,8 +130,6 @@ export default function AdminPage() {
 
     try {
       const supabase = createClient();
-
-      console.log("Updating event:", editingEvent.id, eventData);
 
       // Extract date and time from the date object
       const eventDateTime = new Date(eventData.date);
@@ -171,7 +159,6 @@ export default function AdminPage() {
         return;
       }
 
-      console.log("Event updated successfully");
       await fetchEvents(); // Refresh the list
       setEditingEvent(null);
       toast.success("Event updated successfully!");
@@ -191,8 +178,6 @@ export default function AdminPage() {
         onClick: async () => {
           try {
             const supabase = createClient();
-
-            console.log("Ending event:", eventId);
 
             // Delete all queue entries for this event
             const { error: queueError } = await supabase
@@ -236,9 +221,6 @@ export default function AdminPage() {
               return;
             }
 
-            console.log(
-              "Event ended successfully - queue and assignments cleared"
-            );
             await fetchEvents(); // Refresh the list
             toast.success("Event ended successfully!", {
               description: "All queue entries and assignments cleared.",
@@ -268,8 +250,6 @@ export default function AdminPage() {
           try {
             const supabase = createClient();
 
-            console.log("Deleting event:", eventId);
-
             const { error } = await supabase
               .from("events")
               .delete()
@@ -283,7 +263,6 @@ export default function AdminPage() {
               return;
             }
 
-            console.log("Event deleted successfully");
             await fetchEvents(); // Refresh the list
             toast.success("Event deleted successfully!");
           } catch (err) {

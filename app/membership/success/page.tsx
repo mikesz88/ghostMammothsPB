@@ -10,6 +10,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Header } from "@/components/ui/header";
 import { createClient } from "@/lib/supabase/client";
 import { formatPrice } from "@/lib/membership-helpers";
+import { PENDING_MEMBERSHIP_TIER_STORAGE_KEY } from "@/lib/constants";
 
 interface MembershipTier {
   id: string;
@@ -70,6 +71,11 @@ function MembershipSuccessContent() {
         }
 
         setTier(tierData as MembershipTier);
+        if (typeof window !== "undefined") {
+          window.localStorage.removeItem(
+            PENDING_MEMBERSHIP_TIER_STORAGE_KEY
+          );
+        }
       } catch (error) {
         console.error("Error fetching subscription info:", error);
         toast.error("An error occurred");

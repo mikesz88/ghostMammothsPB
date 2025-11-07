@@ -420,23 +420,14 @@ export default function AdminEventDetailPage(props: {
   };
 
   const handleForceRemove = async (entryId: string) => {
-    console.log(
-      "🔍 [ADMIN PAGE] handleForceRemove called with entryId:",
-      entryId
-    );
-
     if (
       !confirm("Are you sure you want to remove this player from the queue?")
     ) {
-      console.log("🔍 [ADMIN PAGE] User cancelled removal");
       return;
     }
 
     try {
-      console.log("🔍 [ADMIN PAGE] Calling adminRemoveFromQueue...");
       const { error } = await adminRemoveFromQueue(entryId, "Admin removal");
-
-      console.log("🔍 [ADMIN PAGE] adminRemoveFromQueue result:", { error });
 
       if (error) {
         console.error("❌ [ADMIN PAGE] Error removing player:", error);
@@ -444,7 +435,6 @@ export default function AdminEventDetailPage(props: {
           description: error,
         });
       } else {
-        console.log("✅ [ADMIN PAGE] Player removed successfully");
         toast.success("Player removed from queue");
       }
     } catch (err) {
@@ -546,33 +536,9 @@ export default function AdminEventDetailPage(props: {
       const queueEntryIds = assignment.queueEntryIds || [];
 
       if (queueEntryIds.length === 0) {
-        console.warn(
-          "No queue_entry_ids found in assignment, falling back to user_id lookup"
-        );
-        // Fallback for old assignments that don't have queue_entry_ids
-        const allPlayers = [
-          assignment.player1Id,
-          assignment.player2Id,
-          assignment.player3Id,
-          assignment.player4Id,
-          assignment.player5Id,
-          assignment.player6Id,
-          assignment.player7Id,
-          assignment.player8Id,
-        ].filter(Boolean) as string[];
-
-        const { data: entries } = await supabase
-          .from("queue_entries")
-          .select("id")
-          .eq("event_id", id)
-          .in("user_id", allPlayers);
-
-        if (entries) {
-          queueEntryIds.push(...entries.map((e) => e.id));
-        }
+        toast.error("No queue entries recorded for this game");
+        return;
       }
-
-      console.log("Queue entries that played:", queueEntryIds);
 
       // 3. Update all these queue entries to 'waiting' status
       for (const entryId of queueEntryIds) {
@@ -622,8 +588,6 @@ export default function AdminEventDetailPage(props: {
             queueEntryToTeam.set(entryId, "team2");
           } else {
             // Entry spans both teams (shouldn't happen with proper assignment)
-            console.warn(`Queue entry ${entryId} spans both teams!`);
-            // Assign to team with more slots
             if (playersPerTeam - startSlot >= endSlot - playersPerTeam + 1) {
               queueEntryToTeam.set(entryId, "team1");
             } else {
@@ -651,25 +615,6 @@ export default function AdminEventDetailPage(props: {
       const otherEntries = allQueueEntries.filter(
         (e) => !queueEntryIds.includes(e.id)
       );
-
-      console.log("Winners:", Array.from(winnerEntryIds));
-      console.log("Losers:", Array.from(loserEntryIds));
-      console.log(
-        "Others:",
-        otherEntries.map((e) => e.id)
-      );
-
-      // Safety check: ensure all entries are categorized
-      const categorizedIds = new Set([
-        ...Array.from(winnerEntryIds),
-        ...Array.from(loserEntryIds),
-        ...otherEntries.map((e) => e.id),
-      ]);
-      const allEntryIds = allQueueEntries.map((e) => e.id);
-      const uncategorized = allEntryIds.filter((id) => !categorizedIds.has(id));
-      if (uncategorized.length > 0) {
-        console.warn("Uncategorized queue entries:", uncategorized);
-      }
 
       // 6. Reposition entries based on rotation type
       let position = 1;
@@ -700,8 +645,6 @@ export default function AdminEventDetailPage(props: {
           .eq("id", entryId);
         position++;
       }
-
-      console.log(`Repositioned ${position - 1} queue entries`);
 
       // Final cleanup: reorder queue to ensure no gaps or duplicates
       await reorderQueue(id);

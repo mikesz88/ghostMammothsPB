@@ -1,11 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { createServiceRoleClient } from "@/lib/supabase/service-role";
 import { stripe } from "@/lib/stripe/server";
 import Stripe from "stripe";
 
 export async function GET(request: NextRequest) {
   try {
     const supabase = await createClient();
+    const supabaseAdmin = createServiceRoleClient();
 
     // Get authenticated user
     const {
@@ -74,13 +76,6 @@ export async function GET(request: NextRequest) {
     let subscriptionId = session.subscription as string | null;
     const customerId = session.customer as string;
 
-    console.log("Session data:", {
-      customer: customerId,
-      subscription: subscriptionId,
-      mode: session.mode,
-      payment_status: session.payment_status,
-    });
-
     if (session.subscription) {
       try {
         const { stripe } = await import("@/lib/stripe/server");
@@ -89,30 +84,13 @@ export async function GET(request: NextRequest) {
         );
         currentPeriodStart = (subscription as unknown as { current_period_start?: number }).current_period_start ? new Date((subscription as unknown as { current_period_start: number }).current_period_start * 1000).toISOString() : undefined;
         currentPeriodEnd = (subscription as unknown as { current_period_end?: number }).current_period_end ? new Date((subscription as unknown as { current_period_end: number }).current_period_end * 1000).toISOString() : undefined;
-        console.log("✅ Subscription details retrieved:", {
-          id: subscription.id,
-          status: subscription.status,
-          periodStart: currentPeriodStart,
-          periodEnd: currentPeriodEnd,
-        });
       } catch (err) {
         console.error("❌ Error fetching subscription:", err);
       }
-    } else {
-      console.warn(
-        "⚠️ No subscription ID in session - this is unusual for subscription checkout"
-      );
     }
 
-    console.log("About to upsert user_memberships:", {
-      user_id: user.id,
-      tier_id: tierId,
-      stripe_customer_id: customerId,
-      stripe_subscription_id: subscriptionId,
-    });
-
     // Immediately update user membership (webhook will also do this as backup)
-    const { error: membershipError } = await supabase
+    const { error: membershipError } = await supabaseAdmin
       .from("user_memberships")
       .upsert(
         {
@@ -134,15 +112,10 @@ export async function GET(request: NextRequest) {
     if (membershipError) {
       console.error("Error updating membership:", membershipError);
       // Don't fail the request, webhook will handle it
-    } else {
-      console.log(
-        "✅ user_memberships record created/updated for user:",
-        user.id
-      );
     }
 
     // Update user's membership_status
-    const { error: userError } = await supabase
+    const { error: userError } = await supabaseAdmin
       .from("users")
       .update({
         membership_status: tier.name,
@@ -152,11 +125,7 @@ export async function GET(request: NextRequest) {
 
     if (userError) {
       console.error("Error updating users table:", userError);
-    } else {
-      console.log("✅ users.membership_status updated to:", tier.name);
     }
-
-    console.log("Session verified for user:", user.id, "Tier:", tier.name);
 
     return NextResponse.json({
       tier_id: tierId,

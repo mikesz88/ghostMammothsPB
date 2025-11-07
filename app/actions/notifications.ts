@@ -26,7 +26,6 @@ export async function sendQueueNotification(
     .single();
 
   if (!user?.email) {
-    console.log("No email found for user:", userId);
     return { success: false, error: "User email not found" };
   }
 
@@ -37,7 +36,6 @@ export async function sendQueueNotification(
     .single();
 
   if (!event) {
-    console.log("Event not found:", eventId);
     return { success: false, error: "Event not found" };
   }
 

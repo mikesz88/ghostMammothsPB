@@ -92,12 +92,6 @@ function CheckoutContent() {
         return;
       }
 
-      console.log("Checkout tier loaded:", {
-        name: data.name,
-        price: data.price,
-        stripePriceId: data.stripe_price_id,
-      });
-
       setSelectedTier(data as MembershipTier);
       setLoading(false);
     };

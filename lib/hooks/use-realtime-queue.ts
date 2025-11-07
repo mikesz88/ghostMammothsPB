@@ -93,15 +93,12 @@ export function useRealtimeQueue(eventId: string) {
           table: "queue_entries",
           filter: `event_id=eq.${eventId}`,
         },
-        (payload) => {
-          console.log("Queue change detected:", payload);
+        (_payload) => {
           // Refetch on any change
           fetchQueue();
         }
       )
-      .subscribe((status) => {
-        console.log("Queue subscription status:", status);
-      });
+      .subscribe();
 
     return () => {
       supabase.removeChannel(channel);

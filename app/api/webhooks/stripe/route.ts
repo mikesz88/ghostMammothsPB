@@ -73,7 +73,7 @@ export async function POST(request: NextRequest) {
         break;
 
       default:
-        console.log(`Unhandled event type: ${event.type}`);
+        break;
     }
 
     return NextResponse.json({ received: true });
@@ -98,8 +98,6 @@ async function handleCheckoutCompleted(
     return;
   }
 
-  console.log(`Checkout completed for user ${userId}, tier ${tierId}`);
-
   // Verify tier exists and get full details
   const { data: tier, error: tierError } = await supabase
     .from("membership_tiers")
@@ -111,13 +109,6 @@ async function handleCheckoutCompleted(
     console.error(`Tier ${tierId} not found in database:`, tierError);
     return;
   }
-
-  console.log(`Found tier for checkout:`, {
-    id: tier.id,
-    name: tier.name,
-    displayName: tier.display_name,
-    price: tier.price,
-  });
 
   const sessionData = session as unknown as { customer?: string | { id?: string }; subscription?: string | { id?: string }; payment_intent?: string | { id?: string } };
   // Create or update user membership record
@@ -167,13 +158,7 @@ async function handleCheckoutCompleted(
         tier_name: tier.name,
       },
     });
-
-    console.log(
-      `Payment recorded for user ${userId}: $${session.amount_total / 100}`
-    );
   }
-
-  console.log(`User ${userId} upgraded to ${tier.name}`);
 }
 
 async function handleSubscriptionUpdate(
@@ -238,10 +223,6 @@ async function handleSubscriptionUpdate(
       stripe_customer_id: typeof subscription.customer === 'string' ? subscription.customer : subscription.customer.id,
     })
     .eq("id", userId);
-
-  console.log(
-    `Subscription ${subscription.status} for user ${userId} - Tier: ${tier.name} (${tierId})`
-  );
 }
 
 async function handleSubscriptionDeleted(
@@ -270,8 +251,6 @@ async function handleSubscriptionDeleted(
     .from("users")
     .update({ membership_status: "cancelled" })
     .eq("id", userId);
-
-  console.log(`Subscription cancelled for user ${userId}`);
 }
 
 async function handlePaymentSucceeded(invoice: Stripe.Invoice, supabase: SupabaseClient) {
@@ -308,10 +287,6 @@ async function handlePaymentSucceeded(invoice: Stripe.Invoice, supabase: Supabas
       subscription_id: subscription,
     },
   });
-
-  console.log(
-    `Payment succeeded for user ${userId}: $${(invoice.amount_paid || 0) / 100}`
-  );
 }
 
 async function handlePaymentFailed(invoice: Stripe.Invoice, supabase: SupabaseClient) {
@@ -361,6 +336,4 @@ async function handlePaymentFailed(invoice: Stripe.Invoice, supabase: SupabaseCl
       subscription_id: subscriptionId,
     },
   });
-
-  console.log(`Payment failed for user ${userId}`);
 }

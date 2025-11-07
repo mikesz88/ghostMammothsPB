@@ -71,11 +71,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         });
 
         if (profileError) {
-          console.warn(
-            "Could not create user profile during login:",
-            profileError
-          );
-          // Don't fail the login, just log the warning
+          // Don't fail the login if profile creation fails - it will be created on login
         }
       }
     }
@@ -121,9 +117,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       // If user needs to confirm email, sign them out and show message
       if (!emailConfirmed) {
-        console.log(
-          "Email confirmation required - profile will be created upon first login"
-        );
         // Sign out any session that might have been created
         await supabase.auth.signOut();
         return { error: null }; // Success, but awaiting email confirmation
@@ -143,9 +136,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         console.error("Error creating user profile:", profileError);
 
         // Don't fail signup if profile creation fails - it will be created on login
-        if (profileError.message.includes("row-level security")) {
-          console.log("Profile will be created on first login");
-        }
       }
     }
 

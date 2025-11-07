@@ -67,14 +67,6 @@ export async function POST(request: NextRequest) {
     const protocol = request.headers.get("x-forwarded-proto") || "http";
     const baseUrl = process.env.NEXT_PUBLIC_URL || `${protocol}://${host}`;
 
-    console.log("Creating checkout session for:", {
-      userId: user.id,
-      email: user.email,
-      priceId,
-      tierId: tier.id,
-      tierName: tier.name,
-    });
-
     const { session, error } = await createMembershipCheckoutSession(
       user.id,
       user.email!,
@@ -96,7 +88,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.log("Checkout session created successfully:", session.id);
     return NextResponse.json({ url: session.url });
   } catch (error) {
     console.error("Error in create-checkout-session:", error);

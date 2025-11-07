@@ -53,12 +53,6 @@ export async function getUserMembership(
       const tier = tiers?.[0];
 
       if (tier) {
-        console.log("Found tier from users.membership_status fallback:", {
-          searchedFor: userData.membership_status,
-          foundName: tier.name,
-          foundDisplayName: tier.display_name,
-        });
-
         return {
           status: "active",
           tierName: tier.name,

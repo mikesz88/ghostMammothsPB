@@ -16,6 +16,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/lib/auth-context";
 import { Header } from "@/components/ui/header";
+import { createClient } from "@/lib/supabase/client";
+import { getUserMembership } from "@/lib/membership-helpers";
+import { PENDING_MEMBERSHIP_TIER_STORAGE_KEY } from "@/lib/constants";
 
 function LoginForm() {
   const [email, setEmail] = useState("");
@@ -45,7 +48,44 @@ function LoginForm() {
       if (error) {
         setError(error.message);
       } else {
-        router.push("/events");
+        try {
+          const supabase = createClient();
+          const {
+            data: { user },
+          } = await supabase.auth.getUser();
+
+          if (!user) {
+            router.push("/membership");
+            return;
+          }
+
+          const membership = await getUserMembership(user.id);
+          const hasActivePaidMembership = membership.isPaid && membership.isActive;
+
+          if (hasActivePaidMembership) {
+            if (typeof window !== "undefined") {
+              window.localStorage.removeItem(PENDING_MEMBERSHIP_TIER_STORAGE_KEY);
+            }
+            router.push("/events");
+            return;
+          }
+
+          let pendingTier: string | null = null;
+          if (typeof window !== "undefined") {
+            pendingTier = window.localStorage.getItem(
+              PENDING_MEMBERSHIP_TIER_STORAGE_KEY
+            );
+          }
+
+          if (pendingTier) {
+            router.push(`/signup?flow=confirm-email&tier=${pendingTier}`);
+          } else {
+            router.push("/membership");
+          }
+        } catch (redirectError) {
+          console.error("Post-login redirect error:", redirectError);
+          router.push("/membership");
+        }
       }
     } catch (err) {
       setError("An unexpected error occurred");

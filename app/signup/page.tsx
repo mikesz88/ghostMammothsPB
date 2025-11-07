@@ -25,6 +25,7 @@ import { useAuth } from "@/lib/auth-context";
 import { Header } from "@/components/ui/header";
 import { createClient } from "@/lib/supabase/client";
 import { formatPrice } from "@/lib/membership-helpers";
+import { PENDING_MEMBERSHIP_TIER_STORAGE_KEY } from "@/lib/constants";
 
 interface MembershipTier {
   id: string;
@@ -66,6 +67,7 @@ export default function SignupPage() {
   const noAvailablePlans = !tiersLoading && tiers.length === 0;
   const isSubmitDisabled =
     loading || tiersLoading || !selectedTierId || noAvailablePlans;
+  const flowParam = searchParams.get("flow");
 
   useEffect(() => {
     const loadTiers = async () => {
@@ -111,6 +113,26 @@ export default function SignupPage() {
 
     void loadTiers();
   }, [tierParam]);
+
+  useEffect(() => {
+    if (flowParam === "confirm-email") {
+      let tierFromQuery = tierParam || "";
+
+      if (!tierFromQuery && typeof window !== "undefined") {
+        tierFromQuery =
+          window.localStorage.getItem(
+            PENDING_MEMBERSHIP_TIER_STORAGE_KEY
+          ) || "";
+      }
+
+      setSuccess(true);
+
+      if (tierFromQuery) {
+        setSuccessTierId(tierFromQuery);
+        setSelectedTierId((prev) => prev || tierFromQuery);
+      }
+    }
+  }, [flowParam, tierParam]);
 
   const handleInputChange = (field: string, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -162,6 +184,12 @@ export default function SignupPage() {
       if (error) {
         setError(error.message);
       } else {
+        if (typeof window !== "undefined") {
+          window.localStorage.setItem(
+            PENDING_MEMBERSHIP_TIER_STORAGE_KEY,
+            selectedTierId
+          );
+        }
         setSuccessTierId(selectedTierId);
         setSuccess(true);
         // Don't auto-redirect - let user read the confirmation message
