@@ -28,7 +28,12 @@ export async function DELETE() {
       );
     }
 
-    const supabaseAdmin = createServiceRoleClient();
+    let supabaseAdmin = null;
+    try {
+      supabaseAdmin = createServiceRoleClient();
+    } catch (error) {
+      console.error("Failed to initialize Supabase service role client:", error);
+    }
     const userId = user.id;
 
     if (!supabaseAdmin) {

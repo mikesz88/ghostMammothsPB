@@ -7,7 +7,12 @@ import Stripe from "stripe";
 export async function GET(request: NextRequest) {
   try {
     const supabase = await createClient();
-    const supabaseAdmin = createServiceRoleClient();
+    let supabaseAdmin = null;
+    try {
+      supabaseAdmin = createServiceRoleClient();
+    } catch (error) {
+      console.error("Failed to initialize Supabase service role client:", error);
+    }
 
     // Get authenticated user
     const {
