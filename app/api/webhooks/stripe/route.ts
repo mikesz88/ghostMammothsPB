@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { stripe } from "@/lib/stripe/server";
-import { createClient } from "@/lib/supabase/server";
+import { createServiceRoleClient } from "@/lib/supabase/service-role";
 import Stripe from "stripe";
 
-type SupabaseClient = Awaited<ReturnType<typeof createClient>>;
+type SupabaseClient = ReturnType<typeof createServiceRoleClient>;
 
 export async function POST(request: NextRequest) {
   const body = await request.text();
@@ -32,7 +32,14 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const supabase = await createClient();
+  const supabase = createServiceRoleClient();
+
+  if (!supabase) {
+    console.error(
+      "Supabase service-role key not configured; cannot process Stripe webhook."
+    );
+    return NextResponse.json({ received: true, skipped: true });
+  }
 
   try {
     switch (event.type) {
@@ -88,7 +95,7 @@ export async function POST(request: NextRequest) {
 
 async function handleCheckoutCompleted(
   session: Stripe.Checkout.Session,
-  supabase: SupabaseClient
+  supabase: NonNullable<SupabaseClient>
 ) {
   const userId = session.metadata?.user_id;
   const tierId = session.metadata?.tier_id;
@@ -163,7 +170,7 @@ async function handleCheckoutCompleted(
 
 async function handleSubscriptionUpdate(
   subscription: Stripe.Subscription,
-  supabase: SupabaseClient
+  supabase: NonNullable<SupabaseClient>
 ) {
   const userId = subscription.metadata.user_id;
   const tierId = subscription.metadata.tier_id;
@@ -227,7 +234,7 @@ async function handleSubscriptionUpdate(
 
 async function handleSubscriptionDeleted(
   subscription: Stripe.Subscription,
-  supabase: SupabaseClient
+  supabase: NonNullable<SupabaseClient>
 ) {
   const userId = subscription.metadata.user_id;
 
@@ -253,7 +260,10 @@ async function handleSubscriptionDeleted(
     .eq("id", userId);
 }
 
-async function handlePaymentSucceeded(invoice: Stripe.Invoice, supabase: SupabaseClient) {
+async function handlePaymentSucceeded(
+  invoice: Stripe.Invoice,
+  supabase: NonNullable<SupabaseClient>
+) {
   const invoiceData = invoice as unknown as { subscription?: string | { id?: string }; payment_intent?: string | { id?: string } };
   const subscription = typeof invoiceData.subscription === 'string' ? invoiceData.subscription : invoiceData.subscription?.id || null;
   const userId = invoice.lines.data[0]?.metadata?.user_id || null;
@@ -289,7 +299,10 @@ async function handlePaymentSucceeded(invoice: Stripe.Invoice, supabase: Supabas
   });
 }
 
-async function handlePaymentFailed(invoice: Stripe.Invoice, supabase: SupabaseClient) {
+async function handlePaymentFailed(
+  invoice: Stripe.Invoice,
+  supabase: NonNullable<SupabaseClient>
+) {
   const invoiceData = invoice as unknown as { subscription?: string | { id?: string } };
   const userId = invoice.lines.data[0]?.metadata?.user_id || null;
 

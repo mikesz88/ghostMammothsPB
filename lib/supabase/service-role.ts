@@ -9,9 +9,14 @@ export function createServiceRoleClient() {
     return null;
   }
 
-  return createClient<Database>(url, serviceRoleKey, {
-    auth: {
-      persistSession: false,
-    },
-  });
+  try {
+    return createClient<Database>(url, serviceRoleKey, {
+      auth: {
+        persistSession: false,
+      },
+    });
+  } catch (error) {
+    console.error("Failed to create Supabase service role client:", error);
+    return null;
+  }
 }
