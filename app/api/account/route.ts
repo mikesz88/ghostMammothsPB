@@ -31,6 +31,16 @@ export async function DELETE() {
     const supabaseAdmin = createServiceRoleClient();
     const userId = user.id;
 
+    if (!supabaseAdmin) {
+      return NextResponse.json(
+        {
+          error:
+            "Account deletion is currently unavailable. Please contact support to remove your account.",
+        },
+        { status: 503 }
+      );
+    }
+
     // Cancel any active Stripe subscription before removing data
     const { data: membership } = await supabaseAdmin
       .from("user_memberships")

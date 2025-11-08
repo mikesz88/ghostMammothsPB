@@ -7,11 +7,7 @@ import Stripe from "stripe";
 export async function GET(request: NextRequest) {
   try {
     const supabase = await createClient();
-    const supabaseAdmin =
-      process.env.NEXT_PUBLIC_SUPABASE_URL &&
-      process.env.SUPABASE_SERVICE_ROLE_KEY
-        ? createServiceRoleClient()
-        : null;
+    const supabaseAdmin = createServiceRoleClient();
 
     // Get authenticated user
     const {
