@@ -21,10 +21,46 @@ import { Badge } from "@/components/ui/badge";
 import { Header } from "@/components/ui/header";
 import { useRealtimeEvents } from "@/lib/hooks/use-realtime-events";
 import { useAuth } from "@/lib/auth-context";
+import { useEffect, useState } from "react";
+import { createClient } from "@/lib/supabase/client";
 
 export default function HomePage() {
   const { events, loading } = useRealtimeEvents();
   const { user } = useAuth();
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const checkAdmin = async () => {
+      if (!user) {
+        if (isMounted) setIsAdmin(false);
+        return;
+      }
+
+      if (user.user_metadata?.is_admin) {
+        if (isMounted) setIsAdmin(true);
+        return;
+      }
+
+      const supabase = createClient();
+      const { data } = await supabase
+        .from("users")
+        .select("is_admin")
+        .eq("id", user.id)
+        .single();
+
+      if (isMounted) {
+        setIsAdmin(Boolean(data?.is_admin));
+      }
+    };
+
+    void checkAdmin();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [user]);
 
   if (loading) {
     return (
@@ -93,7 +129,7 @@ export default function HomePage() {
             <p className="text-muted-foreground mb-4">
               Check back later for upcoming pickleball events.
             </p>
-            {user && (
+            {isAdmin && (
               <Button asChild>
                 <Link href="/admin">Create Event</Link>
               </Button>
