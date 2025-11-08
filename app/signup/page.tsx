@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { Trophy, Eye, EyeOff, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -36,7 +36,7 @@ interface MembershipTier {
   description: string | null;
 }
 
-export default function SignupPage() {
+function SignupContent() {
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -466,5 +466,22 @@ export default function SignupPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function SignupPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-background">
+          <Header />
+          <div className="flex items-center justify-center p-4 py-12">
+            <div className="text-muted-foreground">Loading...</div>
+          </div>
+        </div>
+      }
+    >
+      <SignupContent />
+    </Suspense>
   );
 }

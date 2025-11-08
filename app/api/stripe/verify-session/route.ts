@@ -7,7 +7,11 @@ import Stripe from "stripe";
 export async function GET(request: NextRequest) {
   try {
     const supabase = await createClient();
-    const supabaseAdmin = createServiceRoleClient();
+    const supabaseAdmin =
+      process.env.NEXT_PUBLIC_SUPABASE_URL &&
+      process.env.SUPABASE_SERVICE_ROLE_KEY
+        ? createServiceRoleClient()
+        : null;
 
     // Get authenticated user
     const {
@@ -90,41 +94,49 @@ export async function GET(request: NextRequest) {
     }
 
     // Immediately update user membership (webhook will also do this as backup)
-    const { error: membershipError } = await supabaseAdmin
-      .from("user_memberships")
-      .upsert(
-        {
-          user_id: user.id,
-          tier_id: tierId,
-          status: "active",
-          stripe_customer_id: customerId,
-          stripe_subscription_id: subscriptionId,
-          current_period_start: currentPeriodStart,
-          current_period_end: currentPeriodEnd,
-          cancel_at_period_end: false,
-          updated_at: new Date().toISOString(),
-        },
-        {
-          onConflict: "user_id",
-        }
-      );
+    if (supabaseAdmin) {
+      const { error: membershipError } = await supabaseAdmin
+        .from("user_memberships")
+        .upsert(
+          {
+            user_id: user.id,
+            tier_id: tierId,
+            status: "active",
+            stripe_customer_id: customerId,
+            stripe_subscription_id: subscriptionId,
+            current_period_start: currentPeriodStart,
+            current_period_end: currentPeriodEnd,
+            cancel_at_period_end: false,
+            updated_at: new Date().toISOString(),
+          },
+          {
+            onConflict: "user_id",
+          }
+        );
 
-    if (membershipError) {
-      console.error("Error updating membership:", membershipError);
-      // Don't fail the request, webhook will handle it
+      if (membershipError) {
+        console.error("Error updating membership:", membershipError);
+        // Don't fail the request, webhook will handle it
+      }
     }
 
     // Update user's membership_status
-    const { error: userError } = await supabaseAdmin
-      .from("users")
-      .update({
-        membership_status: tier.name,
-        stripe_customer_id: session.customer as string,
-      })
-      .eq("id", user.id);
+    if (supabaseAdmin) {
+      const { error: userError } = await supabaseAdmin
+        .from("users")
+        .update({
+          membership_status: tier.name,
+          stripe_customer_id: session.customer as string,
+        })
+        .eq("id", user.id);
 
-    if (userError) {
-      console.error("Error updating users table:", userError);
+      if (userError) {
+        console.error("Error updating users table:", userError);
+      }
+    } else {
+      console.error(
+        "Supabase service-role key not configured; skipping membership sync."
+      );
     }
 
     return NextResponse.json({
