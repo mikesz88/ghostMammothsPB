@@ -130,11 +130,11 @@ export default function EventsPage() {
             <p className="text-muted-foreground mb-4">
               Check back later for upcoming pickleball events.
             </p>
-            {isAdmin && (
+            {/* {isAdmin && (
               <Button asChild>
                 <Link href="/admin">Create Event</Link>
               </Button>
-            )}
+            )} */}
           </div>
         ) : (
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
