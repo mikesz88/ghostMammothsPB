@@ -61,9 +61,12 @@ export default function SettingsPage() {
         method: "DELETE",
       });
 
-      if (!response.ok) {
-        const data = await response.json().catch(() => null);
-        throw new Error(data?.error || "Failed to delete account");
+      const result = await response.json().catch(() => null);
+
+      if (!response.ok || !result?.success) {
+        throw new Error(
+          result?.error || "Failed to delete account. Please contact support."
+        );
       }
 
       toast.success("Your account has been deleted.");

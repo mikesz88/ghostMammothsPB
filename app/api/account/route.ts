@@ -9,13 +9,12 @@ export async function DELETE() {
     const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
     if (!publicUrl || !anonKey) {
-      return NextResponse.json(
-        {
-          error:
-            "Account deletion is currently unavailable. Please contact support to remove your account.",
-        },
-        { status: 503 }
-      );
+      return NextResponse.json({
+        success: false,
+        error:
+          "Account deletion is currently unavailable. Please contact support to remove your account.",
+        disabled: true,
+      });
     }
 
     const supabase = await createClient();
@@ -50,13 +49,12 @@ export async function DELETE() {
     const userId = user.id;
 
     if (!supabaseAdmin) {
-      return NextResponse.json(
-        {
-          error:
-            "Account deletion is currently unavailable. Please contact support to remove your account.",
-        },
-        { status: 503 }
-      );
+      return NextResponse.json({
+        success: false,
+        error:
+          "Account deletion is currently unavailable. Please contact support to remove your account.",
+        disabled: true,
+      });
     }
 
     // Cancel any active Stripe subscription before removing data
@@ -74,13 +72,11 @@ export async function DELETE() {
         });
       } catch (error) {
         console.error("Error canceling Stripe subscription:", error);
-        return NextResponse.json(
-          {
-            error:
-              "We were unable to cancel your billing subscription. Please contact support.",
-          },
-          { status: 502 }
-        );
+        return NextResponse.json({
+          success: false,
+          error:
+            "We were unable to cancel your billing subscription. Please contact support.",
+        });
       }
     }
 
@@ -144,10 +140,10 @@ export async function DELETE() {
 
     if (userTableError) {
       console.error("Error deleting user profile:", userTableError);
-      return NextResponse.json(
-        { error: "Unable to delete user profile" },
-        { status: 500 }
-      );
+      return NextResponse.json({
+        success: false,
+        error: "Unable to delete user profile",
+      });
     }
 
     const { error: authDeleteError } =
@@ -155,18 +151,18 @@ export async function DELETE() {
 
     if (authDeleteError) {
       console.error("Error removing auth user:", authDeleteError);
-      return NextResponse.json(
-        { error: "Unable to delete auth user" },
-        { status: 500 }
-      );
+      return NextResponse.json({
+        success: false,
+        error: "Unable to delete auth user",
+      });
     }
 
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("Error deleting account:", error);
-    return NextResponse.json(
-      { error: "Unable to delete account" },
-      { status: 500 }
-    );
+    return NextResponse.json({
+      success: false,
+      error: "Unable to delete account",
+    });
   }
 }
