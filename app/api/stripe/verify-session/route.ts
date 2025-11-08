@@ -6,6 +6,19 @@ import Stripe from "stripe";
 
 export async function GET(request: NextRequest) {
   try {
+    const publicUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+    if (!publicUrl || !anonKey) {
+      return NextResponse.json(
+        {
+          error:
+            "Membership verification is temporarily unavailable. Please try again later.",
+        },
+        { status: 503 }
+      );
+    }
+
     const supabase = await createClient();
     let supabaseAdmin = null;
     try {

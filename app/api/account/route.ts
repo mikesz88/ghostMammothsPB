@@ -5,6 +5,19 @@ import { stripe } from "@/lib/stripe/server";
 
 export async function DELETE() {
   try {
+    const publicUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+    if (!publicUrl || !anonKey) {
+      return NextResponse.json(
+        {
+          error:
+            "Account deletion is currently unavailable. Please contact support to remove your account.",
+        },
+        { status: 503 }
+      );
+    }
+
     const supabase = await createClient();
     const {
       data: { user },
