@@ -5,7 +5,6 @@ import { createClient } from "@/lib/supabase/server";
 export async function getAllUsers(searchQuery?: string) {
   const supabase = await createClient();
 
-  // Verify admin
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -21,7 +20,6 @@ export async function getAllUsers(searchQuery?: string) {
     return { data: null, error: "Unauthorized - Admin access required" };
   }
 
-  // Fetch users
   let query = supabase
     .from("users")
     .select("*")
@@ -46,7 +44,6 @@ export async function getAllUsers(searchQuery?: string) {
 export async function getUserById(userId: string) {
   const supabase = await createClient();
 
-  // Verify admin
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -62,7 +59,6 @@ export async function getUserById(userId: string) {
     return { data: null, error: "Unauthorized - Admin access required" };
   }
 
-  // Fetch user with stats
   const { data, error } = await supabase
     .from("users")
     .select(
@@ -94,7 +90,6 @@ export async function updateUser(
 ) {
   const supabase = await createClient();
 
-  // Verify admin
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -126,7 +121,6 @@ export async function updateUser(
 export async function toggleAdminStatus(userId: string, isAdmin: boolean) {
   const supabase = await createClient();
 
-  // Verify admin
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -142,7 +136,6 @@ export async function toggleAdminStatus(userId: string, isAdmin: boolean) {
     return { error: "Unauthorized - Admin access required" };
   }
 
-  // Prevent removing own admin status
   if (user.id === userId && !isAdmin) {
     return { error: "Cannot remove your own admin status" };
   }
@@ -163,7 +156,6 @@ export async function toggleAdminStatus(userId: string, isAdmin: boolean) {
 export async function deleteUser(userId: string) {
   const supabase = await createClient();
 
-  // Verify admin
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -179,7 +171,6 @@ export async function deleteUser(userId: string) {
     return { error: "Unauthorized - Admin access required" };
   }
 
-  // Prevent deleting own account
   if (user.id === userId) {
     return { error: "Cannot delete your own account" };
   }

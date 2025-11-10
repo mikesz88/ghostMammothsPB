@@ -67,32 +67,181 @@ export class QueueManager {
   }
 
   /**
-   * Gets next N players from queue, respecting groups
+   * Gets next N players from queue using optimal subset sum algorithm
+   * Finds best combination of groups that fills exactly 'count' players
+   * Prioritizes: 1) Exact match, 2) Fewer groups, 3) Earlier positions
+   *
+   * IMPORTANT: Groups are NEVER split - they are treated as atomic units.
+   * A group of 3 players will always be taken together or skipped entirely.
    */
-  private static getNextPlayers(
-    queue: QueueEntry[],
-    count: number
-  ): QueueEntry[] {
-    const selected: QueueEntry[] = [];
-    const processedGroups = new Set<string>();
+  static getNextPlayers(queue: QueueEntry[], count: number): QueueEntry[] {
+    // Group entries by their group_id or as solo players
+    // Each group is treated as an atomic unit that cannot be split
+    const groups: QueueEntry[][] = [];
+    const processedGroupIds = new Set<string>();
 
     for (const entry of queue) {
-      if (selected.length >= count) break;
-
-      // If part of a group, get all group members
-      if (entry.groupId && !processedGroups.has(entry.groupId)) {
+      if (entry.groupId && !processedGroupIds.has(entry.groupId)) {
         const groupMembers = queue.filter((e) => e.groupId === entry.groupId);
-        if (selected.length + groupMembers.length <= count) {
-          selected.push(...groupMembers);
-          processedGroups.add(entry.groupId);
-        }
+        groups.push(groupMembers);
+        processedGroupIds.add(entry.groupId);
       } else if (!entry.groupId) {
-        // Solo player
-        selected.push(entry);
+        groups.push([entry]); // Solo player as single-member group
       }
     }
 
-    return selected.slice(0, count);
+    // Helper to count total players in a group
+    const countPlayers = (entries: QueueEntry[]): number => {
+      return entries.reduce((sum, entry) => sum + (entry.groupSize || 1), 0);
+    };
+
+    // Calculate player counts for each group
+    const groupSizes = groups.map(countPlayers);
+
+    // Find best combination using backtracking
+    const bestIndices = this.findBestCombination(groupSizes, count, 0, [], 0);
+
+    if (bestIndices && bestIndices.length > 0) {
+      // Flatten selected groups into individual entries
+      return bestIndices.flatMap((idx) => groups[idx]);
+    }
+
+    // Fallback: return empty if no valid combination found
+    return [];
+  }
+
+  /**
+   * Backtracking algorithm to find best subset of groups that sum to target
+   * Returns indices of groups that should be selected
+   * Prioritizes: 1) Exact match, 2) Fewer groups, 3) Sequential groups, 4) Earlier positions
+   *
+   * IMPORTANT: This algorithm explores ALL possible combinations to find the optimal one.
+   * It doesn't stop at the first valid solution - it continues to find the best sequential match.
+   */
+  private static findBestCombination(
+    groupSizes: number[],
+    target: number,
+    startIdx: number,
+    currentCombination: number[],
+    currentSum: number,
+    bestExact: number[] | null = null
+  ): number[] | null {
+    // Perfect match found
+    if (currentSum === target) {
+      console.log(
+        "🎯 Found exact match:",
+        currentCombination,
+        "sum:",
+        currentSum
+      );
+      if (!bestExact) {
+        bestExact = [...currentCombination];
+        console.log("✅ Set as best:", bestExact);
+      } else {
+        // Compare with current best and update if this is better
+        let isBetter = false;
+
+        // Prioritize sequential groups over fewer groups
+        const currentIsSequential = this.isSequential(currentCombination);
+        const bestIsSequential = this.isSequential(bestExact);
+
+        if (currentIsSequential && !bestIsSequential) {
+          // Current is sequential, best is not - prefer current
+          isBetter = true;
+        } else if (!currentIsSequential && bestIsSequential) {
+          // Current is not sequential, best is - keep best
+          isBetter = false;
+        } else if (currentCombination.length < bestExact.length) {
+          // Both have same sequential status - prefer fewer groups
+          isBetter = true;
+        } else if (currentCombination.length === bestExact.length) {
+          // Same number of groups and same sequential status - prefer earlier positions
+          const currentIndexSum = currentCombination.reduce((a, b) => a + b, 0);
+          const bestIndexSum = bestExact.reduce((a, b) => a + b, 0);
+          if (currentIndexSum < bestIndexSum) {
+            isBetter = true;
+          }
+        }
+
+        if (isBetter) {
+          bestExact = [...currentCombination];
+        }
+      }
+
+      // Continue exploring to find even better solutions
+      // Don't return early - keep searching for optimal sequential solution
+    }
+
+    // Exceeded target or reached end without exact match
+    if (currentSum > target || startIdx >= groupSizes.length) {
+      return bestExact;
+    }
+
+    // Try including current group (explores "take early groups" path first)
+    const withCurrent = this.findBestCombination(
+      groupSizes,
+      target,
+      startIdx + 1,
+      [...currentCombination, startIdx],
+      currentSum + groupSizes[startIdx],
+      bestExact
+    );
+
+    // If we found exact match with current, update bestExact
+    const updatedBest = withCurrent || bestExact;
+
+    // Try skipping current group
+    const withoutCurrent = this.findBestCombination(
+      groupSizes,
+      target,
+      startIdx + 1,
+      currentCombination,
+      currentSum,
+      updatedBest
+    );
+
+    // Return best result
+    if (withCurrent && withoutCurrent) {
+      // Prefer fewer groups
+      if (withCurrent.length !== withoutCurrent.length) {
+        return withCurrent.length < withoutCurrent.length
+          ? withCurrent
+          : withoutCurrent;
+      }
+      // Same length - prefer sequential groups
+      const withSequential = this.isSequential(withCurrent);
+      const withoutSequential = this.isSequential(withoutCurrent);
+
+      if (withSequential && !withoutSequential) {
+        return withCurrent;
+      }
+      if (!withSequential && withoutSequential) {
+        return withoutCurrent;
+      }
+
+      // If both are sequential or both aren't, prefer earlier positions (lower sum of indices)
+      const currentIndexSum = withCurrent.reduce((a, b) => a + b, 0);
+      const withoutIndexSum = withoutCurrent.reduce((a, b) => a + b, 0);
+      return currentIndexSum <= withoutIndexSum ? withCurrent : withoutCurrent;
+    }
+
+    return withCurrent || withoutCurrent;
+  }
+
+  /**
+   * Helper method to check if indices are sequential (consecutive)
+   * Returns true if all indices are consecutive numbers
+   */
+  private static isSequential(indices: number[]): boolean {
+    if (indices.length <= 1) return true;
+
+    const sorted = [...indices].sort((a, b) => a - b);
+    for (let i = 1; i < sorted.length; i++) {
+      if (sorted[i] !== sorted[i - 1] + 1) {
+        return false;
+      }
+    }
+    return true;
   }
 
   /**
@@ -130,17 +279,29 @@ export class QueueManager {
     assignment: CourtAssignment,
     rotationType: RotationType,
     winningTeam: "team1" | "team2",
-    queue: QueueEntry[]
+    queue: QueueEntry[],
+    teamSize: TeamSize
   ): {
     playersToQueue: string[];
     playersToStay: string[];
   } {
-    const team1 = [assignment.player1Id, assignment.player2Id].filter(
-      Boolean
-    ) as string[];
-    const team2 = [assignment.player3Id, assignment.player4Id].filter(
-      Boolean
-    ) as string[];
+    // Get all player IDs from assignment
+    const allPlayerIds = [
+      assignment.player1Id,
+      assignment.player2Id,
+      assignment.player3Id,
+      assignment.player4Id,
+      assignment.player5Id,
+      assignment.player6Id,
+      assignment.player7Id,
+      assignment.player8Id,
+    ].filter(Boolean) as string[];
+
+    // Dynamically split into teams based on teamSize
+    // Team1: first N players, Team2: next N players
+    const team1 = allPlayerIds.slice(0, teamSize);
+    const team2 = allPlayerIds.slice(teamSize, teamSize * 2);
+
     const winners = winningTeam === "team1" ? team1 : team2;
     const losers = winningTeam === "team1" ? team2 : team1;
 

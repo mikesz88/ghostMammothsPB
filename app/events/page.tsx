@@ -56,6 +56,30 @@ export default function EventsPage() {
           <p className="text-muted-foreground">
             Join the queue for your favorite pickleball events
           </p>
+
+          {/* Call-to-action for anonymous users */}
+          {!user && (
+            <div className="mt-6 p-4 bg-primary/10 border border-primary/20 rounded-lg">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div>
+                  <h3 className="text-lg font-semibold text-foreground mb-1">
+                    Ready to join the action?
+                  </h3>
+                  <p className="text-muted-foreground">
+                    Sign up to join event queues and start playing!
+                  </p>
+                </div>
+                <div className="flex gap-2">
+                  <Button variant="outline" asChild>
+                    <Link href="/login">Login</Link>
+                  </Button>
+                  <Button asChild>
+                    <Link href="/signup">Sign Up</Link>
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
         {events.length === 0 ? (
@@ -108,14 +132,27 @@ export default function EventsPage() {
                 </CardHeader>
                 <CardContent>
                   <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                    <div className="flex flex-col gap-2 text-sm text-muted-foreground">
                       <div className="flex items-center gap-1">
                         <Users className="w-4 h-4" />
-                        <span>{event.courtCount} courts</span>
+                        <span>
+                          {event.teamSize === 1
+                            ? "Solo (1v1)"
+                            : event.teamSize === 2
+                            ? "Doubles (2v2)"
+                            : event.teamSize === 3
+                            ? "Triplets (3v3)"
+                            : "Quads (4v4)"}{" "}
+                          • {event.courtCount} courts
+                        </span>
                       </div>
                       <div className="flex items-center gap-1">
                         <Trophy className="w-4 h-4" />
-                        <span>{event.rotationType}</span>
+                        <span>
+                          {event.rotationType
+                            .replace("-", " ")
+                            .replace(/\b\w/g, (l) => l.toUpperCase())}
+                        </span>
                       </div>
                     </div>
                   </div>

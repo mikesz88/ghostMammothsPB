@@ -19,10 +19,18 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { QueueList } from "@/components/queue-list";
 import { CourtStatus } from "@/components/court-status";
+import { TestControls } from "./test-controls";
 import { Header } from "@/components/ui/header";
 import { createClient } from "@/lib/supabase/client";
-import { leaveQueue, adminRemoveFromQueue } from "@/app/actions/queue";
+import {
+  leaveQueue,
+  adminRemoveFromQueue,
+  reorderQueue,
+  assignPlayersToNextCourt,
+} from "@/app/actions/queue";
+import { sendQueueNotification } from "@/app/actions/notifications";
 import type { Event, QueueEntry, CourtAssignment } from "@/lib/types";
+import { QueueManager } from "@/lib/queue-manager";
 import { toast } from "sonner";
 
 export default function AdminEventDetailPage(props: {
@@ -35,6 +43,7 @@ export default function AdminEventDetailPage(props: {
   const [assignments, setAssignments] = useState<CourtAssignment[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isTestEvent, setIsTestEvent] = useState(false);
 
   // Fetch event data
   useEffect(() => {
@@ -61,7 +70,7 @@ export default function AdminEventDetailPage(props: {
           eventDate.setHours(parseInt(timeParts[0]), parseInt(timeParts[1]));
         }
 
-        setEvent({
+        const eventData = {
           id: data.id,
           name: data.name,
           location: data.location,
@@ -73,7 +82,14 @@ export default function AdminEventDetailPage(props: {
           status: data.status,
           createdAt: new Date(data.created_at),
           updatedAt: new Date(data.updated_at || data.created_at),
-        });
+        };
+
+        setEvent(eventData);
+
+        // Check if this is a test event (name contains "DYNAMIC ADMIN TEST EVENT")
+        setIsTestEvent(
+          data.name.toUpperCase().includes("DYNAMIC ADMIN TEST EVENT")
+        );
       }
       setLoading(false);
     };
@@ -108,6 +124,7 @@ export default function AdminEventDetailPage(props: {
           userId: entry.user_id,
           groupSize: entry.group_size || 1,
           groupId: entry.group_id,
+          player_names: entry.player_names || [],
           position: entry.position,
           status: entry.status,
           joinedAt: new Date(entry.joined_at),
@@ -187,6 +204,7 @@ export default function AdminEventDetailPage(props: {
           player2Id: assignment.player2_id,
           player3Id: assignment.player3_id,
           player4Id: assignment.player4_id,
+          player_names: assignment.player_names || [],
           startedAt: new Date(assignment.started_at),
           endedAt: assignment.ended_at
             ? new Date(assignment.ended_at)
@@ -231,6 +249,7 @@ export default function AdminEventDetailPage(props: {
                 createdAt: new Date(),
               }
             : undefined,
+          queueEntryIds: assignment.queue_entry_ids || [],
         }));
         setAssignments(courtAssignments);
       }
@@ -268,110 +287,30 @@ export default function AdminEventDetailPage(props: {
   const handleAssignNext = async () => {
     if (!event) return;
 
-    const playersPerCourt = event.teamSize * 2;
-    const nextPlayers = queue
-      .filter((e) => e.status === "waiting")
-      .slice(0, playersPerCourt);
+    try {
+      const result = await assignPlayersToNextCourt(id);
 
-    if (nextPlayers.length < playersPerCourt) {
-      toast.error("Not enough players in queue", {
-        description: `Need ${playersPerCourt} players for ${
+      if (result.success) {
+        const teamSizeText =
           event.teamSize === 1
             ? "solo"
             : event.teamSize === 2
             ? "doubles"
             : event.teamSize === 3
             ? "triplets"
-            : "quads"
-        }`,
-      });
-      return;
-    }
+            : "quads";
 
-    // Find an available court - reuse ended court numbers
-    const availableCourt = (() => {
-      const activeCourts = new Set(
-        assignments.filter((a) => !a.endedAt).map((a) => a.courtNumber)
-      );
-
-      // Find first court number that's not in use
-      for (let i = 1; i <= event.courtCount; i++) {
-        if (!activeCourts.has(i)) {
-          return i;
-        }
-      }
-
-      return null; // All courts occupied
-    })();
-
-    if (availableCourt === null) {
-      toast.error("No available courts", {
-        description: "End a game first to free up a court.",
-      });
-      return;
-    }
-
-    try {
-      const supabase = createClient();
-
-      // Create court assignment with dynamic player slots
-      const assignmentData: any = {
-        event_id: id,
-        court_number: availableCourt,
-        started_at: new Date().toISOString(),
-      };
-
-      // Assign players to slots based on team size
-      if (nextPlayers[0]) assignmentData.player1_id = nextPlayers[0].userId;
-      if (nextPlayers[1]) assignmentData.player2_id = nextPlayers[1].userId;
-      if (nextPlayers[2]) assignmentData.player3_id = nextPlayers[2].userId;
-      if (nextPlayers[3]) assignmentData.player4_id = nextPlayers[3].userId;
-      if (nextPlayers[4]) assignmentData.player5_id = nextPlayers[4].userId;
-      if (nextPlayers[5]) assignmentData.player6_id = nextPlayers[5].userId;
-      if (nextPlayers[6]) assignmentData.player7_id = nextPlayers[6].userId;
-      if (nextPlayers[7]) assignmentData.player8_id = nextPlayers[7].userId;
-
-      const { error: assignmentError } = await supabase
-        .from("court_assignments")
-        .insert(assignmentData);
-
-      if (assignmentError) {
-        console.error("Error creating assignment:", assignmentError);
+        toast.success(
+          `Assigned ${result.playersAssigned} players to Court ${result.courtNumber}`,
+          {
+            description: `${teamSizeText} game started`,
+          }
+        );
+      } else {
         toast.error("Failed to assign players", {
-          description: assignmentError.message,
+          description: result.error,
         });
-        return;
       }
-
-      // Update queue entries to "playing"
-      console.log(
-        "Updating queue entries to playing:",
-        nextPlayers.map((p) => ({
-          id: p.id,
-          userId: p.userId,
-          name: p.user?.name,
-        }))
-      );
-
-      for (const player of nextPlayers) {
-        const { error: updateError } = await supabase
-          .from("queue_entries")
-          .update({ status: "playing" })
-          .eq("id", player.id);
-
-        if (updateError) {
-          console.error(`Failed to update player ${player.id}:`, updateError);
-        } else {
-          console.log(`Updated player ${player.id} to playing`);
-        }
-      }
-
-      toast.success(
-        `Assigned ${playersPerCourt} players to Court ${availableCourt}`
-      );
-
-      // Force page refresh to show updated data
-      window.location.reload();
     } catch (err) {
       console.error("Error assigning players:", err);
       toast.error("Failed to assign players");
@@ -454,7 +393,7 @@ export default function AdminEventDetailPage(props: {
       action: {
         label: "End Game",
         onClick: async () => {
-          await performEndGame(assignmentId);
+          await performEndGame(assignmentId, winningTeam);
         },
       },
       cancel: {
@@ -464,49 +403,216 @@ export default function AdminEventDetailPage(props: {
     });
   };
 
-  const performEndGame = async (assignmentId: string) => {
+  const performEndGame = async (
+    assignmentId: string,
+    winningTeam: "team1" | "team2"
+  ) => {
     try {
-      const supabase = createClient();
+      if (!event) return;
 
-      // Delete the assignment (simpler approach - no history kept)
+      const supabase = createClient();
+      const assignment = assignments.find((a) => a.id === assignmentId);
+      if (!assignment) {
+        toast.error("Assignment not found");
+        return;
+      }
+
+      // Use QueueManager to determine who stays and who rotates
+      const { playersToStay, playersToQueue } =
+        QueueManager.handleGameCompletion(
+          assignment,
+          event.rotationType,
+          winningTeam,
+          queue,
+          event.teamSize
+        );
+
+      // 1. Mark the game as ended
       const { error: endError } = await supabase
         .from("court_assignments")
-        .delete()
+        .update({ ended_at: new Date().toISOString() })
         .eq("id", assignmentId);
 
       if (endError) {
         console.error("Error ending game:", endError);
-        toast.error("Failed to end game", {
-          description: endError.message,
-        });
+        toast.error("Failed to end game");
         return;
       }
 
-      // Get the assignment to find player IDs
-      const assignment = assignments.find((a) => a.id === assignmentId);
-      if (!assignment) return;
+      // 2. Get the queue entry IDs that were assigned to this court
+      // This is the key fix - we use the stored queue_entry_ids instead of user_ids
+      const queueEntryIds = (assignment as any).queueEntryIds || [];
 
-      // Remove players from queue (support up to 8 players)
-      const playerIds = [
-        assignment.player1Id,
-        assignment.player2Id,
-        assignment.player3Id,
-        assignment.player4Id,
-        assignment.player5Id,
-        assignment.player6Id,
-        assignment.player7Id,
-        assignment.player8Id,
-      ].filter(Boolean);
+      if (queueEntryIds.length === 0) {
+        console.warn(
+          "No queue_entry_ids found in assignment, falling back to user_id lookup"
+        );
+        // Fallback for old assignments that don't have queue_entry_ids
+        const allPlayers = [
+          assignment.player1Id,
+          assignment.player2Id,
+          assignment.player3Id,
+          assignment.player4Id,
+          assignment.player5Id,
+          assignment.player6Id,
+          assignment.player7Id,
+          assignment.player8Id,
+        ].filter(Boolean) as string[];
 
-      for (const playerId of playerIds) {
-        await supabase
+        const { data: entries } = await supabase
           .from("queue_entries")
-          .delete()
+          .select("id")
           .eq("event_id", id)
-          .eq("user_id", playerId);
+          .in("user_id", allPlayers);
+
+        if (entries) {
+          queueEntryIds.push(...entries.map((e) => e.id));
+        }
       }
 
-      toast.success("Game ended successfully");
+      console.log("Queue entries that played:", queueEntryIds);
+
+      // 3. Update all these queue entries to 'waiting' status
+      for (const entryId of queueEntryIds) {
+        await supabase
+          .from("queue_entries")
+          .update({ status: "waiting" })
+          .eq("id", entryId);
+      }
+
+      // 4. Get all current queue entries to determine positioning
+      const { data: allQueueEntries } = await supabase
+        .from("queue_entries")
+        .select("id, user_id, group_size, position")
+        .eq("event_id", id)
+        .eq("status", "waiting")
+        .order("position");
+
+      if (!allQueueEntries) {
+        toast.error("Failed to fetch queue entries");
+        return;
+      }
+
+      // 5. Determine which queue entries belong to which team
+      // Since queue entries fill slots sequentially, we can determine team membership
+      // by looking at which slots they filled
+      const playersPerTeam = event.teamSize;
+
+      // Create a map of which queue entries contributed to which team
+      const queueEntryToTeam = new Map<string, "team1" | "team2">();
+
+      // Track which player slots each queue entry filled
+      let slotIndex = 0;
+      for (const entryId of queueEntryIds) {
+        const entry = allQueueEntries.find((e) => e.id === entryId);
+        if (entry) {
+          const groupSize = entry.group_size || 1;
+          // Determine which team this entry's slots belong to
+          // Slots 0 to (playersPerTeam-1) = team1
+          // Slots playersPerTeam to (2*playersPerTeam-1) = team2
+          const startSlot = slotIndex;
+          const endSlot = slotIndex + groupSize - 1;
+
+          // If all slots are in team1 range or team2 range, assign accordingly
+          if (endSlot < playersPerTeam) {
+            queueEntryToTeam.set(entryId, "team1");
+          } else if (startSlot >= playersPerTeam) {
+            queueEntryToTeam.set(entryId, "team2");
+          } else {
+            // Entry spans both teams (shouldn't happen with proper assignment)
+            console.warn(`Queue entry ${entryId} spans both teams!`);
+            // Assign to team with more slots
+            if (playersPerTeam - startSlot >= endSlot - playersPerTeam + 1) {
+              queueEntryToTeam.set(entryId, "team1");
+            } else {
+              queueEntryToTeam.set(entryId, "team2");
+            }
+          }
+
+          slotIndex += groupSize;
+        }
+      }
+
+      // Separate entries into: winners, losers, and others
+      const winnerEntryIds = new Set<string>();
+      const loserEntryIds = new Set<string>();
+
+      for (const [entryId, team] of queueEntryToTeam.entries()) {
+        if (team === winningTeam) {
+          winnerEntryIds.add(entryId);
+        } else {
+          loserEntryIds.add(entryId);
+        }
+      }
+
+      // Get entries that weren't in this game
+      const otherEntries = allQueueEntries.filter(
+        (e) => !queueEntryIds.includes(e.id)
+      );
+
+      console.log("Winners:", Array.from(winnerEntryIds));
+      console.log("Losers:", Array.from(loserEntryIds));
+      console.log(
+        "Others:",
+        otherEntries.map((e) => e.id)
+      );
+
+      // Safety check: ensure all entries are categorized
+      const categorizedIds = new Set([
+        ...Array.from(winnerEntryIds),
+        ...Array.from(loserEntryIds),
+        ...otherEntries.map((e) => e.id),
+      ]);
+      const allEntryIds = allQueueEntries.map((e) => e.id);
+      const uncategorized = allEntryIds.filter((id) => !categorizedIds.has(id));
+      if (uncategorized.length > 0) {
+        console.warn("Uncategorized queue entries:", uncategorized);
+      }
+
+      // 6. Reposition entries based on rotation type
+      let position = 1;
+
+      // Winners go to front
+      for (const entryId of winnerEntryIds) {
+        await supabase
+          .from("queue_entries")
+          .update({ position })
+          .eq("id", entryId);
+        position++;
+      }
+
+      // Other players (not in this game) stay in their relative order
+      for (const entry of otherEntries) {
+        await supabase
+          .from("queue_entries")
+          .update({ position })
+          .eq("id", entry.id);
+        position++;
+      }
+
+      // Losers go to back
+      for (const entryId of loserEntryIds) {
+        await supabase
+          .from("queue_entries")
+          .update({ position })
+          .eq("id", entryId);
+        position++;
+      }
+
+      console.log(`Repositioned ${position - 1} queue entries`);
+
+      // Final cleanup: reorder queue to ensure no gaps or duplicates
+      await reorderQueue(id);
+
+      const stayCount = Array.from(winnerEntryIds).length;
+      toast.success(
+        `Game ended! ${stayCount} queue entr${
+          stayCount === 1 ? "y" : "ies"
+        } moved to front.`,
+        {
+          description: "Use 'Assign Next' to start the next game.",
+        }
+      );
     } catch (err) {
       console.error("Error ending game:", err);
       toast.error("Failed to end game");
@@ -553,6 +659,18 @@ export default function AdminEventDetailPage(props: {
       />
 
       <div className="container mx-auto px-4 py-8">
+        {/* Test Mode Controls */}
+        {isTestEvent && (
+          <div className="mb-8">
+            <TestControls
+              eventId={id}
+              currentRotationType={event.rotationType}
+              currentTeamSize={event.teamSize}
+              currentCourtCount={event.courtCount}
+            />
+          </div>
+        )}
+
         {/* Event Header */}
         <Card className="border-border mb-8">
           <CardContent className="p-6">

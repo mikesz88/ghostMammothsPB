@@ -117,12 +117,134 @@ export default function EventDetailPage(props: {
 
       if (error) {
         console.error("Error fetching assignments:", error);
+      } else if (data) {
+        const courtAssignments: CourtAssignment[] = data.map((assignment) => ({
+          id: assignment.id,
+          eventId: assignment.event_id,
+          courtNumber: assignment.court_number,
+          player1Id: assignment.player1_id,
+          player2Id: assignment.player2_id,
+          player3Id: assignment.player3_id,
+          player4Id: assignment.player4_id,
+          player5Id: assignment.player5_id,
+          player6Id: assignment.player6_id,
+          player7Id: assignment.player7_id,
+          player8Id: assignment.player8_id,
+          player_names: assignment.player_names || [],
+          startedAt: new Date(assignment.started_at),
+          endedAt: assignment.ended_at
+            ? new Date(assignment.ended_at)
+            : undefined,
+          player1: assignment.player1
+            ? {
+                id: assignment.player1.id,
+                name: assignment.player1.name,
+                email: assignment.player1.email,
+                skillLevel: assignment.player1.skill_level,
+                isAdmin: false,
+                createdAt: new Date(),
+              }
+            : undefined,
+          player2: assignment.player2
+            ? {
+                id: assignment.player2.id,
+                name: assignment.player2.name,
+                email: assignment.player2.email,
+                skillLevel: assignment.player2.skill_level,
+                isAdmin: false,
+                createdAt: new Date(),
+              }
+            : undefined,
+          player3: assignment.player3
+            ? {
+                id: assignment.player3.id,
+                name: assignment.player3.name,
+                email: assignment.player3.email,
+                skillLevel: assignment.player3.skill_level,
+                isAdmin: false,
+                createdAt: new Date(),
+              }
+            : undefined,
+          player4: assignment.player4
+            ? {
+                id: assignment.player4.id,
+                name: assignment.player4.name,
+                email: assignment.player4.email,
+                skillLevel: assignment.player4.skill_level,
+                isAdmin: false,
+                createdAt: new Date(),
+              }
+            : undefined,
+          player5: assignment.player5
+            ? {
+                id: assignment.player5.id,
+                name: assignment.player5.name,
+                email: assignment.player5.email,
+                skillLevel: assignment.player5.skill_level,
+                isAdmin: false,
+                createdAt: new Date(),
+              }
+            : undefined,
+          player6: assignment.player6
+            ? {
+                id: assignment.player6.id,
+                name: assignment.player6.name,
+                email: assignment.player6.email,
+                skillLevel: assignment.player6.skill_level,
+                isAdmin: false,
+                createdAt: new Date(),
+              }
+            : undefined,
+          player7: assignment.player7
+            ? {
+                id: assignment.player7.id,
+                name: assignment.player7.name,
+                email: assignment.player7.email,
+                skillLevel: assignment.player7.skill_level,
+                isAdmin: false,
+                createdAt: new Date(),
+              }
+            : undefined,
+          player8: assignment.player8
+            ? {
+                id: assignment.player8.id,
+                name: assignment.player8.name,
+                email: assignment.player8.email,
+                skillLevel: assignment.player8.skill_level,
+                isAdmin: false,
+                createdAt: new Date(),
+              }
+            : undefined,
+        }));
+        setAssignments(courtAssignments);
       } else {
-        setAssignments(data || []);
+        setAssignments([]);
       }
     };
 
     fetchAssignments();
+
+    // Set up real-time subscription for court assignments
+    const supabase = createClient();
+    const channel = supabase
+      .channel(`public-assignments-${id}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "court_assignments",
+          filter: `event_id=eq.${id}`,
+        },
+        () => {
+          fetchAssignments();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [id]);
 
   // Check if user can join event based on membership
@@ -146,6 +268,22 @@ export default function EventDetailPage(props: {
   );
   const userPosition = currentUserEntry?.position || 0;
   const isUpNext = userPosition > 0 && userPosition <= 4;
+
+  // Check if user is currently playing on a court
+  const isCurrentlyPlaying = user
+    ? assignments.some(
+        (assignment) =>
+          !assignment.endedAt &&
+          (assignment.player1Id === user.id ||
+            assignment.player2Id === user.id ||
+            assignment.player3Id === user.id ||
+            assignment.player4Id === user.id ||
+            assignment.player5Id === user.id ||
+            assignment.player6Id === user.id ||
+            assignment.player7Id === user.id ||
+            assignment.player8Id === user.id)
+      )
+    : false;
 
   // Handle position change notifications
   useEffect(() => {
@@ -177,15 +315,55 @@ export default function EventDetailPage(props: {
   ) => {
     if (!user) return;
 
+    // Check if user is already in queue
+    const alreadyInQueue = queue.find(
+      (e) =>
+        e.userId === user.id &&
+        (e.status === "waiting" || e.status === "playing")
+    );
+
+    if (alreadyInQueue) {
+      toast.error("Already in queue", {
+        description: "You're already in the queue for this event.",
+      });
+      return;
+    }
+
+    // Check if user is already playing on a court
+    const alreadyPlaying = assignments.some(
+      (assignment) =>
+        !assignment.endedAt &&
+        (assignment.player1Id === user.id ||
+          assignment.player2Id === user.id ||
+          assignment.player3Id === user.id ||
+          assignment.player4Id === user.id ||
+          assignment.player5Id === user.id ||
+          assignment.player6Id === user.id ||
+          assignment.player7Id === user.id ||
+          assignment.player8Id === user.id)
+    );
+
+    if (alreadyPlaying) {
+      toast.error("Already playing", {
+        description:
+          "You're currently playing on a court. Finish your game first.",
+      });
+      return;
+    }
+
     try {
       // Generate a unique group ID if joining as a group
       const groupId = groupSize > 1 ? crypto.randomUUID() : undefined;
 
       // Add the current user to the queue with group information
-      // Note: Currently only the authenticated user is added to the database
-      // The other player names are stored in the dialog but not persisted
-      // This is intentional - only registered users can join the queue
-      const { error } = await joinQueue(id, user.id, groupSize, groupId);
+      // Now storing all player names in the database for display on courts
+      const { error } = await joinQueue(
+        id,
+        user.id,
+        groupSize,
+        groupId,
+        players
+      );
 
       if (error) {
         console.error("Error joining queue:", error);
@@ -405,7 +583,12 @@ export default function EventDetailPage(props: {
           <div>
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-2xl font-bold text-foreground">Queue</h2>
-              {userPosition > 0 ? (
+              {isCurrentlyPlaying ? (
+                <Badge variant="default" className="text-sm">
+                  <Trophy className="w-3 h-3 mr-1" />
+                  Currently Playing
+                </Badge>
+              ) : userPosition > 0 ? (
                 <Badge variant="default" className="text-sm">
                   <Bell className="w-3 h-3 mr-1" />
                   You're #{userPosition}

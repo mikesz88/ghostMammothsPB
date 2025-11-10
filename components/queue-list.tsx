@@ -13,6 +13,51 @@ interface QueueListProps {
   isAdmin?: boolean;
 }
 
+// Skill level mapping for weighted average calculation
+const skillLevelToNumber: Record<string, number> = {
+  beginner: 1,
+  intermediate: 2,
+  advanced: 3,
+  pro: 4,
+};
+
+const numberToSkillLevel: Record<number, string> = {
+  1: "beginner",
+  2: "intermediate",
+  3: "advanced",
+  4: "pro",
+};
+
+// Calculate weighted average skill level for a group
+function getAverageSkillLevel(
+  playerNames: Array<{ name: string; skillLevel: string }> | undefined,
+  fallbackSkillLevel?: string
+): string {
+  if (!playerNames || playerNames.length === 0) {
+    return fallbackSkillLevel || "intermediate";
+  }
+
+  // Convert skill levels to numbers and calculate average
+  const skillNumbers = playerNames
+    .map((player) => skillLevelToNumber[player.skillLevel] || 2)
+    .filter((num) => num !== undefined);
+
+  if (skillNumbers.length === 0) {
+    return fallbackSkillLevel || "intermediate";
+  }
+
+  const average =
+    skillNumbers.reduce((sum, num) => sum + num, 0) / skillNumbers.length;
+
+  // Round to nearest integer (weighted average)
+  const roundedAverage = Math.round(average);
+
+  // Ensure it's within valid range (1-4)
+  const clampedAverage = Math.max(1, Math.min(4, roundedAverage));
+
+  return numberToSkillLevel[clampedAverage] || "intermediate";
+}
+
 export function QueueList({
   queue,
   onRemove,
@@ -72,35 +117,31 @@ export function QueueList({
                     </span>
                   </div>
                   <div className="flex-1">
-                    {isGroup ? (
-                      <>
-                        <div className="flex items-center gap-2 mb-1">
-                          <p className="font-medium text-foreground">
-                            Group of {entries.length}
-                          </p>
-                          <Badge variant="outline" className="text-xs">
-                            {firstEntry.user?.skillLevel}
-                          </Badge>
-                        </div>
-                        <div className="flex flex-wrap gap-2 text-sm text-muted-foreground">
-                          {entries.map((entry) => (
-                            <span key={entry.id}>{entry.user?.name}</span>
-                          ))}
-                        </div>
-                      </>
-                    ) : (
-                      <>
-                        <p className="font-medium text-foreground">
-                          {firstEntry.user?.name}
-                        </p>
-                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                          <Badge variant="outline" className="text-xs">
-                            {firstEntry.user?.skillLevel}
-                          </Badge>
-                          <span>Solo</span>
-                        </div>
-                      </>
-                    )}
+                    <div className="flex items-center gap-2 mb-1">
+                      <p className="font-medium text-foreground">
+                        Group of {firstEntry.groupSize || entries.length}
+                      </p>
+                      <Badge variant="outline" className="text-xs">
+                        {getAverageSkillLevel(
+                          firstEntry.player_names,
+                          firstEntry.user?.skillLevel
+                        )}
+                      </Badge>
+                    </div>
+                    <div className="flex flex-wrap gap-2 text-sm text-muted-foreground">
+                      {firstEntry.player_names &&
+                      firstEntry.player_names.length > 0 ? (
+                        firstEntry.player_names.map((player, idx) => (
+                          <span key={idx}>{player.name}</span>
+                        ))
+                      ) : isGroup ? (
+                        entries.map((entry) => (
+                          <span key={entry.id}>{entry.user?.name}</span>
+                        ))
+                      ) : (
+                        <span>{firstEntry.user?.name}</span>
+                      )}
+                    </div>
                   </div>
                 </div>
                 <div className="flex items-center gap-3">

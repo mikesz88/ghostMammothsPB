@@ -60,8 +60,8 @@ function HomeContent() {
             <Alert variant="destructive">
               <AlertCircle className="w-4 h-4" />
               <AlertDescription>
-                Admin access required. You don't have permission to access the
-                admin dashboard.
+                Admin access required. You don&apos;t have permission to access
+                the admin dashboard.
               </AlertDescription>
             </Alert>
           </div>
@@ -71,8 +71,8 @@ function HomeContent() {
           Smart Queue Management for Pickleball Events
         </h1>
         <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto text-pretty">
-          Join the queue, track your position, and get notified when it's your
-          turn to play. Real-time court assignments and seamless rotation
+          Join the queue, track your position, and get notified when it&apos;s
+          your turn to play. Real-time court assignments and seamless rotation
           management.
         </p>
         <div className="flex items-center justify-center gap-4">

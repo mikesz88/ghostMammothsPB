@@ -53,36 +53,44 @@ export function CourtStatus({
                       Team 1
                     </p>
                     <div className="space-y-2">
-                      {[
-                        assignment.player1,
-                        assignment.player2,
-                        assignment.player3,
-                        assignment.player4,
-                        assignment.player5,
-                        assignment.player6,
-                        assignment.player7,
-                        assignment.player8,
-                      ]
-                        .filter(Boolean)
-                        .slice(0, teamSize)
-                        .map((player, idx) => (
+                      {(() => {
+                        // Use player_names if available, otherwise fall back to player objects
+                        const playerNames = assignment.player_names || [];
+                        const players = [
+                          assignment.player1,
+                          assignment.player2,
+                          assignment.player3,
+                          assignment.player4,
+                          assignment.player5,
+                          assignment.player6,
+                          assignment.player7,
+                          assignment.player8,
+                        ].filter(Boolean);
+
+                        const team1Names =
+                          playerNames.length > 0
+                            ? playerNames.slice(0, teamSize)
+                            : players
+                                .slice(0, teamSize)
+                                .map((p) => p?.name || "Player");
+
+                        return team1Names.map((name, idx) => (
                           <div
                             key={idx}
                             className="flex items-center gap-2 text-sm"
                           >
                             <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center">
                               <span className="text-xs font-medium text-primary">
-                                {player?.name
+                                {name
                                   .split(" ")
                                   .map((n) => n[0])
                                   .join("")}
                               </span>
                             </div>
-                            <span className="text-foreground">
-                              {player?.name}
-                            </span>
+                            <span className="text-foreground">{name}</span>
                           </div>
-                        ))}
+                        ));
+                      })()}
                     </div>
                   </div>
                   <div className="space-y-2">
@@ -90,36 +98,44 @@ export function CourtStatus({
                       Team 2
                     </p>
                     <div className="space-y-2">
-                      {[
-                        assignment.player1,
-                        assignment.player2,
-                        assignment.player3,
-                        assignment.player4,
-                        assignment.player5,
-                        assignment.player6,
-                        assignment.player7,
-                        assignment.player8,
-                      ]
-                        .filter(Boolean)
-                        .slice(teamSize, teamSize * 2)
-                        .map((player, idx) => (
+                      {(() => {
+                        // Use player_names if available, otherwise fall back to player objects
+                        const playerNames = assignment.player_names || [];
+                        const players = [
+                          assignment.player1,
+                          assignment.player2,
+                          assignment.player3,
+                          assignment.player4,
+                          assignment.player5,
+                          assignment.player6,
+                          assignment.player7,
+                          assignment.player8,
+                        ].filter(Boolean);
+
+                        const team2Names =
+                          playerNames.length > 0
+                            ? playerNames.slice(teamSize, teamSize * 2)
+                            : players
+                                .slice(teamSize, teamSize * 2)
+                                .map((p) => p?.name || "Player");
+
+                        return team2Names.map((name, idx) => (
                           <div
                             key={idx}
                             className="flex items-center gap-2 text-sm"
                           >
                             <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center">
                               <span className="text-xs font-medium text-primary">
-                                {player?.name
+                                {name
                                   .split(" ")
                                   .map((n) => n[0])
                                   .join("")}
                               </span>
                             </div>
-                            <span className="text-foreground">
-                              {player?.name}
-                            </span>
+                            <span className="text-foreground">{name}</span>
                           </div>
-                        ))}
+                        ));
+                      })()}
                     </div>
                   </div>
                 </div>
