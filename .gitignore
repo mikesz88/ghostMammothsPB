@@ -36,3 +36,9 @@ yarn-error.log*
 next-env.d.ts
 
 .env
+
+# data exports
+data-export.json
+*.export.json
+supabase/scripts/*.sql
+*.sql
