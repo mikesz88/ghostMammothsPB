@@ -31,6 +31,7 @@ export async function createUserProfile(
     skill_level: userData.skillLevel,
     phone: userData.phone || null,
     is_admin: false,
+    membership_status: "free",
   });
 
   if (profileError) {

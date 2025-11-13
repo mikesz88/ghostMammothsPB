@@ -9,8 +9,6 @@ import type { GroupSize } from "@/lib/types";
 type QueueEntryRow = Database["public"]["Tables"]["queue_entries"]["Row"];
 type CourtAssignmentInsert =
   Database["public"]["Tables"]["court_assignments"]["Insert"];
-type UserMembershipRow =
-  Database["public"]["Tables"]["user_memberships"]["Row"];
 
 // Custom type for the query result with partial user data
 type QueueEntryWithUser = QueueEntryRow & {
@@ -53,58 +51,6 @@ export async function joinQueue(
   playerNames?: Array<{ name: string; skillLevel: string }>
 ) {
   const supabase = await createClient();
-
-  // Ensure user has an active paid membership before joining the queue
-  const { data: membershipData } = await supabase
-    .from("user_memberships")
-    .select(
-      `
-      status,
-      tier:membership_tiers(price)
-    `
-    )
-    .eq("user_id", userId)
-    .single();
-
-  type MembershipWithTier = UserMembershipRow & {
-    tier: { price: number } | null;
-  };
-
-  const membershipRecord = membershipData as MembershipWithTier | null;
-
-  const hasActiveTier =
-    membershipRecord?.status &&
-    (membershipRecord.status === "active" ||
-      membershipRecord.status === "trialing");
-  const tierPrice = membershipRecord?.tier?.price ?? 0;
-  const isPaidTier = tierPrice > 0;
-
-  let hasPaidMembership = !!(hasActiveTier && isPaidTier);
-
-  if (!hasPaidMembership) {
-    const { data: userRecord } = await supabase
-      .from("users")
-      .select("membership_status, is_admin")
-      .eq("id", userId)
-      .single();
-
-    const isAdminUser = !!userRecord?.is_admin;
-
-    if (
-      isAdminUser ||
-      (userRecord?.membership_status &&
-        userRecord.membership_status !== "free")
-    ) {
-      hasPaidMembership = true;
-    }
-  }
-
-  if (!hasPaidMembership) {
-    return {
-      error:
-        "A paid membership is required to join the queue. Visit the membership page to upgrade.",
-    };
-  }
 
   const {
     data: { user },
@@ -482,7 +428,10 @@ export async function assignPlayersToNextCourt(eventId: string) {
   };
 }
 
-export async function adminRemoveFromQueue(queueEntryId: string, reason?: string) {
+export async function adminRemoveFromQueue(
+  queueEntryId: string,
+  reason?: string
+) {
   const supabase = await createClient();
 
   const {

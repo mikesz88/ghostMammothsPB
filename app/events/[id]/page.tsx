@@ -13,6 +13,8 @@ import {
   RefreshCw,
   Settings,
   Loader2,
+  QrCode,
+  Copy,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -29,21 +31,85 @@ import { useRealtimeQueue } from "@/lib/hooks/use-realtime-queue";
 import { useAuth } from "@/lib/auth-context";
 import { joinQueue, leaveQueue } from "@/app/actions/queue";
 import { createClient } from "@/lib/supabase/client";
-import { canUserJoinEvent, formatPrice } from "@/lib/membership-helpers";
 import { Header } from "@/components/ui/header";
-import type { Event, QueueEntry, CourtAssignment, TeamSize, RotationType, EventStatus, SkillLevel } from "@/lib/types";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import type {
+  Event,
+  QueueEntry,
+  CourtAssignment,
+  TeamSize,
+  RotationType,
+  EventStatus,
+  SkillLevel,
+} from "@/lib/types";
 import type { Database } from "@/supabase/supa-schema";
 
-type CourtAssignmentRow = Database["public"]["Tables"]["court_assignments"]["Row"];
+type CourtAssignmentRow =
+  Database["public"]["Tables"]["court_assignments"]["Row"];
 type CourtAssignmentWithPlayers = CourtAssignmentRow & {
-  player1: { id: string; name: string; email: string; skill_level: string; phone: string | null } | null;
-  player2: { id: string; name: string; email: string; skill_level: string; phone: string | null } | null;
-  player3: { id: string; name: string; email: string; skill_level: string; phone: string | null } | null;
-  player4: { id: string; name: string; email: string; skill_level: string; phone: string | null } | null;
-  player5: { id: string; name: string; email: string; skill_level: string; phone: string | null } | null;
-  player6: { id: string; name: string; email: string; skill_level: string; phone: string | null } | null;
-  player7: { id: string; name: string; email: string; skill_level: string; phone: string | null } | null;
-  player8: { id: string; name: string; email: string; skill_level: string; phone: string | null } | null;
+  player1: {
+    id: string;
+    name: string;
+    email: string;
+    skill_level: string;
+    phone: string | null;
+  } | null;
+  player2: {
+    id: string;
+    name: string;
+    email: string;
+    skill_level: string;
+    phone: string | null;
+  } | null;
+  player3: {
+    id: string;
+    name: string;
+    email: string;
+    skill_level: string;
+    phone: string | null;
+  } | null;
+  player4: {
+    id: string;
+    name: string;
+    email: string;
+    skill_level: string;
+    phone: string | null;
+  } | null;
+  player5: {
+    id: string;
+    name: string;
+    email: string;
+    skill_level: string;
+    phone: string | null;
+  } | null;
+  player6: {
+    id: string;
+    name: string;
+    email: string;
+    skill_level: string;
+    phone: string | null;
+  } | null;
+  player7: {
+    id: string;
+    name: string;
+    email: string;
+    skill_level: string;
+    phone: string | null;
+  } | null;
+  player8: {
+    id: string;
+    name: string;
+    email: string;
+    skill_level: string;
+    phone: string | null;
+  } | null;
 };
 
 export default function EventDetailPage(props: {
@@ -57,10 +123,9 @@ export default function EventDetailPage(props: {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [lastPosition, setLastPosition] = useState<number>(0);
-  const [canJoin, setCanJoin] = useState(true);
-  const [joinReason, setJoinReason] = useState<string | undefined>();
-  const [requiresPayment, setRequiresPayment] = useState(false);
-  const [paymentAmount, setPaymentAmount] = useState<number | undefined>();
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [showQrDialog, setShowQrDialog] = useState(false);
+  const [queueLink, setQueueLink] = useState("");
 
   const { user } = useAuth();
   const {
@@ -94,8 +159,10 @@ export default function EventDetailPage(props: {
               ? new Date(`${data.date}T${data.time}`)
               : new Date(data.date),
           courtCount:
-            parseInt(data.court_count.toString()) || parseInt(data.num_courts) || 0,
-          teamSize: data.team_size as TeamSize || 2,
+            parseInt(data.court_count.toString()) ||
+            parseInt(data.num_courts) ||
+            0,
+          teamSize: (data.team_size as TeamSize) || 2,
           rotationType: data.rotation_type as RotationType,
           status: data.status as EventStatus,
           createdAt: new Date(data.created_at),
@@ -134,127 +201,132 @@ export default function EventDetailPage(props: {
       if (error) {
         console.error("Error fetching assignments:", error);
       } else if (data) {
-        const courtAssignments: CourtAssignment[] = data.map((assignment: CourtAssignmentWithPlayers) => {
-          // Parse player_names and queueEntryIds JSON if they exist
-          let playerNamesArray: string[] = [];
-          let queueEntryIdsArray: string[] = [];
-          
-          if (assignment.player_names) {
-            try {
-              const parsed = assignment.player_names as unknown as string[];
-              playerNamesArray = Array.isArray(parsed) ? parsed : [];
-            } catch {
-              playerNamesArray = [];
+        const courtAssignments: CourtAssignment[] = data.map(
+          (assignment: CourtAssignmentWithPlayers) => {
+            // Parse player_names and queueEntryIds JSON if they exist
+            let playerNamesArray: string[] = [];
+            let queueEntryIdsArray: string[] = [];
+
+            if (assignment.player_names) {
+              try {
+                const parsed = assignment.player_names as unknown as string[];
+                playerNamesArray = Array.isArray(parsed) ? parsed : [];
+              } catch {
+                playerNamesArray = [];
+              }
             }
-          }
-          
-          if (assignment.queue_entry_ids) {
-            try {
-              const parsed = assignment.queue_entry_ids as unknown as string[];
-              queueEntryIdsArray = Array.isArray(parsed) ? parsed : [];
-            } catch {
-              queueEntryIdsArray = [];
+
+            if (assignment.queue_entry_ids) {
+              try {
+                const parsed =
+                  assignment.queue_entry_ids as unknown as string[];
+                queueEntryIdsArray = Array.isArray(parsed) ? parsed : [];
+              } catch {
+                queueEntryIdsArray = [];
+              }
             }
+
+            return {
+              id: assignment.id,
+              eventId: assignment.event_id || "",
+              courtNumber: assignment.court_number,
+              player1Id: assignment.player1_id || undefined,
+              player2Id: assignment.player2_id || undefined,
+              player3Id: assignment.player3_id || undefined,
+              player4Id: assignment.player4_id || undefined,
+              player5Id: assignment.player5_id || undefined,
+              player6Id: assignment.player6_id || undefined,
+              player7Id: assignment.player7_id || undefined,
+              player8Id: assignment.player8_id || undefined,
+              player_names: playerNamesArray,
+              queueEntryIds: queueEntryIdsArray,
+              startedAt: new Date(assignment.started_at || ""),
+              endedAt: assignment.ended_at
+                ? new Date(assignment.ended_at)
+                : undefined,
+              player1: assignment.player1
+                ? {
+                    id: assignment.player1.id,
+                    name: assignment.player1.name,
+                    email: assignment.player1.email,
+                    skillLevel: assignment.player1.skill_level as SkillLevel,
+                    isAdmin: false,
+                    createdAt: new Date(),
+                  }
+                : undefined,
+              player2: assignment.player2
+                ? {
+                    id: assignment.player2.id,
+                    name: assignment.player2.name,
+                    email: assignment.player2.email,
+                    skillLevel: assignment.player2.skill_level as SkillLevel,
+                    isAdmin: false,
+                    createdAt: new Date(),
+                  }
+                : undefined,
+              player3: assignment.player3
+                ? {
+                    id: assignment.player3.id,
+                    name: assignment.player3.name,
+                    email: assignment.player3.email,
+                    skillLevel: assignment.player3.skill_level as SkillLevel,
+                    isAdmin: false,
+                    createdAt: new Date(),
+                  }
+                : undefined,
+              player4: assignment.player4
+                ? {
+                    id: assignment.player4.id,
+                    name: assignment.player4.name,
+                    email: assignment.player4.email,
+                    skillLevel: assignment.player4.skill_level as SkillLevel,
+                    isAdmin: false,
+                    createdAt: new Date(),
+                  }
+                : undefined,
+              player5: assignment.player5
+                ? {
+                    id: assignment.player5.id,
+                    name: assignment.player5.name,
+                    email: assignment.player5.email,
+                    skillLevel: assignment.player5.skill_level as SkillLevel,
+                    isAdmin: false,
+                    createdAt: new Date(),
+                  }
+                : undefined,
+              player6: assignment.player6
+                ? {
+                    id: assignment.player6.id,
+                    name: assignment.player6.name,
+                    email: assignment.player6.email,
+                    skillLevel: assignment.player6.skill_level as SkillLevel,
+                    isAdmin: false,
+                    createdAt: new Date(),
+                  }
+                : undefined,
+              player7: assignment.player7
+                ? {
+                    id: assignment.player7.id,
+                    name: assignment.player7.name,
+                    email: assignment.player7.email,
+                    skillLevel: assignment.player7.skill_level as SkillLevel,
+                    isAdmin: false,
+                    createdAt: new Date(),
+                  }
+                : undefined,
+              player8: assignment.player8
+                ? {
+                    id: assignment.player8.id,
+                    name: assignment.player8.name,
+                    email: assignment.player8.email,
+                    skillLevel: assignment.player8.skill_level as SkillLevel,
+                    isAdmin: false,
+                    createdAt: new Date(),
+                  }
+                : undefined,
+            };
           }
-          
-          return {
-            id: assignment.id,
-            eventId: assignment.event_id || "",
-            courtNumber: assignment.court_number,
-            player1Id: assignment.player1_id || undefined,
-            player2Id: assignment.player2_id || undefined,
-            player3Id: assignment.player3_id || undefined,
-            player4Id: assignment.player4_id || undefined,
-            player5Id: assignment.player5_id || undefined,
-            player6Id: assignment.player6_id || undefined,
-            player7Id: assignment.player7_id || undefined,
-            player8Id: assignment.player8_id || undefined,
-            player_names: playerNamesArray,
-            queueEntryIds: queueEntryIdsArray,
-            startedAt: new Date(assignment.started_at || ""),
-            endedAt: assignment.ended_at ? new Date(assignment.ended_at) : undefined,
-            player1: assignment.player1
-              ? {
-                  id: assignment.player1.id,
-                  name: assignment.player1.name,
-                  email: assignment.player1.email,
-                  skillLevel: assignment.player1.skill_level as SkillLevel,
-                  isAdmin: false,
-                  createdAt: new Date(),
-                }
-              : undefined,
-            player2: assignment.player2
-              ? {
-                  id: assignment.player2.id,
-                  name: assignment.player2.name,
-                  email: assignment.player2.email,
-                  skillLevel: assignment.player2.skill_level as SkillLevel,
-                  isAdmin: false,
-                  createdAt: new Date(),
-                }
-              : undefined,
-            player3: assignment.player3
-              ? {
-                  id: assignment.player3.id,
-                  name: assignment.player3.name,
-                  email: assignment.player3.email,
-                  skillLevel: assignment.player3.skill_level as SkillLevel,
-                  isAdmin: false,
-                  createdAt: new Date(),
-                }
-              : undefined,
-            player4: assignment.player4
-              ? {
-                  id: assignment.player4.id,
-                  name: assignment.player4.name,
-                  email: assignment.player4.email,
-                  skillLevel: assignment.player4.skill_level as SkillLevel,
-                  isAdmin: false,
-                  createdAt: new Date(),
-                }
-              : undefined,
-            player5: assignment.player5
-              ? {
-                  id: assignment.player5.id,
-                  name: assignment.player5.name,
-                  email: assignment.player5.email,
-                  skillLevel: assignment.player5.skill_level as SkillLevel,
-                  isAdmin: false,
-                  createdAt: new Date(),
-                }
-              : undefined,
-            player6: assignment.player6
-              ? {
-                  id: assignment.player6.id,
-                  name: assignment.player6.name,
-                  email: assignment.player6.email,
-                  skillLevel: assignment.player6.skill_level as SkillLevel,
-                  isAdmin: false,
-                  createdAt: new Date(),
-                }
-              : undefined,
-            player7: assignment.player7
-              ? {
-                  id: assignment.player7.id,
-                  name: assignment.player7.name,
-                  email: assignment.player7.email,
-                  skillLevel: assignment.player7.skill_level as SkillLevel,
-                  isAdmin: false,
-                  createdAt: new Date(),
-                }
-              : undefined,
-            player8: assignment.player8
-              ? {
-                  id: assignment.player8.id,
-                  name: assignment.player8.name,
-                  email: assignment.player8.email,
-                  skillLevel: assignment.player8.skill_level as SkillLevel,
-                  isAdmin: false,
-                  createdAt: new Date(),
-                }
-              : undefined,
-          };
-        });
+        );
         setAssignments(courtAssignments);
       } else {
         setAssignments([]);
@@ -286,20 +358,44 @@ export default function EventDetailPage(props: {
     };
   }, [id]);
 
-  // Check if user can join event based on membership
   useEffect(() => {
-    const checkAccess = async () => {
-      if (user && event) {
-        const access = await canUserJoinEvent(user.id, id);
-        setCanJoin(access.canJoin);
-        setJoinReason(access.reason);
-        setRequiresPayment(access.requiresPayment);
-        setPaymentAmount(access.amount);
+    let isMounted = true;
+
+    const checkAdmin = async () => {
+      if (!user) {
+        if (isMounted) setIsAdmin(false);
+        return;
+      }
+
+      if (user.user_metadata?.is_admin) {
+        if (isMounted) setIsAdmin(true);
+        return;
+      }
+
+      const supabase = createClient();
+      const { data } = await supabase
+        .from("users")
+        .select("is_admin")
+        .eq("id", user.id)
+        .single();
+
+      if (isMounted) {
+        setIsAdmin(Boolean(data?.is_admin));
       }
     };
 
-    checkAccess();
-  }, [user, event, id]);
+    void checkAdmin();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [user]);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      setQueueLink(`${window.location.origin}/events/${id}`);
+    }
+  }, [id]);
 
   // Get current user's queue position
   const currentUserEntry = queue.find(
@@ -406,26 +502,9 @@ export default function EventDetailPage(props: {
 
       if (error) {
         console.error("Error joining queue:", error);
-        const isMembershipError =
-          typeof error === "string" &&
-          error.toLowerCase().includes("membership");
-
-        if (isMembershipError) {
-          toast.error("Membership required", {
-            description:
-              "Upgrade your membership to join the queue for this event.",
-            action: {
-              label: "View Plans",
-              onClick: () => {
-                window.location.href = "/membership";
-              },
-            },
-          });
-        } else {
-          toast.error("Failed to join queue", {
-            description: "Please try again.",
-          });
-        }
+        toast.error("Failed to join queue", {
+          description: typeof error === "string" ? error : "Please try again.",
+        });
       } else {
         setShowJoinDialog(false);
 
@@ -651,35 +730,26 @@ export default function EventDetailPage(props: {
                 </Badge>
               ) : (
                 <>
-                  {!canJoin && joinReason ? (
-                    <div className="flex flex-col items-end gap-2">
-                      <p className="text-sm text-muted-foreground">
-                        {joinReason}
-                      </p>
-                      <Button variant="default" asChild>
-                        <Link href="/membership">Upgrade Membership</Link>
+                  <div className="flex flex-wrap items-center justify-end gap-2">
+                    {user ? (
+                      <Button onClick={() => setShowJoinDialog(true)}>
+                        Join Queue
                       </Button>
-                    </div>
-                  ) : requiresPayment && paymentAmount ? (
-                    <div className="flex flex-col items-end gap-2">
-                      <p className="text-sm text-muted-foreground">
-                        {formatPrice(paymentAmount)} to join
-                      </p>
+                    ) : (
+                      <Button asChild>
+                        <Link href="/login">Sign in to Join</Link>
+                      </Button>
+                    )}
+                    {isAdmin && (
                       <Button
-                        onClick={() => setShowJoinDialog(true)}
-                        disabled={!user}
+                        variant="outline"
+                        onClick={() => setShowQrDialog(true)}
                       >
-                        Pay & Join Queue
+                        <QrCode className="w-4 h-4 mr-2" />
+                        Show Queue QR
                       </Button>
-                    </div>
-                  ) : (
-                    <Button
-                      onClick={() => setShowJoinDialog(true)}
-                      disabled={!user}
-                    >
-                      Join Queue
-                    </Button>
-                  )}
+                    )}
+                  </div>
                 </>
               )}
             </div>
@@ -707,6 +777,53 @@ export default function EventDetailPage(props: {
         onJoin={handleJoinQueue}
         eventTeamSize={event.teamSize}
       />
+
+      <Dialog open={showQrDialog} onOpenChange={setShowQrDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Queue QR Code</DialogTitle>
+            <DialogDescription>
+              Share this code with players to let them join the queue from their
+              phones.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex flex-col items-center gap-4 py-4">
+            {queueLink ? (
+              <img
+                src={`https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=${encodeURIComponent(
+                  queueLink
+                )}`}
+                alt="Queue QR code"
+                className="rounded-md border border-border"
+              />
+            ) : (
+              <Loader2 className="w-6 h-6 animate-spin" />
+            )}
+            <div className="w-full break-all rounded-md border border-dashed border-muted-foreground/40 bg-muted/30 p-3 text-center text-xs text-muted-foreground">
+              {queueLink || "Generating link..."}
+            </div>
+          </div>
+          <DialogFooter>
+            <div className="flex w-full flex-col gap-2 sm:flex-row sm:justify-end">
+              <Button
+                variant="outline"
+                onClick={async () => {
+                  if (!queueLink) return;
+                  try {
+                    await navigator.clipboard.writeText(queueLink);
+                    toast.success("Queue link copied to clipboard");
+                  } catch (err) {
+                    console.error("Failed to copy queue link:", err);
+                    toast.error("Unable to copy link");
+                  }
+                }}
+              >
+                <Copy className="w-4 h-4 mr-2" /> Copy Link
+              </Button>
+            </div>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

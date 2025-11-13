@@ -106,7 +106,7 @@ export async function getUserMembership(
  * Check if user can join an event based on membership
  */
 export async function canUserJoinEvent(
-  userId: string,
+  _userId: string,
   eventId: string
 ): Promise<{
   canJoin: boolean;
@@ -119,7 +119,7 @@ export async function canUserJoinEvent(
   // Get event details
   const { data: event } = await supabase
     .from("events")
-    .select("price, free_for_members, requires_membership")
+    .select("id")
     .eq("id", eventId)
     .single();
 
@@ -131,75 +131,9 @@ export async function canUserJoinEvent(
     };
   }
 
-  // Check if user is an admin (admins can bypass membership restrictions)
-  const { data: userRecord } = await supabase
-    .from("users")
-    .select("is_admin")
-    .eq("id", userId)
-    .single();
-
-  const isAdminUser = !!userRecord?.is_admin;
-
-  // Get user's membership
-  const membership = await getUserMembership(userId);
-  const hasActivePaidMembership = membership.isPaid && membership.isActive;
-
-  if (!hasActivePaidMembership && !isAdminUser) {
-    return {
-      canJoin: false,
-      reason: "A paid membership is required to join the queue.",
-      requiresPayment: false,
-    };
-  }
-
-  // Check if user has already registered for this event
-  const { data: registration } = await supabase
-    .from("event_registrations")
-    .select("payment_status")
-    .eq("event_id", eventId)
-    .eq("user_id", userId)
-    .single();
-
-  if (registration && registration.payment_status === "paid") {
-    return {
-      canJoin: true,
-      requiresPayment: false,
-    };
-  }
-
-  // Event is free
-  if (!event.price || event.price === 0) {
-    return {
-      canJoin: true,
-      requiresPayment: false,
-    };
-  }
-
-  // Event requires membership
-  if (event.requires_membership && !hasActivePaidMembership && !isAdminUser) {
-    return {
-      canJoin: false,
-      reason: "This event requires a paid membership",
-      requiresPayment: false,
-    };
-  }
-
-  // Event is free for members and user has active paid membership
-  if (event.free_for_members && (hasActivePaidMembership || isAdminUser)) {
-    return {
-      canJoin: true,
-      requiresPayment: false,
-    };
-  }
-
-  // User needs to pay for this event
-  const requiresPayment = !isAdminUser;
-
   return {
     canJoin: true,
-    reason: requiresPayment ? "Payment required to join this event" : undefined,
-    requiresPayment,
-    amount: requiresPayment ? event.price : undefined,
+    requiresPayment: false,
   };
 }
 

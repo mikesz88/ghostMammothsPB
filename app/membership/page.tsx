@@ -44,7 +44,6 @@ export default function MembershipPage() {
 
   useEffect(() => {
     const fetchData = async () => {
-      // Fetch membership tiers from database
       const supabase = createClient();
       const { data: tiersData, error: tiersError } = await supabase
         .from("membership_tiers")
@@ -56,7 +55,6 @@ export default function MembershipPage() {
         setTiers(tiersData as MembershipTier[]);
       }
 
-      // Fetch user's current membership
       if (user) {
         const info = await getUserMembership(user.id);
         setMembership(info);
@@ -70,6 +68,7 @@ export default function MembershipPage() {
 
   const currentTierName = membership?.tierName || "free";
 
+  const freeTier = tiers.find((tier) => tier.price === 0);
   const paidTiers = tiers.filter((tier) => tier.price > 0);
 
   // Helper function to check if a tier is the user's current plan
@@ -103,11 +102,11 @@ export default function MembershipPage() {
         {/* Header */}
         <div className="text-center mb-12">
           <h1 className="text-4xl font-bold text-foreground mb-4">
-            Join the Community Fan Club
+            Choose Your Membership
           </h1>
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-            Unlimited pickleball events, priority queue access, and members-only
-            perks for just $10/month or $100/year.
+            Every player starts on our Free plan with access to the on-site
+            queue. Upgrade any time to unlock paid membership perks.
           </p>
         </div>
 
@@ -146,6 +145,86 @@ export default function MembershipPage() {
                       <Crown className="w-3 h-3 mr-1" />
                       Active
                     </Badge>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+        {freeTier && (
+          <div className="max-w-4xl mx-auto mb-12">
+            <h2 className="text-xl font-semibold text-foreground text-center mb-4">
+              Included with every account
+            </h2>
+            <Card
+              className={`border-2 ${
+                isCurrentPlan(freeTier.name)
+                  ? "border-primary bg-primary/5"
+                  : "border-border"
+              } relative max-w-xl mx-auto`}
+            >
+              {isCurrentPlan(freeTier.name) && (
+                <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
+                  <Badge className="bg-primary text-primary-foreground">
+                    <Crown className="w-3 h-3 mr-1" />
+                    Current Plan
+                  </Badge>
+                </div>
+              )}
+              <CardHeader>
+                <CardTitle className="text-2xl">
+                  {freeTier.display_name}
+                </CardTitle>
+                <CardDescription>
+                  {freeTier.description ||
+                    "Perfect for getting started at any event."}
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div>
+                  <p className="text-4xl font-bold text-foreground">Free</p>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Join event queues in person with a single account.
+                  </p>
+                </div>
+                <ul className="space-y-3">
+                  <li className="flex items-start gap-2">
+                    <Check className="w-5 h-5 text-primary shrink-0 mt-0.5" />
+                    <span className="text-muted-foreground">
+                      Join queues via on-site QR code
+                    </span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <Check className="w-5 h-5 text-primary shrink-0 mt-0.5" />
+                    <span className="text-muted-foreground">
+                      Track your position in real time
+                    </span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <Check className="w-5 h-5 text-primary shrink-0 mt-0.5" />
+                    <span className="text-muted-foreground">
+                      Email updates for queue changes
+                    </span>
+                  </li>
+                </ul>
+                <div>
+                  {user ? (
+                    isCurrentPlan(freeTier.name) ? (
+                      <Button className="w-full" variant="outline" disabled>
+                        You're on this plan
+                      </Button>
+                    ) : (
+                      <Button className="w-full" variant="outline" asChild>
+                        <Link href="/settings/membership">
+                          Switch to Free Plan
+                        </Link>
+                      </Button>
+                    )
+                  ) : (
+                    <Button className="w-full" asChild>
+                      <Link href="/signup">Create Free Account</Link>
+                    </Button>
                   )}
                 </div>
               </CardContent>
@@ -309,8 +388,7 @@ export default function MembershipPage() {
             </h2>
             <p className="text-muted-foreground mb-8">
               Stay flexible with monthly billing or lock in the best value for
-              the year—every plan includes unlimited events, priority queueing,
-              and premium member perks.
+              the year—paid plans add perks on top of the free queue experience.
             </p>
             <div className="grid md:grid-cols-2 gap-6">
               {monthlyTier && (
