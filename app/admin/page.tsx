@@ -302,21 +302,26 @@ export default function AdminPage() {
       <Header variant="admin" />
 
       {/* Page Content */}
-      <div className="container mx-auto px-4 py-12">
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h1 className="text-4xl font-bold text-foreground mb-2">
-              Event Management
-            </h1>
-            <p className="text-muted-foreground">
-              Create and manage pickleball events
-            </p>
+      <div className="w-full px-3 sm:px-4 md:px-6 py-8 sm:py-12">
+        <div className="max-w-7xl mx-auto w-full">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
+            <div className="flex-1 min-w-0">
+              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-foreground mb-2">
+                Event Management
+              </h1>
+              <p className="text-sm sm:text-base text-muted-foreground">
+                Create and manage pickleball events
+              </p>
+            </div>
+            <Button 
+              onClick={() => setShowCreateDialog(true)} 
+              size="lg"
+              className="w-full sm:w-auto shrink-0"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Create Event
+            </Button>
           </div>
-          <Button onClick={() => setShowCreateDialog(true)} size="lg">
-            <Plus className="w-4 h-4 mr-2" />
-            Create Event
-          </Button>
-        </div>
 
         {/* Stats Overview */}
         <div className="grid md:grid-cols-4 gap-6 mb-12">
@@ -529,6 +534,7 @@ export default function AdminPage() {
             </div>
           </div>
         )}
+        </div>
       </div>
 
       <CreateEventDialog

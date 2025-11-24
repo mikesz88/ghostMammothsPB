@@ -703,7 +703,8 @@ export default function AdminEventDetailPage(props: {
         backButton={{ href: "/admin", label: "Back to Dashboard" }}
       />
 
-      <div className="container mx-auto px-4 py-8">
+      <div className="w-full px-3 sm:px-4 md:px-6 py-6 sm:py-8">
+        <div className="max-w-7xl mx-auto w-full">
         {/* Test Mode Controls */}
         {isTestEvent && (
           <div className="mb-8">
@@ -717,14 +718,14 @@ export default function AdminEventDetailPage(props: {
         )}
 
         {/* Event Header */}
-        <Card className="border-border mb-8">
-          <CardContent className="p-6">
-            <div className="flex items-start justify-between mb-6">
-              <div>
-                <h1 className="text-3xl font-bold text-foreground mb-2">
+        <Card className="border-border mb-8 w-full overflow-hidden">
+          <CardContent className="p-4 sm:p-6">
+            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-6">
+              <div className="flex-1 min-w-0">
+                <h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-2 break-words">
                   {event.name}
                 </h1>
-                <div className="flex flex-wrap items-center gap-4 text-muted-foreground">
+                <div className="flex flex-col sm:flex-row sm:flex-wrap items-start sm:items-center gap-3 sm:gap-4 text-sm sm:text-base text-muted-foreground">
                   <div className="flex items-center gap-2">
                     <MapPin className="w-4 h-4" />
                     <span>{event.location}</span>
@@ -766,12 +767,13 @@ export default function AdminEventDetailPage(props: {
               </div>
               <Badge
                 variant={event.status === "active" ? "default" : "secondary"}
+                className="self-start sm:self-auto"
               >
                 {event.status}
               </Badge>
             </div>
 
-            <div className="flex items-center gap-4">
+            <div className="flex flex-wrap items-center gap-3 sm:gap-4">
               <div className="flex items-center gap-2">
                 <div className="w-3 h-3 rounded-full bg-yellow-500" />
                 <span className="text-sm text-muted-foreground">
@@ -788,10 +790,10 @@ export default function AdminEventDetailPage(props: {
           </CardContent>
         </Card>
 
-        <div className="grid lg:grid-cols-2 gap-8">
+        <div className="grid lg:grid-cols-2 gap-6 sm:gap-8">
           {/* Court Status */}
           <div>
-            <h2 className="text-2xl font-bold text-foreground mb-4">Courts</h2>
+            <h2 className="text-xl sm:text-2xl font-bold text-foreground mb-4">Courts</h2>
             <CourtStatus
               assignments={assignments}
               courtCount={event.courtCount}
@@ -803,50 +805,52 @@ export default function AdminEventDetailPage(props: {
 
           {/* Queue */}
           <div>
-            <Card className="border-border mb-4">
-              <CardContent className="p-6">
-                <div className="grid grid-cols-3 gap-4">
+            <Card className="border-border mb-4 w-full overflow-hidden">
+              <CardContent className="p-4 sm:p-6">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div className="text-center">
-                    <p className="text-3xl font-bold text-foreground">
+                    <p className="text-2xl sm:text-3xl font-bold text-foreground">
                       {waitingCount}
                     </p>
-                    <p className="text-sm text-muted-foreground">In Queue</p>
+                    <p className="text-xs sm:text-sm text-muted-foreground">In Queue</p>
                   </div>
                   <div className="text-center">
-                    <p className="text-3xl font-bold text-foreground">
+                    <p className="text-2xl sm:text-3xl font-bold text-foreground">
                       {Math.ceil(waitingCount / 4)}
                     </p>
-                    <p className="text-sm text-muted-foreground">Full Games</p>
+                    <p className="text-xs sm:text-sm text-muted-foreground">Full Games</p>
                   </div>
                   <div className="text-center">
-                    <p className="text-3xl font-bold text-foreground">
+                    <p className="text-2xl sm:text-3xl font-bold text-foreground">
                       {waitingCount > 0
                         ? Math.ceil((waitingCount / 4) * 15)
                         : 0}
                       m
                     </p>
-                    <p className="text-sm text-muted-foreground">Est. Wait</p>
+                    <p className="text-xs sm:text-sm text-muted-foreground">Est. Wait</p>
                   </div>
                 </div>
               </CardContent>
             </Card>
 
-            <div className="flex gap-2 mb-4">
-              <Button onClick={handleAssignNext} size="lg" className="flex-1">
-                <Play className="w-4 h-4 mr-2" />
-                Assign Next Players
+            <div className="flex flex-col sm:flex-row gap-2 mb-4">
+              <Button onClick={handleAssignNext} size="lg" className="flex-1 w-full sm:w-auto h-12 sm:h-14 text-base">
+                <Play className="w-5 h-5 mr-2" />
+                <span className="hidden sm:inline">Assign Next Players</span>
+                <span className="sm:hidden">Assign Next</span>
               </Button>
               <Button
                 onClick={handleClearQueue}
                 size="lg"
                 variant="destructive"
+                className="flex-1 w-full sm:w-auto h-12 sm:h-14 text-base"
               >
-                <Trash2 className="w-4 h-4 mr-2" />
+                <Trash2 className="w-5 h-5 mr-2" />
                 Clear Queue
               </Button>
             </div>
 
-            <h2 className="text-2xl font-bold text-foreground mb-4">Queue</h2>
+            <h2 className="text-xl sm:text-2xl font-bold text-foreground mb-4">Queue</h2>
             {queue.length === 0 ? (
               <Card className="border-border">
                 <CardContent className="p-12 text-center">
@@ -863,6 +867,7 @@ export default function AdminEventDetailPage(props: {
               />
             )}
           </div>
+        </div>
         </div>
       </div>
     </div>

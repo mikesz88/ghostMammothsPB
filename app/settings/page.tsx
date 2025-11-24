@@ -148,35 +148,35 @@ export default function SettingsPage() {
     <div className="min-h-screen bg-background">
       <Header />
 
-      <div className="container mx-auto px-4 py-12">
-        <div className="max-w-4xl mx-auto">
+      <div className="w-full px-3 sm:px-4 md:px-6 py-8 sm:py-12">
+        <div className="max-w-4xl mx-auto w-full">
           {/* Header */}
           <div className="mb-8">
-            <h1 className="text-4xl font-bold text-foreground mb-2">
+            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-foreground mb-2">
               Settings
             </h1>
-            <p className="text-muted-foreground">
+            <p className="text-sm sm:text-base text-muted-foreground">
               Manage your account, membership, and preferences
             </p>
           </div>
 
           {/* User Profile Card */}
-          <Card className="border-border mb-6">
-            <CardHeader>
+          <Card className="border-border mb-6 w-full overflow-hidden">
+            <CardHeader className="p-4 sm:p-6">
               <CardTitle className="text-foreground">
                 Account Information
               </CardTitle>
               <CardDescription>Your profile details</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-start gap-4">
-                <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center shrink-0">
+            <CardContent className="space-y-4 p-4 sm:p-6 pt-0">
+              <div className="flex flex-col sm:flex-row items-start gap-4">
+                <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center shrink-0 mx-auto sm:mx-0">
                   <User className="w-8 h-8 text-primary" />
                 </div>
-                <div className="flex-1 space-y-3">
+                <div className="flex-1 space-y-3 w-full">
                   <div>
                     <p className="text-sm text-muted-foreground mb-1">Name</p>
-                    <p className="font-medium text-foreground">
+                    <p className="font-medium text-foreground break-words">
                       {userDetails?.name ||
                         user.user_metadata?.name ||
                         "Not set"}
@@ -184,13 +184,13 @@ export default function SettingsPage() {
                   </div>
                   <div>
                     <p className="text-sm text-muted-foreground mb-1">Email</p>
-                    <div className="flex items-center gap-2">
-                      <Mail className="w-4 h-4 text-muted-foreground" />
-                      <p className="font-medium text-foreground">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Mail className="w-4 h-4 text-muted-foreground shrink-0" />
+                      <p className="font-medium text-foreground break-all min-w-0">
                         {user.email}
                       </p>
                       {user.email_confirmed_at && (
-                        <Badge variant="outline" className="text-xs">
+                        <Badge variant="outline" className="text-xs shrink-0">
                           Verified
                         </Badge>
                       )}
@@ -237,11 +237,11 @@ export default function SettingsPage() {
           </Card>
 
           {/* Quick Actions */}
-          <Card className="border-border mt-6">
-            <CardHeader>
+          <Card className="border-border mt-6 w-full overflow-hidden">
+            <CardHeader className="p-4 sm:p-6">
               <CardTitle className="text-foreground">Quick Actions</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-2">
+            <CardContent className="space-y-2 p-4 sm:p-6 pt-0">
               <Button
                 variant="outline"
                 className="w-full justify-start"
@@ -278,8 +278,8 @@ export default function SettingsPage() {
           </Card>
 
           {/* Account Controls */}
-          <Card className="border-border mt-6">
-            <CardHeader>
+          <Card className="border-border mt-6 w-full overflow-hidden">
+            <CardHeader className="p-4 sm:p-6">
               <CardTitle className="text-foreground">
                 Account Controls
               </CardTitle>
@@ -287,8 +287,8 @@ export default function SettingsPage() {
                 Manage the status of your account and data.
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-3">
-              <p className="text-sm text-muted-foreground">
+            <CardContent className="space-y-3 p-4 sm:p-6 pt-0">
+              <p className="text-sm text-muted-foreground break-words">
                 Deleting your account will immediately cancel access, remove
                 your profile from events, and permanently erase your membership
                 history.
@@ -297,7 +297,7 @@ export default function SettingsPage() {
                 variant="destructive"
                 onClick={handleDeleteAccount}
                 disabled={deleteLoading}
-                className="w-full sm:w-auto"
+                className="w-full"
               >
                 {deleteLoading ? (
                   <>

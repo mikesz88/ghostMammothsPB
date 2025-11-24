@@ -590,12 +590,12 @@ export default function EventDetailPage(props: {
       {/* Event Header */}
       <div className="border-b border-border bg-card">
         <div className="container mx-auto px-4 py-8">
-          <div className="flex items-start justify-between mb-6">
-            <div>
-              <h1 className="text-3xl font-bold text-foreground mb-2">
+          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-6">
+            <div className="flex-1">
+              <h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-2">
                 {event.name}
               </h1>
-              <div className="flex flex-wrap gap-4 text-muted-foreground">
+              <div className="flex flex-col sm:flex-row sm:flex-wrap gap-3 sm:gap-4 text-muted-foreground">
                 <div className="flex items-center gap-2">
                   <MapPin className="w-4 h-4" />
                   {event.location}
@@ -624,7 +624,7 @@ export default function EventDetailPage(props: {
                 </div>
               </div>
             </div>
-            <Badge variant="default" className="text-sm">
+            <Badge variant="default" className="text-sm self-start sm:self-auto">
               {event.status}
             </Badge>
           </div>
@@ -639,7 +639,7 @@ export default function EventDetailPage(props: {
             </div>
           )}
 
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <Card className="border-border bg-background">
               <CardContent className="p-4">
                 <div className="flex items-center gap-3">

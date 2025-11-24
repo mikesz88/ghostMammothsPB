@@ -101,7 +101,7 @@ export default function MembershipPage() {
       <div className="container mx-auto px-4 py-12">
         {/* Header */}
         <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold text-foreground mb-4">
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-foreground mb-4">
             Choose Your Membership
           </h1>
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
@@ -183,7 +183,7 @@ export default function MembershipPage() {
               </CardHeader>
               <CardContent className="space-y-6">
                 <div>
-                  <p className="text-4xl font-bold text-foreground">Free</p>
+                  <p className="text-3xl sm:text-4xl font-bold text-foreground">Free</p>
                   <p className="text-sm text-muted-foreground mt-1">
                     Join event queues in person with a single account.
                   </p>
@@ -280,7 +280,7 @@ export default function MembershipPage() {
                   </CardHeader>
                   <CardContent className="space-y-6">
                     <div>
-                      <p className="text-4xl font-bold text-foreground">
+                      <p className="text-3xl sm:text-4xl font-bold text-foreground">
                         {formatPrice(tier.price)}
                         <span className="text-lg font-normal text-muted-foreground">
                           /{tier.billing_period}
@@ -397,7 +397,7 @@ export default function MembershipPage() {
                     <h3 className="text-xl font-semibold text-foreground">
                       Monthly Membership
                     </h3>
-                    <p className="text-3xl font-bold text-foreground">
+                    <p className="text-2xl sm:text-3xl font-bold text-foreground">
                       {formatPrice(monthlyTier.price)}
                       <span className="text-base font-normal text-muted-foreground">
                         /month
@@ -415,7 +415,7 @@ export default function MembershipPage() {
                     <h3 className="text-xl font-semibold text-foreground">
                       Annual Membership
                     </h3>
-                    <p className="text-3xl font-bold text-foreground">
+                    <p className="text-2xl sm:text-3xl font-bold text-foreground">
                       {formatPrice(annualTier.price)}
                       <span className="text-base font-normal text-muted-foreground">
                         /year

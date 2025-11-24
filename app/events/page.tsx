@@ -87,7 +87,7 @@ export default function EventsPage() {
       {/* Page Content */}
       <div className="container mx-auto px-4 py-12">
         <div className="mb-8">
-          <h1 className="text-4xl font-bold text-foreground mb-2">
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-foreground mb-2">
             Upcoming Events
           </h1>
           <p className="text-muted-foreground">

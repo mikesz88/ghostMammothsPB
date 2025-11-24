@@ -163,23 +163,24 @@ export default function AdminUsersPage() {
       <Header variant="admin" />
 
       {/* Page Content */}
-      <div className="container mx-auto px-4 py-12">
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h1 className="text-4xl font-bold text-foreground mb-2">
-              User Management
-            </h1>
-            <p className="text-muted-foreground">
-              Manage users and admin permissions
-            </p>
+      <div className="w-full px-3 sm:px-4 md:px-6 py-8 sm:py-12">
+        <div className="max-w-7xl mx-auto w-full">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
+            <div className="flex-1 min-w-0">
+              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-foreground mb-2">
+                User Management
+              </h1>
+              <p className="text-sm sm:text-base text-muted-foreground">
+                Manage users and admin permissions
+              </p>
+            </div>
+            <Button variant="outline" asChild className="w-full sm:w-auto shrink-0">
+              <Link href="/admin">
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Back to Admin
+              </Link>
+            </Button>
           </div>
-          <Button variant="outline" asChild>
-            <Link href="/admin">
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Back to Admin
-            </Link>
-          </Button>
-        </div>
 
         {/* Stats Overview */}
         <div className="grid md:grid-cols-4 gap-6 mb-8">
@@ -281,26 +282,26 @@ export default function AdminUsersPage() {
             </h2>
             <div className="space-y-3">
               {adminUsers.map((user) => (
-                <Card key={user.id} className="border-border bg-card">
+                <Card key={user.id} className="border-border bg-card w-full overflow-hidden">
                   <CardContent className="p-4">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-4 flex-1">
-                        <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                      <div className="flex items-center gap-3 sm:gap-4 flex-1 min-w-0">
+                        <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center shrink-0">
                           <Shield className="w-6 h-6 text-primary" />
                         </div>
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-1">
-                            <p className="font-medium text-foreground">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex flex-wrap items-center gap-2 mb-1">
+                            <p className="font-medium text-foreground break-words">
                               {user.name}
                             </p>
-                            <Badge variant="default" className="text-xs">
+                            <Badge variant="default" className="text-xs shrink-0">
                               Admin
                             </Badge>
-                            <Badge variant="outline" className="text-xs">
+                            <Badge variant="outline" className="text-xs shrink-0">
                               {user.skill_level}
                             </Badge>
                           </div>
-                          <p className="text-sm text-muted-foreground">
+                          <p className="text-sm text-muted-foreground break-all">
                             {user.email}
                           </p>
                           {user.phone && (
@@ -310,8 +311,8 @@ export default function AdminUsersPage() {
                           )}
                         </div>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <Button variant="outline" size="sm" asChild>
+                      <div className="flex flex-wrap items-center gap-2 shrink-0">
+                        <Button variant="outline" size="sm" asChild className="flex-1 sm:flex-initial">
                           <Link href={`/admin/users/${user.id}`}>
                             <Edit className="w-4 h-4 mr-2" />
                             Edit
@@ -323,9 +324,11 @@ export default function AdminUsersPage() {
                           onClick={() =>
                             handleToggleAdmin(user.id, user.is_admin)
                           }
+                          className="flex-1 sm:flex-initial"
                         >
                           <ShieldOff className="w-4 h-4 mr-2" />
-                          Remove Admin
+                          <span className="hidden sm:inline">Remove Admin</span>
+                          <span className="sm:hidden">Remove</span>
                         </Button>
                       </div>
                     </div>
@@ -350,29 +353,29 @@ export default function AdminUsersPage() {
           ) : (
             <div className="space-y-3">
               {regularUsers.map((user) => (
-                <Card key={user.id} className="border-border bg-card">
+                <Card key={user.id} className="border-border bg-card w-full overflow-hidden">
                   <CardContent className="p-4">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-4 flex-1">
-                        <div className="w-12 h-12 bg-muted/50 rounded-full flex items-center justify-center">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                      <div className="flex items-center gap-3 sm:gap-4 flex-1 min-w-0">
+                        <div className="w-12 h-12 bg-muted/50 rounded-full flex items-center justify-center shrink-0">
                           <Users className="w-6 h-6 text-muted-foreground" />
                         </div>
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-1">
-                            <p className="font-medium text-foreground">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex flex-wrap items-center gap-2 mb-1">
+                            <p className="font-medium text-foreground break-words">
                               {user.name}
                             </p>
-                            <Badge variant="outline" className="text-xs">
+                            <Badge variant="outline" className="text-xs shrink-0">
                               {user.skill_level}
                             </Badge>
                             {user.membership_status &&
                               user.membership_status !== "free" && (
-                                <Badge variant="secondary" className="text-xs">
+                                <Badge variant="secondary" className="text-xs shrink-0">
                                   {user.membership_status}
                                 </Badge>
                               )}
                           </div>
-                          <p className="text-sm text-muted-foreground">
+                          <p className="text-sm text-muted-foreground break-all">
                             {user.email}
                           </p>
                           {user.phone && (
@@ -386,8 +389,8 @@ export default function AdminUsersPage() {
                           </p>
                         </div>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <Button variant="outline" size="sm" asChild>
+                      <div className="flex flex-wrap items-center gap-2 shrink-0">
+                        <Button variant="outline" size="sm" asChild className="flex-1 sm:flex-initial">
                           <Link href={`/admin/users/${user.id}`}>
                             <Edit className="w-4 h-4 mr-2" />
                             Edit
@@ -399,14 +402,18 @@ export default function AdminUsersPage() {
                           onClick={() =>
                             handleToggleAdmin(user.id, user.is_admin)
                           }
+                          className="flex-1 sm:flex-initial"
                         >
                           <Shield className="w-4 h-4 mr-2" />
-                          Make Admin
+                          <span className="hidden sm:inline">Make Admin</span>
+                          <span className="sm:hidden">Admin</span>
                         </Button>
                         <Button
                           variant="ghost"
                           size="sm"
                           onClick={() => handleDeleteUser(user.id, user.name)}
+                          className="flex-1 sm:flex-initial"
+                          title="Delete user"
                         >
                           <Trash2 className="w-4 h-4 text-destructive" />
                         </Button>
@@ -417,6 +424,7 @@ export default function AdminUsersPage() {
               ))}
             </div>
           )}
+        </div>
         </div>
       </div>
     </div>

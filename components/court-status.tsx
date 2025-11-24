@@ -34,19 +34,19 @@ export function CourtStatus({
         );
 
         return (
-          <Card key={courtNumber} className="border-border bg-card">
-            <CardHeader className="pb-3">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-lg text-foreground">
+          <Card key={courtNumber} className="border-border bg-card w-full overflow-hidden">
+            <CardHeader className="pb-3 p-4 sm:p-6">
+              <div className="flex items-center justify-between gap-2">
+                <CardTitle className="text-base sm:text-lg text-foreground">
                   Court {courtNumber}
                 </CardTitle>
-                <Badge variant={assignment ? "default" : "secondary"}>
+                <Badge variant={assignment ? "default" : "secondary"} className="shrink-0">
                   {assignment ? "In Use" : "Available"}
                 </Badge>
               </div>
             </CardHeader>
             {assignment && (
-              <CardContent className="space-y-4">
+              <CardContent className="space-y-4 p-4 sm:p-6 pt-0">
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <p className="text-xs font-medium text-muted-foreground">
