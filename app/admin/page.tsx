@@ -28,7 +28,10 @@ import { CreateEventDialog } from "@/components/create-event-dialog";
 import { EditEventDialog } from "@/components/edit-event-dialog";
 import { Header } from "@/components/ui/header";
 import { createClient } from "@/lib/supabase/client";
-import type { Event } from "@/lib/types";
+import type { Event, TeamSize, RotationType, EventStatus } from "@/lib/types";
+import type { Database } from "@/supabase/supa-schema";
+
+type EventRow = Database["public"]["Tables"]["events"]["Row"];
 
 export default function AdminPage() {
   const [events, setEvents] = useState<Event[]>([]);
@@ -53,18 +56,23 @@ export default function AdminPage() {
       console.error("Error fetching events:", error);
     } else {
       // Convert date strings to Date objects and parse court_count
-      const eventsWithDates = (data || []).map((event: any) => ({
-        ...event,
+      const eventsWithDates = (data || []).map((event: EventRow) => ({
+        id: event.id,
+        name: event.name,
+        location: event.location,
         date:
           event.date && event.time
             ? new Date(`${event.date}T${event.time}`)
             : new Date(event.date),
         courtCount:
-          parseInt(event.court_count) || parseInt(event.num_courts) || 0,
-        teamSize: event.team_size || 2,
-        rotationType: event.rotation_type,
+          parseInt(event.court_count.toString()) ||
+          parseInt(event.num_courts) ||
+          0,
+        teamSize: (event.team_size as TeamSize) || 2,
+        rotationType: event.rotation_type as RotationType,
+        status: event.status as EventStatus,
         createdAt: new Date(event.created_at),
-        updatedAt: event.updated_at ? new Date(event.updated_at) : new Date(),
+        updatedAt: undefined, // updated_at field doesn't exist in events table schema
       }));
       setEvents(eventsWithDates);
     }
@@ -76,15 +84,6 @@ export default function AdminPage() {
   ) => {
     try {
       const supabase = createClient();
-
-      console.log("Creating event with data:", {
-        name: eventData.name,
-        location: eventData.location,
-        date: eventData.date.toISOString(),
-        court_count: eventData.courtCount,
-        rotation_type: eventData.rotationType,
-        status: eventData.status,
-      });
 
       // Extract date and time from the date object
       const eventDateTime = new Date(eventData.date);
@@ -115,7 +114,6 @@ export default function AdminPage() {
         return;
       }
 
-      console.log("Event created successfully:", data);
       await fetchEvents(); // Refresh the list
       setShowCreateDialog(false);
       toast.success("Event created successfully!");
@@ -134,8 +132,6 @@ export default function AdminPage() {
 
     try {
       const supabase = createClient();
-
-      console.log("Updating event:", editingEvent.id, eventData);
 
       // Extract date and time from the date object
       const eventDateTime = new Date(eventData.date);
@@ -165,7 +161,6 @@ export default function AdminPage() {
         return;
       }
 
-      console.log("Event updated successfully");
       await fetchEvents(); // Refresh the list
       setEditingEvent(null);
       toast.success("Event updated successfully!");
@@ -185,8 +180,6 @@ export default function AdminPage() {
         onClick: async () => {
           try {
             const supabase = createClient();
-
-            console.log("Ending event:", eventId);
 
             // Delete all queue entries for this event
             const { error: queueError } = await supabase

@@ -3,6 +3,26 @@
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { sendQueueNotification } from "./notifications";
+import type { Database } from "@/supabase/supa-schema";
+import type { GroupSize } from "@/lib/types";
+
+type QueueEntryRow = Database["public"]["Tables"]["queue_entries"]["Row"];
+type CourtAssignmentInsert =
+  Database["public"]["Tables"]["court_assignments"]["Insert"] & {
+    player_names?: string[]; // JSON field that may not be in schema
+    queue_entry_ids?: string[]; // JSON field that may not be in schema
+  };
+
+// Custom type for the query result with partial user data
+type QueueEntryWithUser = QueueEntryRow & {
+  player_names?: unknown; // JSON field that may not be in schema
+  user: {
+    id: string;
+    name: string;
+    email: string;
+    skill_level: string;
+  } | null;
+};
 
 export async function getQueue(eventId: string) {
   const supabase = await createClient();
@@ -135,8 +155,8 @@ export async function reorderQueue(eventId: string) {
 
   if (queue) {
     // Track notifications to avoid spamming
-    const upNextNotifications: Promise<any>[] = [];
-    const positionUpdateNotifications: Promise<any>[] = [];
+    const upNextNotifications: Promise<unknown>[] = [];
+    const positionUpdateNotifications: Promise<unknown>[] = [];
 
     // Update positions
     for (let i = 0; i < queue.length; i++) {
@@ -216,27 +236,47 @@ export async function assignPlayersToNextCourt(eventId: string) {
   const { QueueManager } = await import("@/lib/queue-manager");
 
   // Map to QueueEntry type
-  const waitingQueue = (queueData || []).map((entry: any) => ({
-    id: entry.id,
-    eventId: entry.event_id,
-    userId: entry.user_id,
-    groupId: entry.group_id,
-    groupSize: entry.group_size || 1,
-    player_names: entry.player_names || [],
-    position: entry.position,
-    status: entry.status,
-    joinedAt: new Date(entry.joined_at),
-    user: entry.user
-      ? {
-          id: entry.user.id,
-          name: entry.user.name,
-          email: entry.user.email,
-          skillLevel: entry.user.skill_level,
-          isAdmin: false,
-          createdAt: new Date(),
-        }
-      : undefined,
-  }));
+  const waitingQueue = (queueData || []).map((entry: QueueEntryWithUser) => {
+    // Parse player_names JSON if it exists
+    let playerNamesArray: Array<{ name: string; skillLevel: string }> = [];
+    if (entry.player_names) {
+      try {
+        const parsed = entry.player_names as unknown as Array<{
+          name: string;
+          skillLevel: string;
+        }>;
+        playerNamesArray = Array.isArray(parsed) ? parsed : [];
+      } catch {
+        playerNamesArray = [];
+      }
+    }
+
+    return {
+      id: entry.id,
+      eventId: entry.event_id,
+      userId: entry.user_id,
+      groupId: entry.group_id || undefined,
+      groupSize: (entry.group_size || 1) as GroupSize,
+      player_names: playerNamesArray,
+      position: entry.position,
+      status: entry.status as "waiting" | "playing" | "completed",
+      joinedAt: new Date(entry.joined_at),
+      user: entry.user
+        ? {
+            id: entry.user.id,
+            name: entry.user.name,
+            email: entry.user.email,
+            skillLevel: entry.user.skill_level as
+              | "beginner"
+              | "intermediate"
+              | "advanced"
+              | "pro",
+            isAdmin: false,
+            createdAt: new Date(),
+          }
+        : undefined,
+    };
+  });
 
   const nextPlayers = QueueManager.getNextPlayers(
     waitingQueue,
@@ -288,7 +328,7 @@ export async function assignPlayersToNextCourt(eventId: string) {
     .not("ended_at", "is", null);
 
   // Create court assignment with dynamic player slots
-  const assignmentData: any = {
+  const assignmentData: CourtAssignmentInsert = {
     event_id: eventId,
     court_number: availableCourt,
     started_at: new Date().toISOString(),
@@ -331,7 +371,7 @@ export async function assignPlayersToNextCourt(eventId: string) {
     }
   }
 
-  // Store player names for display
+  // Store player names for display (schema may be out of date, so we extend the type)
   assignmentData.player_names = playerSlots.map((p) => p.name);
 
   // Assign players to slots (using userId for database)
@@ -392,35 +432,20 @@ export async function assignPlayersToNextCourt(eventId: string) {
   };
 }
 
-export async function adminRemoveFromQueue(
-  queueEntryId: string,
-  reason?: string
-) {
-  console.log("🔍 [ADMIN REMOVE] Starting adminRemoveFromQueue with:", {
-    queueEntryId,
-    reason,
-  });
-
+export async function adminRemoveFromQueue(queueEntryId: string) {
   const supabase = await createClient();
 
-  // Verify admin
   const {
     data: { user },
     error: authError,
   } = await supabase.auth.getUser();
 
-  console.log("🔍 [ADMIN REMOVE] Auth result:", {
-    userId: user?.id,
-    userEmail: user?.email,
-    authError,
-  });
-
   if (!user) {
-    console.log("❌ [ADMIN REMOVE] No user found - not authenticated");
+    if (authError) {
+      console.error("Failed to authenticate admin user:", authError);
+    }
     return { error: "Not authenticated" };
   }
-
-  console.log("🔍 [ADMIN REMOVE] Fetching user profile for:", user.id);
 
   const { data: profile, error: profileError } = await supabase
     .from("users")
@@ -428,31 +453,14 @@ export async function adminRemoveFromQueue(
     .eq("id", user.id)
     .single();
 
-  console.log("🔍 [ADMIN REMOVE] Profile query result:", {
-    profile,
-    profileError,
-    isAdmin: profile?.is_admin,
-    isAdminType: typeof profile?.is_admin,
-  });
-
   if (profileError) {
-    console.log("❌ [ADMIN REMOVE] Profile query failed:", profileError);
+    console.error("Admin profile lookup failed:", profileError);
     return { error: `Profile error: ${profileError.message}` };
   }
 
   if (!profile?.is_admin) {
-    console.log("❌ [ADMIN REMOVE] User is not admin:", {
-      profile,
-      isAdmin: profile?.is_admin,
-      isAdminStrict: profile?.is_admin === true,
-    });
     return { error: "Unauthorized - Admin access required" };
   }
-
-  console.log("✅ [ADMIN REMOVE] Admin verified, proceeding with removal");
-
-  // Get the queue entry to verify it exists and get event_id
-  console.log("🔍 [ADMIN REMOVE] Fetching queue entry:", queueEntryId);
 
   const { data: entry, error: entryError } = await supabase
     .from("queue_entries")
@@ -460,68 +468,38 @@ export async function adminRemoveFromQueue(
     .eq("id", queueEntryId)
     .single();
 
-  console.log("🔍 [ADMIN REMOVE] Queue entry result:", { entry, entryError });
-
   if (entryError) {
-    console.log("❌ [ADMIN REMOVE] Queue entry query failed:", entryError);
+    console.error("Queue entry lookup failed:", entryError);
     return { error: `Queue entry error: ${entryError.message}` };
   }
 
   if (!entry) {
-    console.log("❌ [ADMIN REMOVE] Queue entry not found");
     return { error: "Queue entry not found" };
   }
 
-  console.log("🔍 [ADMIN REMOVE] Queue entry found:", {
-    id: entry.id,
-    userId: entry.user_id,
-    groupId: entry.group_id,
-    eventId: entry.event_id,
-  });
-
-  // Check if it's a group entry - if so, remove all group members
   if (entry.group_id) {
-    console.log(
-      "🔍 [ADMIN REMOVE] Removing group entries for group:",
-      entry.group_id
-    );
-
     const { error: groupError } = await supabase
       .from("queue_entries")
       .delete()
       .eq("group_id", entry.group_id);
 
     if (groupError) {
-      console.log("❌ [ADMIN REMOVE] Group removal failed:", groupError);
+      console.error("Failed to remove queue group entries:", groupError);
       return { error: groupError.message };
     }
-
-    console.log("✅ [ADMIN REMOVE] Group entries removed successfully");
   } else {
-    console.log("🔍 [ADMIN REMOVE] Removing single entry:", queueEntryId);
-
     const { error } = await supabase
       .from("queue_entries")
       .delete()
       .eq("id", queueEntryId);
 
     if (error) {
-      console.log("❌ [ADMIN REMOVE] Single entry removal failed:", error);
+      console.error("Failed to remove queue entry:", error);
       return { error: error.message };
     }
-
-    console.log("✅ [ADMIN REMOVE] Single entry removed successfully");
   }
 
-  // Reorder remaining queue positions
   await reorderQueue(entry.event_id);
-
-  // Log admin activity (optional - you can add this if you want to track admin actions)
-  console.log(
-    `Admin ${user.id} removed queue entry ${queueEntryId}${
-      reason ? ` - Reason: ${reason}` : ""
-    }`
-  );
 
   revalidatePath(`/events/${entry.event_id}`);
   revalidatePath(`/admin/events/${entry.event_id}`);
