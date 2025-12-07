@@ -128,15 +128,8 @@ export class QueueManager {
   ): number[] | null {
     // Perfect match found
     if (currentSum === target) {
-      console.log(
-        "🎯 Found exact match:",
-        currentCombination,
-        "sum:",
-        currentSum
-      );
       if (!bestExact) {
         bestExact = [...currentCombination];
-        console.log("✅ Set as best:", bestExact);
       } else {
         // Compare with current best and update if this is better
         let isBetter = false;

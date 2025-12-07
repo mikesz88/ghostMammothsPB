@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { Check, Crown, Zap, Shield, Gift, Loader2 } from "lucide-react";
@@ -26,7 +26,7 @@ interface MembershipTier {
   };
 }
 
-export default function MembershipSuccessPage() {
+function MembershipSuccessContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [loading, setLoading] = useState(true);
@@ -200,5 +200,25 @@ export default function MembershipSuccessPage() {
         </Card>
       </div>
     </div>
+  );
+}
+
+export default function MembershipSuccessPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-background">
+          <Header />
+          <div className="container mx-auto px-4 py-20">
+            <div className="flex items-center justify-center">
+              <Loader2 className="w-8 h-8 animate-spin mr-2" />
+              <span className="text-muted-foreground">Loading...</span>
+            </div>
+          </div>
+        </div>
+      }
+    >
+      <MembershipSuccessContent />
+    </Suspense>
   );
 }

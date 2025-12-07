@@ -1,61 +1,83 @@
-"use client"
+"use client";
 
-import type React from "react"
-import { useState, useEffect } from "react"
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import type { Event, RotationType } from "@/lib/types"
+import type React from "react";
+import { useState, useEffect } from "react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import type { Event, RotationType } from "@/lib/types";
 
 interface EditEventDialogProps {
-  open: boolean
-  onOpenChange: (open: boolean) => void
-  event: Event
-  onUpdate: (event: Omit<Event, "id" | "createdAt" | "updatedAt">) => void
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  event: Event;
+  onUpdate: (event: Omit<Event, "id" | "createdAt" | "updatedAt">) => void;
 }
 
-export function EditEventDialog({ open, onOpenChange, event, onUpdate }: EditEventDialogProps) {
-  const [name, setName] = useState(event.name)
-  const [location, setLocation] = useState(event.location)
-  const [date, setDate] = useState("")
-  const [time, setTime] = useState("")
-  const [courtCount, setCourtCount] = useState(event.courtCount.toString())
-  const [rotationType, setRotationType] = useState<RotationType>(event.rotationType)
+export function EditEventDialog({
+  open,
+  onOpenChange,
+  event,
+  onUpdate,
+}: EditEventDialogProps) {
+  const [name, setName] = useState(event.name);
+  const [location, setLocation] = useState(event.location);
+  const [date, setDate] = useState("");
+  const [time, setTime] = useState("");
+  const [courtCount, setCourtCount] = useState(event.courtCount.toString());
+  const [rotationType, setRotationType] = useState<RotationType>(
+    event.rotationType
+  );
 
   useEffect(() => {
-    setName(event.name)
-    setLocation(event.location)
-    setCourtCount(event.courtCount.toString())
-    setRotationType(event.rotationType)
+    setName(event.name);
+    setLocation(event.location);
+    setCourtCount(event.courtCount.toString());
+    setRotationType(event.rotationType);
 
-    const eventDate = new Date(event.date)
-    setDate(eventDate.toISOString().split("T")[0])
-    setTime(eventDate.toTimeString().slice(0, 5))
-  }, [event])
+    const eventDate = new Date(event.date);
+    setDate(eventDate.toISOString().split("T")[0]);
+    setTime(eventDate.toTimeString().slice(0, 5));
+  }, [event]);
 
   const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
+    e.preventDefault();
     if (name.trim() && location.trim() && date && time) {
-      const eventDate = new Date(`${date}T${time}`)
+      const eventDate = new Date(`${date}T${time}`);
       onUpdate({
         name,
         location,
         date: eventDate,
         courtCount: Number.parseInt(courtCount),
+        teamSize: event.teamSize,
         rotationType,
         status: event.status,
-      })
+      });
     }
-  }
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="bg-card border-border max-w-2xl">
         <DialogHeader>
           <DialogTitle className="text-foreground">Edit Event</DialogTitle>
-          <DialogDescription>Update event details and settings</DialogDescription>
+          <DialogDescription>
+            Update event details and settings
+          </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid md:grid-cols-2 gap-4">
@@ -85,12 +107,24 @@ export function EditEventDialog({ open, onOpenChange, event, onUpdate }: EditEve
           <div className="grid md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="edit-date">Date</Label>
-              <Input id="edit-date" type="date" value={date} onChange={(e) => setDate(e.target.value)} required />
+              <Input
+                id="edit-date"
+                type="date"
+                value={date}
+                onChange={(e) => setDate(e.target.value)}
+                required
+              />
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="edit-time">Time</Label>
-              <Input id="edit-time" type="time" value={time} onChange={(e) => setTime(e.target.value)} required />
+              <Input
+                id="edit-time"
+                type="time"
+                value={time}
+                onChange={(e) => setTime(e.target.value)}
+                required
+              />
             </div>
           </div>
 
@@ -113,7 +147,12 @@ export function EditEventDialog({ open, onOpenChange, event, onUpdate }: EditEve
 
             <div className="space-y-2">
               <Label htmlFor="edit-rotation">Rotation Type</Label>
-              <Select value={rotationType} onValueChange={(value) => setRotationType(value as RotationType)}>
+              <Select
+                value={rotationType}
+                onValueChange={(value) =>
+                  setRotationType(value as RotationType)
+                }
+              >
                 <SelectTrigger id="edit-rotation">
                   <SelectValue />
                 </SelectTrigger>
@@ -127,7 +166,12 @@ export function EditEventDialog({ open, onOpenChange, event, onUpdate }: EditEve
           </div>
 
           <div className="flex gap-3 pt-4">
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)} className="flex-1">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+              className="flex-1"
+            >
               Cancel
             </Button>
             <Button type="submit" className="flex-1">
@@ -137,5 +181,5 @@ export function EditEventDialog({ open, onOpenChange, event, onUpdate }: EditEve
         </form>
       </DialogContent>
     </Dialog>
-  )
+  );
 }

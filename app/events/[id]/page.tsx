@@ -13,6 +13,8 @@ import {
   RefreshCw,
   Settings,
   Loader2,
+  QrCode,
+  Copy,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -31,6 +33,14 @@ import { joinQueue, leaveQueue } from "@/app/actions/queue";
 import { createClient } from "@/lib/supabase/client";
 import { canUserJoinEvent, formatPrice } from "@/lib/membership-helpers";
 import { Header } from "@/components/ui/header";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import type { Event, QueueEntry, CourtAssignment } from "@/lib/types";
 
 export default function EventDetailPage(props: {
@@ -48,6 +58,9 @@ export default function EventDetailPage(props: {
   const [joinReason, setJoinReason] = useState<string | undefined>();
   const [requiresPayment, setRequiresPayment] = useState(false);
   const [paymentAmount, setPaymentAmount] = useState<number | undefined>();
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [showQrDialog, setShowQrDialog] = useState(false);
+  const [queueLink, setQueueLink] = useState("");
 
   const { user } = useAuth();
   const {
@@ -261,6 +274,30 @@ export default function EventDetailPage(props: {
 
     checkAccess();
   }, [user, event, id]);
+
+  // Check if user is admin
+  useEffect(() => {
+    const checkAdmin = async () => {
+      if (user) {
+        const supabase = createClient();
+        const { data: profile } = await supabase
+          .from("users")
+          .select("is_admin")
+          .eq("id", user.id)
+          .single();
+        setIsAdmin(profile?.is_admin || false);
+      }
+    };
+
+    checkAdmin();
+  }, [user]);
+
+  // Set queue link for QR code
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      setQueueLink(`${window.location.origin}/events/${id}`);
+    }
+  }, [id]);
 
   // Get current user's queue position
   const currentUserEntry = queue.find(
@@ -595,35 +632,46 @@ export default function EventDetailPage(props: {
                 </Badge>
               ) : (
                 <>
-                  {!canJoin && joinReason ? (
-                    <div className="flex flex-col items-end gap-2">
-                      <p className="text-sm text-muted-foreground">
-                        {joinReason}
-                      </p>
-                      <Button variant="default" asChild>
-                        <Link href="/membership">Upgrade Membership</Link>
-                      </Button>
-                    </div>
-                  ) : requiresPayment && paymentAmount ? (
-                    <div className="flex flex-col items-end gap-2">
-                      <p className="text-sm text-muted-foreground">
-                        {formatPrice(paymentAmount)} to join
-                      </p>
+                  <div className="flex items-center gap-2">
+                    {!canJoin && joinReason ? (
+                      <div className="flex flex-col items-end gap-2">
+                        <p className="text-sm text-muted-foreground">
+                          {joinReason}
+                        </p>
+                        <Button variant="default" asChild>
+                          <Link href="/membership">Upgrade Membership</Link>
+                        </Button>
+                      </div>
+                    ) : requiresPayment && paymentAmount ? (
+                      <div className="flex flex-col items-end gap-2">
+                        <p className="text-sm text-muted-foreground">
+                          {formatPrice(paymentAmount)} to join
+                        </p>
+                        <Button
+                          onClick={() => setShowJoinDialog(true)}
+                          disabled={!user}
+                        >
+                          Pay & Join Queue
+                        </Button>
+                      </div>
+                    ) : (
                       <Button
                         onClick={() => setShowJoinDialog(true)}
                         disabled={!user}
                       >
-                        Pay & Join Queue
+                        Join Queue
                       </Button>
-                    </div>
-                  ) : (
-                    <Button
-                      onClick={() => setShowJoinDialog(true)}
-                      disabled={!user}
-                    >
-                      Join Queue
-                    </Button>
-                  )}
+                    )}
+                    {isAdmin && (
+                      <Button
+                        variant="outline"
+                        onClick={() => setShowQrDialog(true)}
+                      >
+                        <QrCode className="w-4 h-4 mr-2" />
+                        Show Queue QR
+                      </Button>
+                    )}
+                  </div>
                 </>
               )}
             </div>
@@ -651,6 +699,53 @@ export default function EventDetailPage(props: {
         onJoin={handleJoinQueue}
         eventTeamSize={event.teamSize}
       />
+
+      <Dialog open={showQrDialog} onOpenChange={setShowQrDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Queue QR Code</DialogTitle>
+            <DialogDescription>
+              Share this code with players to let them join the queue from their
+              phones.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex flex-col items-center gap-4 py-4">
+            {queueLink ? (
+              <img
+                src={`https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=${encodeURIComponent(
+                  queueLink
+                )}`}
+                alt="Queue QR code"
+                className="rounded-md border border-border"
+              />
+            ) : (
+              <Loader2 className="w-6 h-6 animate-spin" />
+            )}
+            <div className="w-full break-all rounded-md border border-dashed border-muted-foreground/40 bg-muted/30 p-3 text-center text-xs text-muted-foreground">
+              {queueLink || "Generating link..."}
+            </div>
+          </div>
+          <DialogFooter>
+            <div className="flex w-full flex-col gap-2 sm:flex-row sm:justify-end">
+              <Button
+                variant="outline"
+                onClick={async () => {
+                  if (!queueLink) return;
+                  try {
+                    await navigator.clipboard.writeText(queueLink);
+                    toast.success("Queue link copied to clipboard");
+                  } catch (err) {
+                    console.error("Failed to copy queue link:", err);
+                    toast.error("Unable to copy link");
+                  }
+                }}
+              >
+                <Copy className="w-4 h-4 mr-2" /> Copy Link
+              </Button>
+            </div>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

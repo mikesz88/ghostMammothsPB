@@ -109,19 +109,19 @@ export function QueueList({
             }`}
           >
             <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4 flex-1">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                <div className="flex items-center gap-3 sm:gap-4 flex-1 min-w-0">
                   <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center shrink-0">
                     <span className="text-lg font-bold text-primary">
                       #{firstEntry.position}
                     </span>
                   </div>
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-1">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1 flex-wrap">
                       <p className="font-medium text-foreground">
                         Group of {firstEntry.groupSize || entries.length}
                       </p>
-                      <Badge variant="outline" className="text-xs">
+                      <Badge variant="outline" className="text-xs shrink-0">
                         {getAverageSkillLevel(
                           firstEntry.player_names,
                           firstEntry.user?.skillLevel
@@ -144,10 +144,10 @@ export function QueueList({
                     </div>
                   </div>
                 </div>
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2 sm:gap-3 shrink-0">
                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <Clock className="w-4 h-4" />
-                    <span>
+                    <Clock className="w-4 h-4 shrink-0" />
+                    <span className="whitespace-nowrap">
                       {(() => {
                         const minutesAgo = Math.floor(
                           (Date.now() - firstEntry.joinedAt.getTime()) / 60000
@@ -168,6 +168,7 @@ export function QueueList({
                       title={
                         isAdmin ? "Admin: Remove from queue" : "Leave queue"
                       }
+                      className="shrink-0"
                     >
                       <X className="w-4 h-4" />
                     </Button>
