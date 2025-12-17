@@ -63,6 +63,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Create Stripe checkout session
+<<<<<<< HEAD
     // Prioritize NEXT_PUBLIC_URL environment variable for production
     const host = request.headers.get("host");
     const protocol =
@@ -80,6 +81,11 @@ export async function POST(request: NextRequest) {
         { status: 500 }
       );
     }
+=======
+    const host = request.headers.get("host") || "localhost:3000";
+    const protocol = request.headers.get("x-forwarded-proto") || "http";
+    const baseUrl = process.env.NEXT_PUBLIC_URL || `${protocol}://${host}`;
+>>>>>>> full/main
 
     console.log("Creating checkout session for:", {
       userId: user.id,
