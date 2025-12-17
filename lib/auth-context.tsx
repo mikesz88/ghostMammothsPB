@@ -88,10 +88,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     password: string,
     userData: { name: string; skillLevel: string; phone?: string }
   ) => {
+    // Get the base URL - prioritize NEXT_PUBLIC_URL, otherwise use current origin
+    const baseUrl =
+      process.env.NEXT_PUBLIC_URL ||
+      (typeof window !== "undefined" ? window.location.origin : "");
+    const redirectTo = baseUrl ? `${baseUrl}/login` : "/login";
+
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
+        emailRedirectTo: redirectTo,
         data: {
           name: userData.name,
           skill_level: userData.skillLevel,
