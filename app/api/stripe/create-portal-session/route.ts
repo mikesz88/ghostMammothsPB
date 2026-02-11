@@ -65,9 +65,23 @@ export async function POST(request: NextRequest) {
     );
 
     // Create portal session with dynamic base URL
-    const host = request.headers.get("host") || "localhost:3000";
-    const protocol = request.headers.get("x-forwarded-proto") || "http";
-    const baseUrl = process.env.NEXT_PUBLIC_URL || `${protocol}://${host}`;
+    // Prioritize NEXT_PUBLIC_URL environment variable for production
+    const host = request.headers.get("host");
+    const protocol =
+      request.headers.get("x-forwarded-proto") ||
+      (process.env.NODE_ENV === "development" ? "http" : "https");
+    const baseUrl =
+      process.env.NEXT_PUBLIC_URL || (host ? `${protocol}://${host}` : null);
+
+    if (!baseUrl) {
+      console.error(
+        "Unable to determine base URL - NEXT_PUBLIC_URL environment variable or host header required"
+      );
+      return NextResponse.json(
+        { error: "Server configuration error" },
+        { status: 500 }
+      );
+    }
 
     console.log("Creating portal session with:", {
       customerId: membership.stripe_customer_id,

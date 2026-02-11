@@ -88,10 +88,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     password: string,
     userData: { name: string; skillLevel: string; phone?: string }
   ) => {
+    // Get the base URL - prioritize NEXT_PUBLIC_URL, otherwise use current origin
+    // This ensures production uses the correct domain
+    const baseUrl =
+      process.env.NEXT_PUBLIC_URL ||
+      (typeof window !== "undefined" ? window.location.origin : null);
+
+    if (!baseUrl) {
+      console.error("Unable to determine base URL for email redirect");
+      return {
+        error: new Error(
+          "Configuration error: Unable to determine application URL"
+        ),
+      };
+    }
+
+    // Construct full absolute URL for email redirect
+    const redirectTo = `${baseUrl}/login`;
+    console.log("Signup email redirect URL:", redirectTo);
+
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
+        emailRedirectTo: redirectTo,
         data: {
           name: userData.name,
           skill_level: userData.skillLevel,
