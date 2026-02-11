@@ -113,7 +113,7 @@ export const Header = ({
         About
       </Link>
       <Link
-        href="https://ghost-mammoths-pb.myshopify.com"
+        href="https://ghostmammoth.myshopify.com"
         target="_blank"
         rel="noopener noreferrer"
         className="text-muted-foreground hover:text-foreground transition-colors"
@@ -215,7 +215,7 @@ export const Header = ({
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
                   <Link
-                    href="https://ghost-mammoths-pb.myshopify.com"
+                    href="https://ghostmammoth.myshopify.com/password"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="cursor-pointer"
