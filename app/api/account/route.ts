@@ -80,7 +80,6 @@ export async function DELETE() {
       supabaseAdmin.from("queue_entries").delete().eq("user_id", userId),
       supabaseAdmin.from("event_registrations").delete().eq("user_id", userId),
       supabaseAdmin.from("user_memberships").delete().eq("user_id", userId),
-      supabaseAdmin.from("email_logs").delete().eq("user_id", userId),
       supabaseAdmin
         .from("payments")
         .update({ user_id: null })
