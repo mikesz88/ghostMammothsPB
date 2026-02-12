@@ -42,3 +42,5 @@ data-export.json
 *.export.json
 supabase/scripts/*.sql
 *.sql
+
+scripts

@@ -6,7 +6,9 @@
     "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "seed:users": "npx tsx scripts/seed-dummy-users.ts",
+    "seed:event": "npx tsx scripts/seed-test-event.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
