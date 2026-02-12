@@ -181,7 +181,7 @@ function HomeContent() {
       {/* Footer */}
       <footer className="border-t border-border mt-20">
         <div className="container mx-auto px-4 py-8 text-center text-muted-foreground">
-          <p>&copy; 2025 Ghost Mammoths Pickleball. All rights reserved.</p>
+          <p>&copy; 2026 Ghost Mammoths Pickleball. All rights reserved.</p>
         </div>
       </footer>
     </div>
