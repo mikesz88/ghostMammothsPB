@@ -1,15 +1,15 @@
-import nodemailer from "nodemailer";
+import { Resend } from "resend";
 
-// Create reusable transporter
-const transporter = nodemailer.createTransport({
-  host: process.env.EMAIL_HOST,
-  port: parseInt(process.env.EMAIL_PORT || "587"),
-  secure: false, // true for 465, false for other ports
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASSWORD,
-  },
-});
+const resend = new Resend(process.env.RESEND_API_KEY);
+
+// Resend requires verified domains or onboarding@resend.dev - Gmail/EMAIL_FROM won't work
+const RESEND_DEFAULT_FROM = "Ghost Mammoth Pickleball <onboarding@resend.dev>";
+
+function getFromEmail(): string {
+  const env = (process.env.RESEND_FROM_EMAIL || "").trim();
+  if (env && env.includes("@")) return env;
+  return RESEND_DEFAULT_FROM;
+}
 
 export interface QueueEmailData {
   userName: string;
@@ -24,8 +24,8 @@ export interface QueueEmailData {
 
 export async function sendQueueJoinEmail(data: QueueEmailData) {
   try {
-    const info = await transporter.sendMail({
-      from: process.env.EMAIL_FROM,
+    const { data: result, error } = await resend.emails.send({
+      from: getFromEmail(),
       to: data.userEmail,
       subject: `Queue Confirmation - ${data.eventName}`,
       html: `
@@ -48,22 +48,14 @@ export async function sendQueueJoinEmail(data: QueueEmailData) {
             </div>
             <div class="content">
               <p>Hi <strong>${data.userName}</strong>,</p>
-              <p>You've successfully joined the queue for <strong>${
-                data.eventName
-              }</strong>!</p>
-              
+              <p>You've successfully joined the queue for <strong>${data.eventName}</strong>!</p>
               <div class="info-box">
                 <p><strong>Event:</strong> ${data.eventName}</p>
                 <p><strong>Location:</strong> ${data.eventLocation}</p>
                 <p><strong>Date:</strong> ${data.eventDate}</p>
                 <p><strong>Your Position:</strong> #${data.currentPosition}</p>
-                ${
-                  data.estimatedWaitTime
-                    ? `<p><strong>Estimated Wait:</strong> ~${data.estimatedWaitTime} minutes</p>`
-                    : ""
-                }
+                ${data.estimatedWaitTime ? `<p><strong>Estimated Wait:</strong> ~${data.estimatedWaitTime} minutes</p>` : ""}
               </div>
-              
               <p>We'll notify you when you're up next!</p>
               <p>See you on the court! 🏓</p>
             </div>
@@ -74,19 +66,14 @@ export async function sendQueueJoinEmail(data: QueueEmailData) {
         </body>
         </html>
       `,
-      text: `Hi ${data.userName},\n\nYou've successfully joined the queue for ${
-        data.eventName
-      }!\n\nEvent: ${data.eventName}\nLocation: ${data.eventLocation}\nDate: ${
-        data.eventDate
-      }\nYour Position: #${data.currentPosition}\n${
-        data.estimatedWaitTime
-          ? `Estimated Wait: ~${data.estimatedWaitTime} minutes\n`
-          : ""
-      }\nWe'll notify you when you're up next!`,
+      text: `Hi ${data.userName},\n\nYou've successfully joined the queue for ${data.eventName}!\n\nEvent: ${data.eventName}\nLocation: ${data.eventLocation}\nDate: ${data.eventDate}\nYour Position: #${data.currentPosition}\n${data.estimatedWaitTime ? `Estimated Wait: ~${data.estimatedWaitTime} minutes\n` : ""}\nWe'll notify you when you're up next!`,
     });
 
-    console.log("Email sent:", info.messageId);
-    return { success: true, messageId: info.messageId };
+    if (error) {
+      console.error("Error sending queue join email:", error);
+      return { success: false, error };
+    }
+    return { success: true, messageId: result?.id };
   } catch (error) {
     console.error("Error sending queue join email:", error);
     return { success: false, error };
@@ -95,8 +82,8 @@ export async function sendQueueJoinEmail(data: QueueEmailData) {
 
 export async function sendPositionUpdateEmail(data: QueueEmailData) {
   try {
-    const info = await transporter.sendMail({
-      from: process.env.EMAIL_FROM,
+    const { data: result, error } = await resend.emails.send({
+      from: getFromEmail(),
       to: data.userEmail,
       subject: `Queue Update - You've moved up!`,
       html: `
@@ -120,19 +107,11 @@ export async function sendPositionUpdateEmail(data: QueueEmailData) {
             <div class="content">
               <p>Hi <strong>${data.userName}</strong>,</p>
               <p>Your position in the queue has been updated.</p>
-              
               <div class="info-box">
                 <p><strong>Event:</strong> ${data.eventName}</p>
-                <p><strong>Current Position:</strong> #${
-                  data.currentPosition
-                }</p>
-                ${
-                  data.estimatedWaitTime
-                    ? `<p><strong>Estimated Wait:</strong> ~${data.estimatedWaitTime} minutes</p>`
-                    : ""
-                }
+                <p><strong>Current Position:</strong> #${data.currentPosition}</p>
+                ${data.estimatedWaitTime ? `<p><strong>Estimated Wait:</strong> ~${data.estimatedWaitTime} minutes</p>` : ""}
               </div>
-              
               <p>Stay nearby - you'll be playing soon!</p>
             </div>
             <div class="footer">
@@ -142,19 +121,14 @@ export async function sendPositionUpdateEmail(data: QueueEmailData) {
         </body>
         </html>
       `,
-      text: `Hi ${
-        data.userName
-      },\n\nYour position in the queue has been updated.\n\nEvent: ${
-        data.eventName
-      }\nCurrent Position: #${data.currentPosition}\n${
-        data.estimatedWaitTime
-          ? `Estimated Wait: ~${data.estimatedWaitTime} minutes\n`
-          : ""
-      }\nStay nearby - you'll be playing soon!`,
+      text: `Hi ${data.userName},\n\nYour position in the queue has been updated.\n\nEvent: ${data.eventName}\nCurrent Position: #${data.currentPosition}\n${data.estimatedWaitTime ? `Estimated Wait: ~${data.estimatedWaitTime} minutes\n` : ""}\nStay nearby - you'll be playing soon!`,
     });
 
-    console.log("Email sent:", info.messageId);
-    return { success: true, messageId: info.messageId };
+    if (error) {
+      console.error("Error sending position update email:", error);
+      return { success: false, error };
+    }
+    return { success: true, messageId: result?.id };
   } catch (error) {
     console.error("Error sending position update email:", error);
     return { success: false, error };
@@ -163,8 +137,8 @@ export async function sendPositionUpdateEmail(data: QueueEmailData) {
 
 export async function sendUpNextEmail(data: QueueEmailData) {
   try {
-    const info = await transporter.sendMail({
-      from: process.env.EMAIL_FROM,
+    const { data: result, error } = await resend.emails.send({
+      from: getFromEmail(),
       to: data.userEmail,
       subject: `🎾 You're Up Next! - ${data.eventName}`,
       html: `
@@ -188,17 +162,14 @@ export async function sendUpNextEmail(data: QueueEmailData) {
             </div>
             <div class="content">
               <p>Hi <strong>${data.userName}</strong>,</p>
-              
               <div class="alert">
                 ⚠️ GET READY! You're one of the next players to be assigned to a court.
               </div>
-              
               <div class="info-box">
                 <p><strong>Event:</strong> ${data.eventName}</p>
                 <p><strong>Location:</strong> ${data.eventLocation}</p>
                 <p><strong>Your Position:</strong> #${data.currentPosition}</p>
               </div>
-              
               <p><strong>Please make sure you're at the venue and ready to play!</strong></p>
               <p>You'll receive another notification when you're assigned to a court.</p>
             </div>
@@ -212,8 +183,11 @@ export async function sendUpNextEmail(data: QueueEmailData) {
       text: `Hi ${data.userName},\n\n🎾 YOU'RE UP NEXT!\n\nGet ready! You're one of the next players to be assigned to a court.\n\nEvent: ${data.eventName}\nLocation: ${data.eventLocation}\nYour Position: #${data.currentPosition}\n\nPlease make sure you're at the venue and ready to play!`,
     });
 
-    console.log("Email sent:", info.messageId);
-    return { success: true, messageId: info.messageId };
+    if (error) {
+      console.error("Error sending up next email:", error);
+      return { success: false, error };
+    }
+    return { success: true, messageId: result?.id };
   } catch (error) {
     console.error("Error sending up next email:", error);
     return { success: false, error };
@@ -226,8 +200,8 @@ export async function sendCourtAssignmentEmail(data: QueueEmailData) {
   }
 
   try {
-    const info = await transporter.sendMail({
-      from: process.env.EMAIL_FROM,
+    const { data: result, error } = await resend.emails.send({
+      from: getFromEmail(),
       to: data.userEmail,
       subject: `🎾 Time to Play! Court ${data.courtNumber} - ${data.eventName}`,
       html: `
@@ -252,20 +226,14 @@ export async function sendCourtAssignmentEmail(data: QueueEmailData) {
             </div>
             <div class="content">
               <p>Hi <strong>${data.userName}</strong>,</p>
-              
               <div class="alert">
                 🎉 YOU'VE BEEN ASSIGNED TO A COURT!
               </div>
-              
-              <div class="court-number">
-                Court #${data.courtNumber}
-              </div>
-              
+              <div class="court-number">Court #${data.courtNumber}</div>
               <div class="info-box">
                 <p><strong>Event:</strong> ${data.eventName}</p>
                 <p><strong>Location:</strong> ${data.eventLocation}</p>
               </div>
-              
               <p style="text-align: center; font-size: 18px;"><strong>Please head to Court #${data.courtNumber} now!</strong></p>
               <p style="text-align: center;">Have a great game! 🏓</p>
             </div>
@@ -279,8 +247,11 @@ export async function sendCourtAssignmentEmail(data: QueueEmailData) {
       text: `Hi ${data.userName},\n\n🎾 IT'S YOUR TURN TO PLAY!\n\nYou've been assigned to Court #${data.courtNumber}\n\nEvent: ${data.eventName}\nLocation: ${data.eventLocation}\n\nPlease head to Court #${data.courtNumber} now!\n\nHave a great game! 🏓`,
     });
 
-    console.log("Email sent:", info.messageId);
-    return { success: true, messageId: info.messageId };
+    if (error) {
+      console.error("Error sending court assignment email:", error);
+      return { success: false, error };
+    }
+    return { success: true, messageId: result?.id };
   } catch (error) {
     console.error("Error sending court assignment email:", error);
     return { success: false, error };
