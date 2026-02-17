@@ -27,9 +27,16 @@ function LoginForm() {
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
-  const { signIn } = useAuth();
+  const { signIn, user, loading: authLoading } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
+
+  // Redirect if already logged in (e.g. from email confirmation callback)
+  useEffect(() => {
+    if (!authLoading && user) {
+      router.replace("/membership");
+    }
+  }, [authLoading, user, router]);
 
   useEffect(() => {
     const urlMessage = searchParams.get("message");
@@ -55,7 +62,7 @@ function LoginForm() {
           } = await supabase.auth.getUser();
 
           if (!user) {
-            router.push("/membership");
+            window.location.href = "/membership";
             return;
           }
 
@@ -67,7 +74,7 @@ function LoginForm() {
             if (typeof window !== "undefined") {
               window.localStorage.removeItem(PENDING_MEMBERSHIP_TIER_STORAGE_KEY);
             }
-            router.push("/events");
+            window.location.href = "/events";
             return;
           }
 
@@ -79,13 +86,13 @@ function LoginForm() {
           }
 
           if (pendingTier) {
-            router.push(`/signup?flow=confirm-email&tier=${pendingTier}`);
+            window.location.href = `/signup?flow=confirm-email&tier=${pendingTier}`;
           } else {
-            router.push("/membership");
+            window.location.href = "/membership";
           }
         } catch (redirectError) {
           console.error("Post-login redirect error:", redirectError);
-          router.push("/membership");
+          window.location.href = "/membership";
         }
       }
     } catch (err) {

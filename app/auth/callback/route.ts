@@ -1,14 +1,39 @@
-import { createClient } from "@/lib/supabase/server";
+import { createServerClient } from "@supabase/ssr";
 import { createServiceRoleClient } from "@/lib/supabase/service-role";
 import { NextResponse } from "next/server";
+import { cookies } from "next/headers";
 
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get("code");
-  const next = searchParams.get("next") ?? "/login";
+  const next = searchParams.get("next") ?? "/membership";
 
   if (code) {
-    const supabase = await createClient();
+    const cookieStore = await cookies();
+
+    // Create redirect response first so we can attach session cookies to it.
+    // Next.js may not merge cookies().set() with NextResponse.redirect() in all cases.
+    const redirectUrl = `${origin}${next}`;
+    const redirectResponse = NextResponse.redirect(redirectUrl);
+
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          getAll() {
+            return cookieStore.getAll();
+          },
+          setAll(cookiesToSet) {
+            cookiesToSet.forEach(({ name, value, options }) => {
+              cookieStore.set(name, value, options);
+              redirectResponse.cookies.set(name, value, { ...options, path: "/" });
+            });
+          },
+        },
+      }
+    );
+
     const { data, error } = await supabase.auth.exchangeCodeForSession(code);
 
     if (!error && data.user) {
@@ -28,7 +53,7 @@ export async function GET(request: Request) {
           { onConflict: "id" }
         );
       }
-      return NextResponse.redirect(`${origin}${next}`);
+      return redirectResponse;
     }
 
     if (error) {
