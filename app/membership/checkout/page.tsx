@@ -262,7 +262,7 @@ function CheckoutContent() {
                 <div className="flex items-center gap-2 text-sm">
                   <Check className="w-4 h-4 text-primary" />
                   <span className="text-muted-foreground">
-                    SMS & email notifications
+                    Email notifications
                   </span>
                 </div>
                 <div className="flex items-center gap-2 text-sm">

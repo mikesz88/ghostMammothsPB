@@ -175,7 +175,7 @@ function MembershipSuccessContent() {
                 )}
                 <li className="flex items-center justify-center gap-2">
                   <Check className="w-4 h-4 text-primary" />
-                  SMS & email notifications
+                  Email notifications
                 </li>
                 <li className="flex items-center justify-center gap-2">
                   <Check className="w-4 h-4 text-primary" />

@@ -60,22 +60,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         .single();
 
       if (!existingProfile) {
-        // Profile doesn't exist, try to create it
-        const { error: profileError } = await supabase.from("users").insert({
-          id: data.user.id,
-          name: data.user.user_metadata?.name || "User",
-          email: email,
-          skill_level: data.user.user_metadata?.skill_level || "intermediate",
-          phone: data.user.user_metadata?.phone || null,
-          is_admin: false,
+        // Profile doesn't exist - use API route with service role to bypass RLS
+        const res = await fetch("/api/users/ensure-profile", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            name: data.user.user_metadata?.name,
+            skill_level: data.user.user_metadata?.skill_level,
+            phone: data.user.user_metadata?.phone,
+          }),
         });
-
-        if (profileError) {
+        if (!res.ok) {
           console.warn(
             "Could not create user profile during login:",
-            profileError
+            await res.text()
           );
-          // Don't fail the login, just log the warning
         }
       }
     }
@@ -146,23 +145,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return { error: null }; // Success, but awaiting email confirmation
       }
 
-      // If we have a confirmed email (email confirmation disabled or already confirmed), create profile now
-      const { error: profileError } = await supabase.from("users").insert({
-        id: data.user.id,
-        name: userData.name,
-        email: email,
-        skill_level: userData.skillLevel,
-        phone: userData.phone || null,
-        is_admin: false,
+      // If we have a confirmed email (email confirmation disabled or already confirmed), create profile via API (bypasses RLS)
+      const res = await fetch("/api/users/ensure-profile", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: userData.name,
+          skill_level: userData.skillLevel,
+          phone: userData.phone,
+        }),
       });
-
-      if (profileError) {
-        console.error("Error creating user profile:", profileError);
-
-        // Don't fail signup if profile creation fails - it will be created on login
-        if (profileError.message.includes("row-level security")) {
-          console.log("Profile will be created on first login");
-        }
+      if (!res.ok) {
+        console.warn("Could not create user profile during signup:", await res.text());
       }
     }
 

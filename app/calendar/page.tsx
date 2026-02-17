@@ -13,7 +13,7 @@ export default function CalendarPage() {
   // Replace this with your actual Google Calendar embed URL
   // To get this: Go to Google Calendar > Settings > Integrate calendar > Copy the iframe code
   const calendarEmbedUrl =
-    "https://calendar.google.com/calendar/embed?height=600&wkst=1&ctz=UTC&showPrint=0&src=Z2hvc3RtYW1tb3RoZGV2QGdtYWlsLmNvbQ&src=ZW4udXNhI2hvbGlkYXlAZ3JvdXAudi5jYWxlbmRhci5nb29nbGUuY29t&color=%23039be5&color=%230b8043";
+    "https://calendar.google.com/calendar/embed?height=600&wkst=1&ctz=America/Chicago&showPrint=0&src=Z2hvc3RtYW1tb3RoZGV2QGdtYWlsLmNvbQ&src=ZW4udXNhI2hvbGlkYXlAZ3JvdXAudi5jYWxlbmRhci5nb29nbGUuY29t&color=%23039be5&color=%230b8043";
 
   return (
     <div className="min-h-screen bg-background">
