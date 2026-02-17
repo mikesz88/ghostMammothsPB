@@ -266,9 +266,6 @@ export default function MembershipPage() {
                       <Check className="w-5 h-5 text-primary shrink-0 mt-0.5" />
                       <span className="text-muted-foreground">
                         Email notifications
-                        {/* {isPaidTier
-                          ? "SMS & email notifications"
-                          : "Email notifications"} */}
                       </span>
                     </li>
                     {isPaidTier && (

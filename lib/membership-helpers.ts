@@ -230,7 +230,7 @@ export function getMembershipDisplayInfo(tierName: string) {
         "Priority queue position",
         "Exclusive events access",
         "10% merchandise discount",
-        "Email & SMS notifications",
+        "Email notifications",
       ],
     },
   };

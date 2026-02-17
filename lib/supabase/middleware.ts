@@ -47,12 +47,21 @@ export async function updateSession(request: NextRequest) {
     request.nextUrl.pathname === "/events" ||
     request.nextUrl.pathname === "/calendar";
 
+  // Helper: create redirect response and copy Supabase cookies to keep session in sync
+  const redirectWithCookies = (url: URL) => {
+    const response = NextResponse.redirect(url);
+    supabaseResponse.cookies.getAll().forEach((cookie) =>
+      response.cookies.set(cookie.name, cookie.value, { path: "/" })
+    );
+    return response;
+  };
+
   // Redirect to login if not authenticated and trying to access protected route
   if (!user && !isPublicPath) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
     url.searchParams.set("message", "Please sign in to continue");
-    return NextResponse.redirect(url);
+    return redirectWithCookies(url);
   }
 
   // Check if user has unconfirmed email and is trying to access protected routes
@@ -68,7 +77,7 @@ export async function updateSession(request: NextRequest) {
         "message",
         "Please confirm your email before logging in"
       );
-      return NextResponse.redirect(url);
+      return redirectWithCookies(url);
     }
   }
 
@@ -86,7 +95,7 @@ export async function updateSession(request: NextRequest) {
       const url = request.nextUrl.clone();
       url.pathname = "/";
       url.searchParams.set("error", "admin-access-required");
-      return NextResponse.redirect(url);
+      return redirectWithCookies(url);
     }
   }
 
