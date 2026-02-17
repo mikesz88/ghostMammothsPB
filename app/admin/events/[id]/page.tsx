@@ -165,9 +165,12 @@ export default function AdminEventDetailPage(props: {
 
         setEvent(eventData);
 
-        // Check if this is a test event (name contains "DYNAMIC ADMIN TEST EVENT")
+        // Show Test Controls for developer test events
+        const nameUpper = data.name.toUpperCase();
         setIsTestEvent(
-          data.name.toUpperCase().includes("DYNAMIC ADMIN TEST EVENT")
+          nameUpper.includes("DEVELOPER TEST EVENT") ||
+            nameUpper.includes("DYNAMIC ADMIN TEST EVENT") ||
+            nameUpper.includes("TEST EVENT")
         );
       }
       setLoading(false);

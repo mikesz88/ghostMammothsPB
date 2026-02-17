@@ -265,9 +265,10 @@ export default function MembershipPage() {
                     <li className="flex items-start gap-2">
                       <Check className="w-5 h-5 text-primary shrink-0 mt-0.5" />
                       <span className="text-muted-foreground">
-                        {isPaidTier
+                        Email notifications
+                        {/* {isPaidTier
                           ? "SMS & email notifications"
-                          : "Email notifications"}
+                          : "Email notifications"} */}
                       </span>
                     </li>
                     {isPaidTier && (

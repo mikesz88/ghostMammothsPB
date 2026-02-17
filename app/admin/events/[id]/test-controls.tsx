@@ -193,6 +193,7 @@ export function TestControls({
         toast.success("Event cleared", {
           description: "All queue and court assignments removed",
         });
+        setTimeout(() => window.location.reload(), 500);
       } else {
         toast.error("Failed to clear event");
       }
@@ -210,6 +211,7 @@ export function TestControls({
       const result = await fillAllCourts(eventId);
       if (result.success) {
         toast.success(`Filled ${result.courtsCreated} courts`);
+        setTimeout(() => window.location.reload(), 500);
       } else {
         toast.error(result.error || "Failed to fill courts");
       }

@@ -7,7 +7,7 @@ import {
   sendUpNextEmail,
   sendCourtAssignmentEmail,
   type QueueEmailData,
-} from "@/lib/email/nodemailer";
+} from "@/lib/email/resend";
 import { format, parse } from "date-fns";
 
 export async function sendQueueNotification(

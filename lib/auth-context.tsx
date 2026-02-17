@@ -103,9 +103,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       };
     }
 
-    // Construct full absolute URL for email redirect
-    const redirectTo = `${baseUrl}/login`;
-    console.log("Signup email redirect URL:", redirectTo);
+    // Redirect to auth callback so it can exchange the code for a session
+    const base = baseUrl.replace(/\/$/, "");
+    const redirectTo = `${base}/auth/callback`;
 
     const { data, error } = await supabase.auth.signUp({
       email,

@@ -2,10 +2,10 @@
 
 import Link from "next/link";
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/auth-context";
-import { signOut } from "@/app/actions/auth";
 import { createClient } from "@/lib/supabase/client";
 import { User, LogOut, Settings, ArrowLeft, Shield } from "lucide-react";
 import {
@@ -33,8 +33,14 @@ export const Header = ({
   hideNav = false,
   customNav,
 }: HeaderProps = {}) => {
-  const { user, loading } = useAuth();
+  const { user, loading, signOut } = useAuth();
+  const router = useRouter();
   const [isAdmin, setIsAdmin] = useState(false);
+
+  const handleSignOut = async () => {
+    await signOut();
+    router.push("/about");
+  };
 
   useEffect(() => {
     const checkAdmin = async () => {
@@ -101,6 +107,12 @@ export const Header = ({
         Events
       </Link>
       <Link
+        href="/membership"
+        className="text-muted-foreground hover:text-foreground transition-colors"
+      >
+        Membership
+      </Link>
+      <Link
         href="/calendar"
         className="text-muted-foreground hover:text-foreground transition-colors"
       >
@@ -113,7 +125,7 @@ export const Header = ({
         About
       </Link>
       <Link
-        href="https://ghost-mammoths-pb.myshopify.com"
+        href="https://ghostmammoth.myshopify.com"
         target="_blank"
         rel="noopener noreferrer"
         className="text-muted-foreground hover:text-foreground transition-colors"
@@ -204,6 +216,11 @@ export const Header = ({
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
+                  <Link href="/membership" className="cursor-pointer">
+                    Membership
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
                   <Link href="/calendar" className="cursor-pointer">
                     Calendar
                   </Link>
@@ -215,7 +232,7 @@ export const Header = ({
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
                   <Link
-                    href="https://ghost-mammoths-pb.myshopify.com"
+                    href="https://ghostmammoth.myshopify.com/password"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="cursor-pointer"
@@ -243,16 +260,12 @@ export const Header = ({
             </DropdownMenuItem>
           )}
           <DropdownMenuSeparator />
-          <DropdownMenuItem asChild>
-            <form action={signOut} className="w-full">
-              <button
-                type="submit"
-                className="w-full text-left flex items-center cursor-pointer"
-              >
-                <LogOut className="w-4 h-4 mr-2" />
-                Sign Out
-              </button>
-            </form>
+          <DropdownMenuItem
+            onClick={handleSignOut}
+            className="cursor-pointer"
+          >
+            <LogOut className="w-4 h-4 mr-2" />
+            Sign Out
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>

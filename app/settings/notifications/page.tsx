@@ -155,7 +155,7 @@ export default function NotificationSettingsPage() {
                 </div>
               )}
 
-              <div className="flex items-center justify-between">
+              {/* <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
                     <MessageSquare className="w-5 h-5 text-primary" />
@@ -194,8 +194,8 @@ export default function NotificationSettingsPage() {
                     onChange={(e) => handleInputChange("phone", e.target.value)}
                     placeholder="+1 (555) 123-4567"
                   />
-                </div>
-              )}
+                </div> */}
+              {/* )} */}
             </CardContent>
           </Card>
 

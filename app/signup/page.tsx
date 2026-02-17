@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useState, useEffect, Suspense } from "react";
 import { Trophy, Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -23,8 +23,9 @@ import {
 } from "@/components/ui/select";
 import { useAuth } from "@/lib/auth-context";
 import { Header } from "@/components/ui/header";
+import { PENDING_MEMBERSHIP_TIER_STORAGE_KEY } from "@/lib/constants";
 
-export default function SignupPage() {
+function SignupContent() {
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -40,6 +41,21 @@ export default function SignupPage() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const { signUp } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const tierParam = searchParams.get("tier");
+  const flowParam = searchParams.get("flow");
+
+  // When arriving from membership flow (e.g. login redirect with pending tier), show verify-email state
+  useEffect(() => {
+    if (flowParam === "confirm-email" && tierParam) {
+      if (typeof window !== "undefined") {
+        window.localStorage.setItem(PENDING_MEMBERSHIP_TIER_STORAGE_KEY, tierParam);
+      }
+    }
+    if (flowParam === "confirm-email") {
+      setSuccess(true);
+    }
+  }, [flowParam, tierParam]);
 
   const handleInputChange = (field: string, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -96,19 +112,18 @@ export default function SignupPage() {
                   <Trophy className="w-8 h-8 text-primary" />
                 </div>
                 <h2 className="text-2xl font-bold text-foreground mb-2">
-                  Check Your Email!
+                  Verify Your Email
                 </h2>
                 <p className="text-muted-foreground mb-4">
-                  Your account has been created successfully. Please check your
-                  email to verify your account before logging in.
+                  Your account is almost ready. Check your inbox to confirm your
+                  email address. Once confirmed, you can log in and join queues
+                  on-site.
                 </p>
-                <p className="text-sm text-muted-foreground mb-6">
-                  Once you've confirmed your email, you can log in and start
-                  playing!
-                </p>
-                <Button asChild className="w-full">
-                  <Link href="/login">Go to Login</Link>
-                </Button>
+                <div className="space-y-3">
+                  <Button variant="ghost" asChild className="w-full">
+                    <Link href="/login">Return to Login</Link>
+                  </Button>
+                </div>
               </CardContent>
             </Card>
           </div>
@@ -266,5 +281,22 @@ export default function SignupPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function SignupPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-background">
+          <Header />
+          <div className="flex items-center justify-center p-4 py-12">
+            <div className="text-muted-foreground">Loading...</div>
+          </div>
+        </div>
+      }
+    >
+      <SignupContent />
+    </Suspense>
   );
 }
