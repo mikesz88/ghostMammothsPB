@@ -17,7 +17,7 @@ export async function sendQueueNotification(
   eventId: string,
   position: number,
   notificationType: "join" | "position-update" | "up-next" | "court-assignment",
-  courtNumber?: number
+  courtNumber?: number,
 ) {
   const supabase = await createClient();
 
@@ -46,12 +46,16 @@ export async function sendQueueNotification(
   // Build event moment: treat stored date + time as Central, then format in Central for email
   const timeStr = (event.time || "00:00:00").slice(0, 8);
   const [y, m, d] = event.date.split("-").map(Number);
-  const [hr, min, sec] = timeStr.split(":").map((n: string) => parseInt(n, 10) || 0);
+  const [hr, min, sec] = timeStr
+    .split(":")
+    .map((n: string) => parseInt(n, 10) || 0);
   const localParts = new Date(Date.UTC(y, m - 1, d, hr, min, sec));
   const eventMoment = fromZonedTime(localParts, CENTRAL_TZ);
   const eventDate =
     formatInTimeZone(eventMoment, CENTRAL_TZ, "PPP") +
-    (event.time ? " at " + formatInTimeZone(eventMoment, CENTRAL_TZ, "h:mm a") : "");
+    (event.time
+      ? " at " + formatInTimeZone(eventMoment, CENTRAL_TZ, "h:mm a")
+      : "");
 
   const emailData: QueueEmailData = {
     userName: user.name || "Player",
@@ -63,7 +67,7 @@ export async function sendQueueNotification(
     estimatedWaitTime: calculateEstimatedWait(
       position,
       event.court_count || 1,
-      event.team_size || 2
+      event.team_size || 2,
     ),
     courtNumber,
   };
@@ -101,7 +105,7 @@ export async function sendQueueNotification(
 function calculateEstimatedWait(
   position: number,
   courtCount: number,
-  teamSize: number
+  teamSize: number,
 ): number {
   const playersPerRound = courtCount * teamSize * 2;
   const roundsToWait = Math.ceil(position / playersPerRound);
@@ -110,7 +114,7 @@ function calculateEstimatedWait(
 }
 
 export async function getEmailStats(
-  timeRange: "today" | "week" | "month" | "all" = "week"
+  timeRange: "today" | "week" | "month" | "all" = "week",
 ) {
   const supabase = await createClient();
 

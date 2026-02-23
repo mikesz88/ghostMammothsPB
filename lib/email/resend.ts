@@ -17,6 +17,8 @@ export interface QueueEmailData {
   eventName: string;
   eventLocation: string;
   eventDate: string;
+  /** When the email was sent (Central time), e.g. "February 5th, 2026 at 3:32 PM" */
+  sentAt?: string;
   currentPosition: number;
   estimatedWaitTime?: number;
   courtNumber?: number;
@@ -53,6 +55,7 @@ export async function sendQueueJoinEmail(data: QueueEmailData) {
                 <p><strong>Event:</strong> ${data.eventName}</p>
                 <p><strong>Location:</strong> ${data.eventLocation}</p>
                 <p><strong>Date:</strong> ${data.eventDate}</p>
+                ${data.sentAt ? `<p><strong>Sent at:</strong> ${data.sentAt}</p>` : ""}
                 <p><strong>Your Position:</strong> #${data.currentPosition}</p>
                 ${data.estimatedWaitTime ? `<p><strong>Estimated Wait:</strong> ~${data.estimatedWaitTime} minutes</p>` : ""}
               </div>
@@ -66,7 +69,7 @@ export async function sendQueueJoinEmail(data: QueueEmailData) {
         </body>
         </html>
       `,
-      text: `Hi ${data.userName},\n\nYou've successfully joined the queue for ${data.eventName}!\n\nEvent: ${data.eventName}\nLocation: ${data.eventLocation}\nDate: ${data.eventDate}\nYour Position: #${data.currentPosition}\n${data.estimatedWaitTime ? `Estimated Wait: ~${data.estimatedWaitTime} minutes\n` : ""}\nWe'll notify you when you're up next!`,
+      text: `Hi ${data.userName},\n\nYou've successfully joined the queue for ${data.eventName}!\n\nEvent: ${data.eventName}\nLocation: ${data.eventLocation}\nDate: ${data.eventDate}\n${data.sentAt ? `Sent at: ${data.sentAt}\n` : ""}Your Position: #${data.currentPosition}\n${data.estimatedWaitTime ? `Estimated Wait: ~${data.estimatedWaitTime} minutes\n` : ""}\nWe'll notify you when you're up next!`,
     });
 
     if (error) {
