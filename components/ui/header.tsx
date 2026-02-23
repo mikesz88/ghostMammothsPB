@@ -67,12 +67,12 @@ export const Header = ({
           <div className="flex items-center gap-2">
             <Image
               src="/icon-32x32.png"
-              alt="Ghost Mammoths PB"
+              alt="Ghost Mammoth PB"
               width={32}
               height={32}
             />
             <span className="text-xl font-bold text-foreground">
-              Ghost Mammoths PB
+              Ghost Mammoth PB
             </span>
           </div>
           <div className="w-32 h-8 bg-muted animate-pulse rounded" />
@@ -86,13 +86,13 @@ export const Header = ({
     <Link href="/" className="flex items-center gap-1.5 sm:gap-2">
       <Image
         src="/icon-32x32.png"
-        alt="Ghost Mammoths PB"
+        alt="Ghost Mammoth PB"
         width={32}
         height={32}
         className="w-6 h-6 sm:w-8 sm:h-8"
       />
       <span className="text-base sm:text-xl font-bold text-foreground truncate max-w-[140px] sm:max-w-none">
-        Ghost Mammoths PB
+        Ghost Mammoth PB
       </span>
     </Link>
   );

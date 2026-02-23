@@ -1,4 +1,4 @@
-// Membership and payment types for Ghost Mammoths PB
+// Membership and payment types for Ghost Mammoth PB
 
 export type MembershipStatus =
   | "active"
