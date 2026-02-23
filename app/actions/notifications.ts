@@ -8,7 +8,9 @@ import {
   sendCourtAssignmentEmail,
   type QueueEmailData,
 } from "@/lib/email/resend";
-import { format, parse } from "date-fns";
+import { formatInTimeZone, fromZonedTime } from "date-fns-tz";
+
+const CENTRAL_TZ = "America/Chicago";
 
 export async function sendQueueNotification(
   userId: string,
@@ -41,24 +43,22 @@ export async function sendQueueNotification(
     return { success: false, error: "Event not found" };
   }
 
-  let formattedTime = "";
-  if (event.time) {
-    try {
-      // Parse the time string (HH:MM:SS format) and format as 12-hour with AM/PM
-      const timeParsed = parse(event.time, "HH:mm:ss", new Date());
-      formattedTime = ` at ${format(timeParsed, "h:mm a")}`;
-    } catch {
-      // Fallback to original time if parsing fails
-      formattedTime = ` at ${event.time}`;
-    }
-  }
+  // Build event moment: treat stored date + time as Central, then format in Central for email
+  const timeStr = (event.time || "00:00:00").slice(0, 8);
+  const [y, m, d] = event.date.split("-").map(Number);
+  const [hr, min, sec] = timeStr.split(":").map((n: string) => parseInt(n, 10) || 0);
+  const localParts = new Date(Date.UTC(y, m - 1, d, hr, min, sec));
+  const eventMoment = fromZonedTime(localParts, CENTRAL_TZ);
+  const eventDate =
+    formatInTimeZone(eventMoment, CENTRAL_TZ, "PPP") +
+    (event.time ? " at " + formatInTimeZone(eventMoment, CENTRAL_TZ, "h:mm a") : "");
 
   const emailData: QueueEmailData = {
     userName: user.name || "Player",
     userEmail: user.email,
     eventName: event.name,
     eventLocation: event.location,
-    eventDate: format(new Date(event.date), "PPP") + formattedTime,
+    eventDate,
     currentPosition: position,
     estimatedWaitTime: calculateEstimatedWait(
       position,

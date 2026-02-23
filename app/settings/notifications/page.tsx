@@ -137,7 +137,7 @@ export default function NotificationSettingsPage() {
                 />
               </div>
 
-              {settings.emailNotifications && (
+              {/* {settings.emailNotifications && (
                 <div className="ml-13 space-y-2">
                   <Label
                     htmlFor="email-input"
@@ -153,7 +153,7 @@ export default function NotificationSettingsPage() {
                     placeholder="your@email.com"
                   />
                 </div>
-              )}
+              )} */}
 
               {/* <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
