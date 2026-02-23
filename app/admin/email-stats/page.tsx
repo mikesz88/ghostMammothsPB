@@ -26,13 +26,28 @@ export default function EmailStatsPage() {
     fetchStats();
   }, [timeRange]);
 
+  const emptyStats = {
+    total: 0,
+    successful: 0,
+    failed: 0,
+    byType: {} as Record<string, number>,
+    logs: [] as any[],
+  };
+
   const fetchStats = async () => {
     setLoading(true);
-    const result = await getEmailStats(timeRange);
-    if (!result.error) {
-      setStats(result);
+    try {
+      const result = await getEmailStats(timeRange);
+      if (!result.error) {
+        setStats(result);
+      } else {
+        setStats(emptyStats);
+      }
+    } catch {
+      setStats(emptyStats);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   if (loading) {
