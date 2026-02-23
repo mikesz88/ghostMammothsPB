@@ -46,7 +46,7 @@ export async function sendQueueNotification(
   // Build event moment: treat stored date + time as Central, then format in Central for email
   const timeStr = (event.time || "00:00:00").slice(0, 8);
   const [y, m, d] = event.date.split("-").map(Number);
-  const [hr, min, sec] = timeStr.split(":").map((n) => parseInt(n, 10) || 0);
+  const [hr, min, sec] = timeStr.split(":").map((n: string) => parseInt(n, 10) || 0);
   const localParts = new Date(Date.UTC(y, m - 1, d, hr, min, sec));
   const eventMoment = fromZonedTime(localParts, CENTRAL_TZ);
   const eventDate =
