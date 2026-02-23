@@ -30,7 +30,7 @@ export default function CalendarPage() {
               </h1>
             </div>
             <p className="text-xl text-muted-foreground">
-              View all upcoming Ghost Mammoths Pickleball events
+              View all upcoming Ghost Mammoth Pickleball events
             </p>
           </div>
 
@@ -51,7 +51,7 @@ export default function CalendarPage() {
                   height="100%"
                   frameBorder="0"
                   scrolling="no"
-                  title="Ghost Mammoths Pickleball Calendar"
+                  title="Ghost Mammoth Pickleball Calendar"
                   className="w-full h-full"
                 />
               </div>

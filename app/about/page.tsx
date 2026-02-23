@@ -17,7 +17,7 @@ export default function AboutPage() {
       <section className="container mx-auto px-4 py-20 text-center">
         <div className="max-w-3xl mx-auto">
           <h1 className="text-5xl font-bold text-foreground mb-6 text-balance">
-            About Ghost Mammoths Pickleball
+            About Ghost Mammoth Pickleball
           </h1>
           <p className="text-xl text-muted-foreground mb-8 text-pretty">
             We're passionate about making pickleball more accessible and
@@ -180,7 +180,7 @@ export default function AboutPage() {
         <div className="container mx-auto px-4 py-8">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
             <p className="text-muted-foreground">
-              &copy; 2025 Ghost Mammoths Pickleball. All rights reserved.
+              &copy; 2025 Ghost Mammoth Pickleball. All rights reserved.
             </p>
             <div className="flex items-center gap-6">
               <Link

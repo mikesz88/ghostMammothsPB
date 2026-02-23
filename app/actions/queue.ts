@@ -33,7 +33,7 @@ export async function getQueue(eventId: string) {
       `
       *,
       user:users(*)
-    `
+    `,
     )
     .eq("event_id", eventId)
     .eq("status", "waiting")
@@ -52,7 +52,7 @@ export async function joinQueue(
   userId: string,
   groupSize: number,
   groupId?: string,
-  playerNames?: Array<{ name: string; skillLevel: string }>
+  playerNames?: Array<{ name: string; skillLevel: string }>,
 ) {
   const supabase = await createClient();
 
@@ -96,8 +96,8 @@ export async function joinQueue(
   }
 
   // Send email notification (async, don't await to avoid blocking)
-  sendQueueNotification(userId, eventId, position, "join").catch((err) =>
-    console.error("Failed to send join email:", err)
+  await sendQueueNotification(userId, eventId, position, "join").catch((err) =>
+    console.error("Failed to send join email:", err),
   );
 
   revalidatePath(`/events/${eventId}`);
@@ -175,8 +175,8 @@ export async function reorderQueue(eventId: string) {
             queue[i].user_id,
             eventId,
             newPosition,
-            "up-next"
-          )
+            "up-next",
+          ),
         );
       }
       // Send position update if they moved up significantly (3+ positions)
@@ -186,15 +186,15 @@ export async function reorderQueue(eventId: string) {
             queue[i].user_id,
             eventId,
             newPosition,
-            "position-update"
-          )
+            "position-update",
+          ),
         );
       }
     }
 
     // Send notifications without blocking
     Promise.all([...upNextNotifications, ...positionUpdateNotifications]).catch(
-      (err) => console.error("Error sending position update emails:", err)
+      (err) => console.error("Error sending position update emails:", err),
     );
   }
 }
@@ -222,7 +222,7 @@ export async function assignPlayersToNextCourt(eventId: string) {
       `
       *,
       user:users(id, name, email, skill_level)
-    `
+    `,
     )
     .eq("event_id", eventId)
     .eq("status", "waiting")
@@ -280,13 +280,13 @@ export async function assignPlayersToNextCourt(eventId: string) {
 
   const nextPlayers = QueueManager.getNextPlayers(
     waitingQueue,
-    playersPerCourt
+    playersPerCourt,
   );
 
   // Count total players (considering group_size)
   const totalPlayerCount = nextPlayers.reduce(
     (sum, entry) => sum + (entry.groupSize || 1),
-    0
+    0,
   );
 
   if (totalPlayerCount < playersPerCourt) {
@@ -304,7 +304,7 @@ export async function assignPlayersToNextCourt(eventId: string) {
     .is("ended_at", null);
 
   const activeCourts = new Set(
-    activeAssignments?.map((a) => a.court_number) || []
+    activeAssignments?.map((a) => a.court_number) || [],
   );
 
   let availableCourt: number | null = null;
@@ -413,9 +413,9 @@ export async function assignPlayersToNextCourt(eventId: string) {
       eventId,
       player.position,
       "court-assignment",
-      availableCourt
+      availableCourt,
     ).catch((err) =>
-      console.error("Failed to send court assignment email:", err)
+      console.error("Failed to send court assignment email:", err),
     );
   }
 

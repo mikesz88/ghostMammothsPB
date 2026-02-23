@@ -142,7 +142,7 @@ function SignupContent() {
             <CardHeader>
               <CardTitle className="text-foreground">Create Account</CardTitle>
               <CardDescription>
-                Join the Ghost Mammoths pickleball community
+                Join the Ghost Mammoth pickleball community
               </CardDescription>
             </CardHeader>
             <CardContent>

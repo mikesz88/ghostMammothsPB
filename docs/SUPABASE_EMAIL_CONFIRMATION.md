@@ -17,7 +17,7 @@ Update your Supabase **Confirm signup** email template to link directly to your 
 <a href="{{ .SiteURL }}/auth/callback?token_hash={{ .TokenHash }}&type=email&next=/membership">Confirm your email</a>
 ```
 
-`{{ .SiteURL }}` comes from **Supabase Dashboard** → **Authentication** → **URL Configuration** → **Site URL**. Set it to your app URL (e.g. `https://ghost-mammoths-pb.vercel.app`).
+`{{ .SiteURL }}` comes from **Supabase Dashboard** → **Authentication** → **URL Configuration** → **Site URL**. Set it to your app URL (e.g. `https://ghost-mammoth-pb.vercel.app`).
 
 Example full template:
 
