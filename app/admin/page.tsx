@@ -311,7 +311,7 @@ export default function AdminPage() {
 
       {/* Page Content */}
       <div className="container mx-auto px-4 py-12">
-        <div className="flex items-center justify-between mb-8">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-8">
           <div>
             <h1 className="text-4xl font-bold text-foreground mb-2">
               Event Management
@@ -320,7 +320,11 @@ export default function AdminPage() {
               Create and manage pickleball events
             </p>
           </div>
-          <Button onClick={() => setShowCreateDialog(true)} size="lg">
+          <Button
+            onClick={() => setShowCreateDialog(true)}
+            size="lg"
+            className="w-full sm:w-auto"
+          >
             <Plus className="w-4 h-4 mr-2" />
             Create Event
           </Button>

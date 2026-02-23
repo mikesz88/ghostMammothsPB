@@ -1,4 +1,4 @@
-import { Calendar as CalendarIcon } from "lucide-react";
+import { Calendar as CalendarIcon, ExternalLink } from "lucide-react";
 import {
   Card,
   CardContent,
@@ -6,12 +6,11 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { Header } from "@/components/ui/header";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 
 export default function CalendarPage() {
-  // Replace this with your actual Google Calendar embed URL
-  // To get this: Go to Google Calendar > Settings > Integrate calendar > Copy the iframe code
+  // Google Calendar embed URL (from Calendar > Settings > Integrate calendar)
   const calendarEmbedUrl =
     "https://calendar.google.com/calendar/embed?height=600&wkst=1&ctz=America/Chicago&showPrint=0&src=Z2hvc3RtYW1tb3RoZGV2QGdtYWlsLmNvbQ&src=ZW4udXNhI2hvbGlkYXlAZ3JvdXAudi5jYWxlbmRhci5nb29nbGUuY29t&color=%23039be5&color=%230b8043";
 
@@ -36,14 +35,27 @@ export default function CalendarPage() {
 
           {/* Calendar Embed */}
           <Card className="border-border">
-            <CardHeader>
-              <CardTitle className="text-foreground">Upcoming Events</CardTitle>
-              <CardDescription>
-                All scheduled pickleball events and sessions
-              </CardDescription>
+            <CardHeader className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+              <div>
+                <CardTitle className="text-foreground">Upcoming Events</CardTitle>
+                <CardDescription>
+                  All scheduled pickleball events and sessions
+                </CardDescription>
+              </div>
+              <a
+                href={calendarEmbedUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex"
+              >
+                <Button variant="outline" size="sm" className="w-full sm:w-auto">
+                  <ExternalLink className="w-4 h-4 mr-2" />
+                  Open in Google Calendar
+                </Button>
+              </a>
             </CardHeader>
             <CardContent>
-              <div className="w-full aspect-[4/3] rounded-lg overflow-hidden bg-muted">
+              <div className="w-full min-h-[70vh] sm:min-h-[600px] rounded-lg overflow-hidden bg-muted">
                 <iframe
                   src={calendarEmbedUrl}
                   style={{ border: 0 }}
@@ -52,7 +64,7 @@ export default function CalendarPage() {
                   frameBorder="0"
                   scrolling="no"
                   title="Ghost Mammoth Pickleball Calendar"
-                  className="w-full h-full"
+                  className="w-full h-full min-h-[70vh] sm:min-h-[600px]"
                 />
               </div>
             </CardContent>
