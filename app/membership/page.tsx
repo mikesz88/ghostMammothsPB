@@ -142,6 +142,56 @@ export default function MembershipPage() {
           </div>
         )}
 
+        {/* Community Fan Club description & perks */}
+        <div className="max-w-3xl mx-auto mb-10">
+          <Card className="border-border bg-card">
+            <CardContent className="p-6 sm:p-8">
+              <h2 className="text-xl font-semibold text-foreground mb-4">
+                Community Fan Club
+              </h2>
+              <p className="text-muted-foreground leading-relaxed mb-2">
+                Community Fan Club is the inner circle of Ghost Mammoth — the
+                early believers who don&apos;t just play, they build the culture.
+                It&apos;s for the people who show up consistently, bring new
+                players, create the vibe, and help shape what we&apos;re
+                becoming.
+              </p>
+              <p className="text-muted-foreground font-medium leading-relaxed mb-6">
+                Not just members. Stakeholders in the movement.
+              </p>
+              <p className="text-sm font-medium text-foreground mb-2">
+                Perks:
+              </p>
+              <ul className="grid sm:grid-cols-2 gap-2 text-muted-foreground">
+                <li className="flex items-center gap-2">
+                  <Check className="w-4 h-4 text-primary shrink-0" />
+                  Exclusive merch drops
+                </li>
+                <li className="flex items-center gap-2">
+                  <Check className="w-4 h-4 text-primary shrink-0" />
+                  Members-only events
+                </li>
+                <li className="flex items-center gap-2">
+                  <Check className="w-4 h-4 text-primary shrink-0" />
+                  Discount on GM items
+                </li>
+                <li className="flex items-center gap-2">
+                  <Check className="w-4 h-4 text-primary shrink-0" />
+                  Priority sign-ups
+                </li>
+                <li className="flex items-center gap-2">
+                  <Check className="w-4 h-4 text-primary shrink-0" />
+                  Recognition as a Community Builder
+                </li>
+                <li className="flex items-center gap-2">
+                  <Check className="w-4 h-4 text-primary shrink-0" />
+                  Directly fund free open-play sessions
+                </li>
+              </ul>
+            </CardContent>
+          </Card>
+        </div>
+
         {/* Pricing Cards */}
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-7xl mx-auto">
           {tiers.map((tier) => {
