@@ -44,3 +44,5 @@ supabase/scripts/*.sql
 *.sql
 
 scripts
+
+docs/SUPABASE_EMAIL_CONFIRMATION.md

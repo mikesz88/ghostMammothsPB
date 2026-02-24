@@ -27,8 +27,14 @@ function LoginForm() {
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
-  const { signIn, user, loading: authLoading } = useAuth();
+  const [resendLoading, setResendLoading] = useState(false);
+  const [resendMessage, setResendMessage] = useState<string | null>(null);
+  const { signIn, user, loading: authLoading, resendVerificationEmail } =
+    useAuth();
   const router = useRouter();
+
+  const isEmailNotConfirmed =
+    error?.toLowerCase().includes("email not confirmed") ?? false;
   const searchParams = useSearchParams();
 
   // Redirect if already logged in (e.g. from email confirmation callback)
@@ -45,10 +51,24 @@ function LoginForm() {
     }
   }, [searchParams]);
 
+  const handleResendVerification = async () => {
+    if (!email?.trim()) return;
+    setResendLoading(true);
+    setResendMessage(null);
+    const { error: resendError } = await resendVerificationEmail(email.trim());
+    setResendLoading(false);
+    if (resendError) {
+      setResendMessage(resendError.message ?? "Failed to resend email.");
+    } else {
+      setResendMessage("Verification email sent. Check your inbox and click the link.");
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
+    setResendMessage(null);
 
     try {
       const { error } = await signIn(email, password);
@@ -120,8 +140,37 @@ function LoginForm() {
                 </div>
               )}
               {error && (
-                <div className="p-3 text-sm text-destructive-foreground bg-destructive rounded-md">
-                  {error}
+                <div className="space-y-2">
+                  <div className="p-3 text-sm text-destructive-foreground bg-destructive rounded-md">
+                    {error}
+                  </div>
+                  {isEmailNotConfirmed && (
+                    <div className="space-y-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="w-full"
+                        onClick={handleResendVerification}
+                        disabled={resendLoading}
+                      >
+                        {resendLoading
+                          ? "Sending..."
+                          : "Resend verification email"}
+                      </Button>
+                      {resendMessage && (
+                        <div
+                          className={`p-3 text-sm rounded-md ${
+                            resendMessage.startsWith("Verification")
+                              ? "text-green-700 bg-green-50 dark:text-green-200 dark:bg-green-950"
+                              : "text-destructive-foreground bg-destructive/20"
+                          }`}
+                        >
+                          {resendMessage}
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               )}
               <div className="space-y-2">
