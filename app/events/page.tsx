@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useState, useEffect } from "react";
 import {
   Calendar,
   MapPin,
@@ -21,10 +22,29 @@ import { Badge } from "@/components/ui/badge";
 import { Header } from "@/components/ui/header";
 import { useRealtimeEvents } from "@/lib/hooks/use-realtime-events";
 import { useAuth } from "@/lib/auth-context";
+import { createClient } from "@/lib/supabase/client";
 
 export default function EventsPage() {
   const { events, loading } = useRealtimeEvents();
   const { user } = useAuth();
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  useEffect(() => {
+    const checkAdmin = async () => {
+      if (user) {
+        const supabase = createClient();
+        const { data } = await supabase
+          .from("users")
+          .select("is_admin")
+          .eq("id", user.id)
+          .single();
+        setIsAdmin(data?.is_admin || false);
+      } else {
+        setIsAdmin(false);
+      }
+    };
+    checkAdmin();
+  }, [user]);
 
   if (loading) {
     return (
@@ -93,7 +113,7 @@ export default function EventsPage() {
             <p className="text-muted-foreground mb-4">
               Check back later for upcoming pickleball events.
             </p>
-            {user && (
+            {user && isAdmin && (
               <Button asChild>
                 <Link href="/admin">Create Event</Link>
               </Button>

@@ -1,4 +1,7 @@
+"use client";
+
 import Link from "next/link";
+import { useState, useEffect } from "react";
 import { Trophy, Users, Zap, Calendar, Shield, Heart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -9,8 +12,30 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Header } from "@/components/ui/header";
+import { useAuth } from "@/lib/auth-context";
+import { createClient } from "@/lib/supabase/client";
 
 export default function AboutPage() {
+  const { user } = useAuth();
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  useEffect(() => {
+    const checkAdmin = async () => {
+      if (user) {
+        const supabase = createClient();
+        const { data } = await supabase
+          .from("users")
+          .select("is_admin")
+          .eq("id", user.id)
+          .single();
+        setIsAdmin(data?.is_admin || false);
+      } else {
+        setIsAdmin(false);
+      }
+    };
+    checkAdmin();
+  }, [user]);
+
   return (
     <div className="min-h-screen bg-background">
       <Header />
@@ -169,9 +194,11 @@ export default function AboutPage() {
               <Button size="lg" asChild>
                 <Link href="/events">Browse Events</Link>
               </Button>
-              <Button size="lg" variant="outline" asChild>
-                <Link href="/admin">Event Organizers</Link>
-              </Button>
+              {isAdmin && (
+                <Button size="lg" variant="outline" asChild>
+                  <Link href="/admin">Event Organizers</Link>
+                </Button>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -195,12 +222,14 @@ export default function AboutPage() {
               >
                 Events
               </Link>
-              <Link
-                href="/admin"
-                className="text-muted-foreground hover:text-foreground transition-colors"
-              >
-                Admin
-              </Link>
+              {isAdmin && (
+                <Link
+                  href="/admin"
+                  className="text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  Admin
+                </Link>
+              )}
             </div>
           </div>
         </div>
