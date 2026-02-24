@@ -67,8 +67,8 @@ export function CreateEventDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="bg-card border-border max-w-2xl">
-        <DialogHeader>
+      <DialogContent className="bg-card border-border max-w-2xl max-h-[90vh] flex flex-col overflow-hidden">
+        <DialogHeader className="flex-shrink-0">
           <DialogTitle className="text-foreground">
             Create New Event
           </DialogTitle>
@@ -76,7 +76,10 @@ export function CreateEventDialog({
             Set up a new pickleball event with queue management
           </DialogDescription>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form
+          onSubmit={handleSubmit}
+          className="flex-1 min-h-0 overflow-y-auto space-y-4 pr-1 -mr-1"
+        >
           <div className="grid md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="name">Event Name</Label>
