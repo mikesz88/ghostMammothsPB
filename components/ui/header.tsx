@@ -69,13 +69,13 @@ function HeaderDefaultNav() {
       </Link>
       <Link
         href="/sitemap"
-        className="text-muted-foreground hover:text-foreground transition-colors"
+        className="text-neutral-900 dark:text-neutral-100 hover:text-neutral-700 dark:hover:text-neutral-300 transition-colors"
       >
         Sitemap
       </Link>
       <Link
         href="/search"
-        className="text-muted-foreground hover:text-foreground transition-colors"
+        className="text-neutral-900 dark:text-neutral-100 hover:text-neutral-700 dark:hover:text-neutral-300 transition-colors"
       >
         Search
       </Link>
@@ -293,7 +293,7 @@ export const Header = ({
 
   if (loading) {
     return (
-      <header className="border-b border-border bg-background sticky top-0 z-50">
+      <header className="border-b border-border bg-white dark:bg-zinc-900 sticky top-0 z-50">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Image
@@ -313,7 +313,7 @@ export const Header = ({
   }
 
   return (
-    <header className="border-b border-border bg-background sticky top-0 z-50">
+    <header className="border-b border-border bg-white dark:bg-zinc-900 sticky top-0 z-50">
       <div className="container mx-auto px-2 sm:px-4 py-3 sm:py-4 flex items-center justify-between gap-2">
         {/* Left side: Logo + optional back button */}
         <div className="flex items-center gap-2 sm:gap-4 min-w-0">
