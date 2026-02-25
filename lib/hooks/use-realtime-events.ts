@@ -7,10 +7,10 @@ import type { Event } from "../types";
 export function useRealtimeEvents() {
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
-  const supabase = createClient();
 
   useEffect(() => {
-    // Initial fetch
+    const supabase = createClient();
+
     const fetchEvents = async () => {
       const { data, error } = await supabase
         .from("events")
@@ -21,7 +21,6 @@ export function useRealtimeEvents() {
       if (error) {
         console.error("Error fetching events:", error);
       } else {
-        // Convert date strings to Date objects and map snake_case to camelCase
         const eventsWithDates = (data || []).map((event: any) => ({
           ...event,
           date:
@@ -42,7 +41,6 @@ export function useRealtimeEvents() {
 
     fetchEvents();
 
-    // Subscribe to real-time changes
     const channel = supabase
       .channel("events")
       .on(
@@ -53,7 +51,6 @@ export function useRealtimeEvents() {
           table: "events",
         },
         () => {
-          // Refetch on any change
           fetchEvents();
         }
       )
@@ -62,7 +59,7 @@ export function useRealtimeEvents() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [supabase]);
+  }, []);
 
   return { events, loading };
 }
