@@ -203,43 +203,6 @@ export default function AboutPage() {
           </CardContent>
         </Card>
       </section>
-      <footer className="border-t border-border mt-20">
-        <div className="container mx-auto px-4 py-8">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-            <p className="text-muted-foreground">
-              &copy; 2025 Ghost Mammoth Pickleball. All rights reserved.
-            </p>
-            <div className="flex items-center gap-6">
-              <Link
-                href="/about"
-                className="text-muted-foreground hover:text-foreground transition-colors"
-              >
-                About
-              </Link>
-              <Link
-                href="/events"
-                className="text-muted-foreground hover:text-foreground transition-colors"
-              >
-                Events
-              </Link>
-              <Link
-                href="/sitemap"
-                className="text-muted-foreground hover:text-foreground transition-colors"
-              >
-                Sitemap
-              </Link>
-              {isAdmin && (
-                <Link
-                  href="/admin"
-                  className="text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  Admin
-                </Link>
-              )}
-            </div>
-          </div>
-        </div>
-      </footer>
     </div>
   );
 }

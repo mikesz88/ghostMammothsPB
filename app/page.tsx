@@ -180,18 +180,6 @@ function HomeContent() {
           </CardContent>
         </Card>
       </section>
-
-      {/* Footer */}
-      <footer className="border-t border-border mt-20">
-        <div className="container mx-auto px-4 py-8 text-center text-muted-foreground">
-          <p className="mb-2">&copy; 2026 Ghost Mammoth Pickleball. All rights reserved.</p>
-          <p>
-            <Link href="/sitemap" className="text-primary hover:underline">
-              Sitemap
-            </Link>
-          </p>
-        </div>
-      </footer>
     </div>
   );
 }

@@ -9,7 +9,8 @@
     "start": "next start",
     "lint": "eslint .",
     "test:e2e": "playwright test",
-    "test:a11y": "playwright test e2e/a11y.spec.ts --workers=1",
+    "test:a11y": "playwright test e2e/a11y.spec.ts",
+    "prod:start": "npm run build && npm run start",
     "ci": "npm run lint && npm run build && npm run test:a11y",
     "seed:users": "npx tsx scripts/seed-dummy-users.ts",
     "seed:event": "npx tsx scripts/seed-test-event.ts"

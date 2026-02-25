@@ -31,7 +31,6 @@ function HeaderLogo() {
         width={32}
         height={32}
         className="w-6 h-6 sm:w-8 sm:h-8"
-        aria-hidden
       />
       <span className="text-base sm:text-xl font-bold text-foreground truncate max-w-[140px] sm:max-w-none">
         Ghost Mammoth PB
@@ -42,7 +41,7 @@ function HeaderLogo() {
 
 function HeaderDefaultNav() {
   return (
-    <nav className="flex items-center gap-4">
+    <nav className="flex items-center gap-4" aria-label="Main navigation">
       <Link
         href="/events"
         className="text-muted-foreground hover:text-foreground transition-colors"
@@ -94,7 +93,7 @@ function HeaderDefaultNav() {
 
 function HeaderAdminNav() {
   return (
-    <nav className="flex items-center gap-4">
+    <nav className="flex items-center gap-4" aria-label="Admin navigation">
       <Link
         href="/events"
         className="text-muted-foreground hover:text-foreground transition-colors"

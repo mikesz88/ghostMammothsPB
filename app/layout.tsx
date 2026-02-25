@@ -48,7 +48,7 @@ export default function RootLayout({
           <main id="main-content" aria-label="Main content">{children}</main>
           <Footer />
         </AuthProvider>
-        <Toaster position="top-right" richColors />
+        <Toaster position="top-right" richColors containerAriaLabel="Notifications" />
       </body>
     </html>
   );
