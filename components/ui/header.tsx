@@ -64,6 +64,12 @@ function HeaderDefaultNav() {
         About
       </Link>
       <Link
+        href="/sitemap"
+        className="text-muted-foreground hover:text-foreground transition-colors"
+      >
+        Sitemap
+      </Link>
+      <Link
         href="https://ghostmammoth.myshopify.com"
         target="_blank"
         rel="noopener noreferrer"

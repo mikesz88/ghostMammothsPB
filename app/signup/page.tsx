@@ -293,6 +293,7 @@ export default function SignupPage() {
     <Suspense
       fallback={
         <div className="min-h-screen bg-background">
+          <h1 className="sr-only">Sign up</h1>
           <Header />
           <div className="flex items-center justify-center p-4 py-12">
             <div className="text-muted-foreground">Loading...</div>

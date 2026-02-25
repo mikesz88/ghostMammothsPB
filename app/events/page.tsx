@@ -49,10 +49,11 @@ export default function EventsPage() {
   if (loading) {
     return (
       <div className="min-h-screen bg-background">
+        <h1 className="sr-only">Events</h1>
         <Header />
         <div className="container mx-auto px-4 py-20">
           <div className="flex items-center justify-center">
-            <Loader2 className="w-8 h-8 animate-spin" />
+            <Loader2 className="w-8 h-8 animate-spin" aria-hidden />
             <span className="ml-2 text-muted-foreground">
               Loading events...
             </span>

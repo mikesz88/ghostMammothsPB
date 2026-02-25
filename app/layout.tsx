@@ -44,7 +44,7 @@ export default function RootLayout({
           Skip to main content
         </a>
         <AuthProvider>
-          <main id="main-content">{children}</main>
+          <main id="main-content" aria-label="Main content">{children}</main>
         </AuthProvider>
         <Toaster position="top-right" richColors />
       </body>
