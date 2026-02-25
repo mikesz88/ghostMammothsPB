@@ -73,12 +73,12 @@ function HeaderDefaultNav() {
       >
         Sitemap
       </Link>
-      {/* <Link
+      <Link
         href="/search"
         className="text-muted-foreground hover:text-foreground transition-colors"
       >
         Search
-      </Link> */}
+      </Link>
       <Link
         href="https://ghostmammoth.myshopify.com"
         target="_blank"
@@ -203,11 +203,11 @@ function HeaderUserMenu({
                   Sitemap
                 </Link>
               </DropdownMenuItem>
-              {/* <DropdownMenuItem asChild>
+              <DropdownMenuItem asChild>
                 <Link href="/search" className="cursor-pointer">
                   Search
                 </Link>
-              </DropdownMenuItem> */}
+              </DropdownMenuItem>
               <DropdownMenuItem asChild>
                 <Link
                   href="https://ghostmammoth.myshopify.com/password"

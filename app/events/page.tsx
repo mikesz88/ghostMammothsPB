@@ -61,13 +61,13 @@ export default function EventsPage() {
           </p>
 
           {!user && (
-            <div className="mt-6 p-4 bg-primary/10 border border-primary/20 rounded-lg">
+            <div className="mt-6 p-4 bg-muted border border-border rounded-lg">
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                 <div>
                   <h2 className="text-lg font-semibold text-foreground mb-1">
                     Ready to join the action?
                   </h2>
-                  <p className="text-muted-foreground">
+                  <p className="text-foreground text-base">
                     Sign up to join event queues and start playing!
                   </p>
                 </div>
