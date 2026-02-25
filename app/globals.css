@@ -23,7 +23,7 @@
   --destructive-foreground: oklch(1 0 0);
   --border: oklch(0.922 0 0);
   --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
+  --ring: oklch(0.35 0.15 265);
   --chart-1: oklch(0.646 0.222 41.116);
   --chart-2: oklch(0.6 0.118 184.704);
   --chart-3: oklch(0.398 0.07 227.392);
@@ -117,8 +117,18 @@
 }
 
 * {
-  @apply border-border outline-ring/50;
+  @apply border-border;
 }
+
+/* F78: Visible focus indicator (WCAG 2.4.7) - ensure focus-visible has a clear, high-contrast outline */
+:focus-visible {
+  outline: 2px solid oklch(0.35 0.15 265);
+  outline-offset: 2px;
+}
+.dark :focus-visible {
+  outline-color: oklch(0.75 0.12 265);
+}
+
 body {
   @apply bg-background text-foreground;
   overflow-x: hidden;

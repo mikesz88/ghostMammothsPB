@@ -125,6 +125,7 @@ function LoginForm() {
   return (
     <div className="flex items-center justify-center p-4 py-12">
       <div className="w-full max-w-md">
+        <h1 className="sr-only">Sign in</h1>
         <Card className="border-border bg-card">
           <CardHeader>
             <CardTitle className="text-foreground">Welcome Back</CardTitle>

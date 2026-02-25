@@ -106,6 +106,7 @@ function SignupContent() {
         <Header />
         <div className="flex items-center justify-center p-4 py-12">
           <div className="w-full max-w-md">
+            <h1 className="sr-only">Verify your email</h1>
             <Card className="border-border bg-card">
               <CardContent className="p-8 text-center">
                 <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -138,6 +139,7 @@ function SignupContent() {
 
       <div className="flex items-center justify-center p-4 py-12">
         <div className="w-full max-w-md">
+          <h1 className="sr-only">Sign up</h1>
           <Card className="border-border bg-card">
             <CardHeader>
               <CardTitle className="text-foreground">Create Account</CardTitle>
