@@ -46,3 +46,7 @@ supabase/scripts/*.sql
 scripts
 
 docs/SUPABASE_EMAIL_CONFIRMATION.md
+
+test-results/
+playwright-report/
+playwright/.cache/
