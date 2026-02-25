@@ -121,6 +121,8 @@
 }
 body {
   @apply bg-background text-foreground;
+  overflow-x: hidden;
+  max-width: 100vw;
 }
 
 /* Skip link: visually hidden until focused (WCAG 2.4.1 Bypass Blocks) */
@@ -147,5 +149,16 @@ button[class*="bg-primary"]:not([role="switch"]) {
 button.bg-primary:hover:not([role="switch"]),
 button[class*="bg-primary"]:hover:not([role="switch"]) {
   background-color: #1d4ed8 !important;
+}
+
+/* Links in text: 3:1 contrast with surrounding text (link-in-text-block) + underline so not relying on color */
+a.text-primary {
+  color: #1e3a5f;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+a.text-primary:hover {
+  color: #1e40af;
+  text-decoration: underline;
 }
 
