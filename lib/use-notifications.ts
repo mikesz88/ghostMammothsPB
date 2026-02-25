@@ -39,11 +39,11 @@ export function useNotifications() {
   useEffect(() => {
     if (!isBrowser) return;
     if ("Notification" in window) {
-      setPermission(Notification.permission);
+      queueMicrotask(() => setPermission(Notification.permission));
     }
     const savedSettings = window.localStorage.getItem("notification-settings");
     if (savedSettings) {
-      setSettings(JSON.parse(savedSettings));
+      queueMicrotask(() => setSettings(JSON.parse(savedSettings)));
     }
   }, [isBrowser]);
 

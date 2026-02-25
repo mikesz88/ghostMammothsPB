@@ -47,9 +47,10 @@ export default function CalendarPage() {
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex"
+                aria-label="Open in Google Calendar (opens in new window)"
               >
                 <Button variant="outline" size="sm" className="w-full sm:w-auto">
-                  <ExternalLink className="w-4 h-4 mr-2" />
+                  <ExternalLink className="w-4 h-4 mr-2" aria-hidden />
                   Open in Google Calendar
                 </Button>
               </a>

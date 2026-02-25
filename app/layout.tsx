@@ -34,7 +34,15 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
         suppressHydrationWarning
       >
-        <AuthProvider>{children}</AuthProvider>
+        <a
+          href="#main-content"
+          className="skip-link sr-only focus:not-sr-only"
+        >
+          Skip to main content
+        </a>
+        <AuthProvider>
+          <main id="main-content">{children}</main>
+        </AuthProvider>
         <Toaster position="top-right" richColors />
       </body>
     </html>

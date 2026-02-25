@@ -432,7 +432,7 @@ export default function MembershipPage() {
               </CardHeader>
               <CardContent>
                 <p className="text-muted-foreground">
-                  Yes! You can cancel your membership at any time. You'll
+                  Yes! You can cancel your membership at any time. You&apos;ll
                   continue to have access until the end of your current billing
                   period.
                 </p>
@@ -448,7 +448,7 @@ export default function MembershipPage() {
               <CardContent>
                 <p className="text-muted-foreground">
                   Your membership will remain active until the end of your paid
-                  period. After that, you'll revert to a free membership and can
+                  period. After that, you&apos;ll revert to a free membership and can
                   still join events by paying per event.
                 </p>
               </CardContent>

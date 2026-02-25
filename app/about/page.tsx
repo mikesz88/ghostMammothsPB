@@ -45,7 +45,7 @@ export default function AboutPage() {
             About Ghost Mammoth Pickleball
           </h1>
           <p className="text-xl text-muted-foreground mb-8 text-pretty">
-            We're passionate about making pickleball more accessible and
+            We&apos;re passionate about making pickleball more accessible and
             organized for everyone. Our smart queue management system ensures
             fair play and maximum court time for all players.
           </p>
@@ -148,9 +148,9 @@ export default function AboutPage() {
                       Play & Rotate
                     </CardTitle>
                     <CardDescription>
-                      Get notified when it's your turn. After your game, the
+                      Get notified when it&apos;s your turn. After your game, the
                       system automatically handles rotation based on the event
-                      rules - whether it's winners stay, rotate all, or
+                      rules - whether it&apos;s winners stay, rotate all, or
                       2-stay-4-off.
                     </CardDescription>
                   </div>
@@ -170,7 +170,7 @@ export default function AboutPage() {
                     </CardTitle>
                     <CardDescription>
                       Track your position in the queue and see estimated wait
-                      times. Get notifications when you're up next so you never
+                      times. Get notifications when you&apos;re up next so you never
                       miss your turn.
                     </CardDescription>
                   </div>

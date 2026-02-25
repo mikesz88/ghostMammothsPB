@@ -48,25 +48,6 @@ export default function AdminUsersPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
 
-  useEffect(() => {
-    fetchUsers();
-  }, []);
-
-  useEffect(() => {
-    if (searchQuery.trim()) {
-      const query = searchQuery.toLowerCase();
-      const filtered = users.filter(
-        (user) =>
-          user.name.toLowerCase().includes(query) ||
-          user.email.toLowerCase().includes(query) ||
-          user.skill_level.toLowerCase().includes(query)
-      );
-      setFilteredUsers(filtered);
-    } else {
-      setFilteredUsers(users);
-    }
-  }, [searchQuery, users]);
-
   const fetchUsers = async () => {
     setLoading(true);
     const { data, error } = await getAllUsers();
@@ -82,6 +63,25 @@ export default function AdminUsersPage() {
     }
     setLoading(false);
   };
+
+  useEffect(() => {
+    queueMicrotask(() => fetchUsers());
+  }, []);
+
+  useEffect(() => {
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      const filtered = users.filter(
+        (user) =>
+          user.name.toLowerCase().includes(query) ||
+          user.email.toLowerCase().includes(query) ||
+          user.skill_level.toLowerCase().includes(query)
+      );
+      queueMicrotask(() => setFilteredUsers(filtered));
+    } else {
+      queueMicrotask(() => setFilteredUsers(users));
+    }
+  }, [searchQuery, users]);
 
   const handleToggleAdmin = async (userId: string, currentStatus: boolean) => {
     const newStatus = !currentStatus;

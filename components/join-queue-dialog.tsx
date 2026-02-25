@@ -126,7 +126,7 @@ export function JoinQueueDialog({
             <Alert>
               <Users className="w-4 h-4" />
               <AlertDescription>
-                You're joining as a pre-formed team of {groupSize}. Your team
+                You&apos;re joining as a pre-formed team of {groupSize}. Your team
                 will stay together and not be split up.
               </AlertDescription>
             </Alert>
@@ -136,7 +136,7 @@ export function JoinQueueDialog({
             <Alert>
               <Users className="w-4 h-4" />
               <AlertDescription>
-                You're joining solo. You'll be paired with other players to form{" "}
+                You&apos;re joining solo. You&apos;ll be paired with other players to form{" "}
                 {eventTeamSize === 2
                   ? "doubles"
                   : eventTeamSize === 3

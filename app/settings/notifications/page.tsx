@@ -91,7 +91,7 @@ export default function NotificationSettingsPage() {
             <CardContent className="space-y-6">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
+                  <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center" aria-hidden>
                     <Bell className="w-5 h-5 text-primary" />
                   </div>
                   <div>
@@ -101,7 +101,7 @@ export default function NotificationSettingsPage() {
                     >
                       Browser Notifications
                     </Label>
-                    <p className="text-sm text-muted-foreground">
+                    <p id="browser-desc" className="text-sm text-muted-foreground">
                       Get instant alerts in your browser
                     </p>
                   </div>
@@ -110,12 +110,13 @@ export default function NotificationSettingsPage() {
                   id="browser"
                   checked={settings.browserNotifications}
                   onCheckedChange={() => handleToggle("browserNotifications")}
+                  aria-describedby="browser-desc"
                 />
               </div>
 
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
+                  <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center" aria-hidden>
                     <Mail className="w-5 h-5 text-primary" />
                   </div>
                   <div>
@@ -125,7 +126,7 @@ export default function NotificationSettingsPage() {
                     >
                       Email Notifications
                     </Label>
-                    <p className="text-sm text-muted-foreground">
+                    <p id="email-desc" className="text-sm text-muted-foreground">
                       Receive updates via email
                     </p>
                   </div>
@@ -134,6 +135,7 @@ export default function NotificationSettingsPage() {
                   id="email"
                   checked={settings.emailNotifications}
                   onCheckedChange={() => handleToggle("emailNotifications")}
+                  aria-describedby="email-desc"
                 />
               </div>
 
@@ -257,7 +259,7 @@ export default function NotificationSettingsPage() {
                     Up Next Alert
                   </Label>
                   <p className="text-sm text-muted-foreground">
-                    When you're in the top 4 of the queue
+                    When you&apos;re in the top 4 of the queue
                   </p>
                 </div>
                 <Switch
@@ -276,7 +278,7 @@ export default function NotificationSettingsPage() {
                     Court Assignment
                   </Label>
                   <p className="text-sm text-muted-foreground">
-                    When you're assigned to a court
+                    When you&apos;re assigned to a court
                   </p>
                 </div>
                 <Switch

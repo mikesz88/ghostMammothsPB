@@ -11,8 +11,8 @@ export function QueuePositionAlert({ position, isUpNext }: QueuePositionAlertPro
     return (
       <Alert className="border-primary bg-primary/10">
         <Trophy className="w-4 h-4 text-primary" />
-        <AlertTitle className="text-primary">You're Up Next!</AlertTitle>
-        <AlertDescription>Get ready to play. You'll be assigned to a court shortly.</AlertDescription>
+        <AlertTitle className="text-primary">You&apos;re Up Next!</AlertTitle>
+        <AlertDescription>Get ready to play. You&apos;ll be assigned to a court shortly.</AlertDescription>
       </Alert>
     )
   }
@@ -22,7 +22,7 @@ export function QueuePositionAlert({ position, isUpNext }: QueuePositionAlertPro
       <Alert className="border-primary/50 bg-primary/5">
         <Bell className="w-4 h-4 text-primary" />
         <AlertTitle className="text-foreground">Almost Your Turn</AlertTitle>
-        <AlertDescription>You're #{position} in queue. Stay nearby and get ready to play!</AlertDescription>
+        <AlertDescription>You&apos;re #{position} in queue. Stay nearby and get ready to play!</AlertDescription>
       </Alert>
     )
   }

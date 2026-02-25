@@ -39,10 +39,6 @@ export default function MembershipSettingsPage() {
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
 
-  useEffect(() => {
-    fetchMembership();
-  }, [user]);
-
   const fetchMembership = async () => {
     if (user) {
       setLoading(true);
@@ -64,6 +60,11 @@ export default function MembershipSettingsPage() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    fetchMembership();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- fetchMembership reads user, avoid stale closure
+  }, [user]);
 
   const handleCancelSubscription = async () => {
     toast("Cancel your membership?", {
@@ -281,7 +282,7 @@ export default function MembershipSettingsPage() {
                       <AlertDescription>
                         Your membership will cancel on{" "}
                         {membership!.currentPeriodEnd.toLocaleDateString()}.
-                        You'll still have access until then.
+                        You&apos;ll still have access until then.
                       </AlertDescription>
                     </Alert>
                   )}
@@ -344,7 +345,7 @@ export default function MembershipSettingsPage() {
                   Your {membership!.tierDisplayName} Benefits
                 </CardTitle>
                 <CardDescription>
-                  What's included in your membership
+                  What&apos;s included in your membership
                 </CardDescription>
               </CardHeader>
               <CardContent>
