@@ -236,6 +236,7 @@ export default function LoginPage() {
       <Suspense
         fallback={
           <div className="flex items-center justify-center p-4 py-12">
+            <h1 className="sr-only">Sign in</h1>
             <div className="text-muted-foreground">Loading...</div>
           </div>
         }

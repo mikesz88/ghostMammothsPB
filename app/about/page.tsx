@@ -222,6 +222,12 @@ export default function AboutPage() {
               >
                 Events
               </Link>
+              <Link
+                href="/sitemap"
+                className="text-muted-foreground hover:text-foreground transition-colors"
+              >
+                Sitemap
+              </Link>
               {isAdmin && (
                 <Link
                   href="/admin"

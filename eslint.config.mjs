@@ -6,8 +6,8 @@ const eslintConfig = [
     ignores: ["node_modules/**", ".next/**", "out/**", "build/**", "next-env.d.ts"],
   },
   ...nextConfig,
-  // Extend a11y: Next already registers jsx-a11y; add full recommended rules
-  { rules: jsxA11y.configs.recommended.rules },
+  // Strict a11y: catch things devs might forget (labels, roles, no nested interactive, etc.)
+  { rules: jsxA11y.configs.strict.rules },
   {
     ignores: [
       "node_modules/**",

@@ -20,6 +20,16 @@ You can start editing the page by modifying `app/page.tsx`. The page auto-update
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
+## Accessibility (a11y) compliance
+
+The project is set up to catch common accessibility issues so the site stays compliant and reduces legal risk.
+
+- **Lint (runs on `npm run build`):** ESLint with **strict** jsx-a11y rules. Catches missing labels, invalid ARIA, interactive elements without keyboard support, and similar issues in JSX.
+- **E2E a11y tests (`npm run test:a11y`):** Playwright + axe-core run on every route. Rules include **WCAG 2.0/2.1/2.2 Level A & AA** and **best-practice** (e.g. nested interactive, contrast, focus, headings). Any violation fails the run.
+- **CI:** `npm run ci` runs lint, build, and a11y tests; fix any reported violations before merging.
+
+For stronger assurance, still do periodic manual audits (e.g. PowerMapper, WAVE, screen reader testing) and resolve any findings.
+
 ## Learn More
 
 To learn more about Next.js, take a look at the following resources:
