@@ -70,6 +70,12 @@ function HeaderDefaultNav() {
         Sitemap
       </Link>
       <Link
+        href="/search"
+        className="text-muted-foreground hover:text-foreground transition-colors"
+      >
+        Search
+      </Link>
+      <Link
         href="https://ghostmammoth.myshopify.com"
         target="_blank"
         rel="noopener noreferrer"
@@ -181,6 +187,16 @@ function HeaderUserMenu({ user, variant, isAdmin, onSignOut }: HeaderUserMenuPro
               <DropdownMenuItem asChild>
                 <Link href="/about" className="cursor-pointer">
                   About
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link href="/sitemap" className="cursor-pointer">
+                  Sitemap
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link href="/search" className="cursor-pointer">
+                  Search
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuItem asChild>

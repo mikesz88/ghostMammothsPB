@@ -7,6 +7,7 @@ const links = [
   { href: "/calendar", label: "Calendar" },
   { href: "/about", label: "About" },
   { href: "/membership", label: "Membership" },
+  { href: "/search", label: "Search" },
   { href: "/login", label: "Login" },
   { href: "/signup", label: "Sign Up" },
   { href: "/settings", label: "Settings" },
