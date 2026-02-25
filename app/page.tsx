@@ -43,8 +43,10 @@ function HomeContent() {
 
   useEffect(() => {
     if (searchParams.get("error") === "admin-access-required") {
-      setShowAdminError(true);
-      setTimeout(() => setShowAdminError(false), 5000);
+      queueMicrotask(() => {
+        setShowAdminError(true);
+        setTimeout(() => setShowAdminError(false), 5000);
+      });
     }
   }, [searchParams]);
 
@@ -106,7 +108,7 @@ function HomeContent() {
           <Card className="border-border bg-card">
             <CardHeader>
               <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-4">
-                <Users className="w-6 h-6 text-primary" />
+                <Users className="w-6 h-6 text-primary" aria-hidden />
               </div>
               <CardTitle className="text-foreground">Real-time Queue</CardTitle>
               <CardDescription>
@@ -119,7 +121,7 @@ function HomeContent() {
           <Card className="border-border bg-card">
             <CardHeader>
               <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-4">
-                <Zap className="w-6 h-6 text-primary" />
+                <Zap className="w-6 h-6 text-primary" aria-hidden />
               </div>
               <CardTitle className="text-foreground">
                 Smart Assignments
@@ -134,7 +136,7 @@ function HomeContent() {
           <Card className="border-border bg-card">
             <CardHeader>
               <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-4">
-                <Calendar className="w-6 h-6 text-primary" />
+                <Calendar className="w-6 h-6 text-primary" aria-hidden />
               </div>
               <CardTitle className="text-foreground">
                 Event Management
@@ -149,7 +151,7 @@ function HomeContent() {
           <Card className="border-border bg-card">
             <CardHeader>
               <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-4">
-                <Trophy className="w-6 h-6 text-primary" />
+                <Trophy className="w-6 h-6 text-primary" aria-hidden />
               </div>
               <CardTitle className="text-foreground">Group Support</CardTitle>
               <CardDescription>

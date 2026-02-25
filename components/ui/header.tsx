@@ -16,6 +16,206 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import type { User as SupabaseUser } from "@supabase/supabase-js";
+
+function HeaderLogo() {
+  return (
+    <Link href="/" className="flex items-center gap-1.5 sm:gap-2" aria-label="Ghost Mammoth PB home">
+      <Image
+        src="/icon-32x32.png"
+        alt=""
+        width={32}
+        height={32}
+        className="w-6 h-6 sm:w-8 sm:h-8"
+        aria-hidden
+      />
+      <span className="text-base sm:text-xl font-bold text-foreground truncate max-w-[140px] sm:max-w-none">
+        Ghost Mammoth PB
+      </span>
+    </Link>
+  );
+}
+
+function HeaderDefaultNav() {
+  return (
+    <nav className="flex items-center gap-4">
+      <Link
+        href="/events"
+        className="text-muted-foreground hover:text-foreground transition-colors"
+      >
+        Events
+      </Link>
+      <Link
+        href="/membership"
+        className="text-muted-foreground hover:text-foreground transition-colors"
+      >
+        Membership
+      </Link>
+      <Link
+        href="/calendar"
+        className="text-muted-foreground hover:text-foreground transition-colors"
+      >
+        Calendar
+      </Link>
+      <Link
+        href="/about"
+        className="text-muted-foreground hover:text-foreground transition-colors"
+      >
+        About
+      </Link>
+      <Link
+        href="https://ghostmammoth.myshopify.com"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="text-muted-foreground hover:text-foreground transition-colors"
+        aria-label="Shop (opens in new window)"
+      >
+        Shop
+      </Link>
+    </nav>
+  );
+}
+
+function HeaderAdminNav() {
+  return (
+    <nav className="flex items-center gap-4">
+      <Link
+        href="/events"
+        className="text-muted-foreground hover:text-foreground transition-colors"
+      >
+        Events
+      </Link>
+      <Link href="/admin" className="text-foreground font-medium">
+        Dashboard
+      </Link>
+      <Link
+        href="/admin/users"
+        className="text-muted-foreground hover:text-foreground transition-colors"
+      >
+        Users
+      </Link>
+    </nav>
+  );
+}
+
+interface HeaderUserMenuProps {
+  user: SupabaseUser | null;
+  variant: "default" | "admin" | "simple";
+  isAdmin: boolean;
+  onSignOut: () => void;
+}
+
+function HeaderUserMenu({ user, variant, isAdmin, onSignOut }: HeaderUserMenuProps) {
+  if (!user) {
+    return (
+      <div className="flex items-center gap-2">
+        <Button variant="outline" size="sm" asChild>
+          <Link href="/login">Login</Link>
+        </Button>
+        <Button size="sm" asChild>
+          <Link href="/signup">Sign Up</Link>
+        </Button>
+      </div>
+    );
+  }
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="ghost" size="sm" className="gap-1 sm:gap-2">
+          <User className="w-4 h-4" aria-hidden />
+          <span className="max-w-[80px] sm:max-w-[150px] truncate text-xs sm:text-sm">
+            {user.user_metadata?.name || user.email}
+          </span>
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-56">
+        <DropdownMenuLabel>My Account</DropdownMenuLabel>
+        <DropdownMenuSeparator />
+
+        <div className="md:hidden">
+          <DropdownMenuLabel className="text-xs text-muted-foreground">
+            Navigation
+          </DropdownMenuLabel>
+          {variant === "admin" ? (
+            <>
+              <DropdownMenuItem asChild>
+                <Link href="/events" className="cursor-pointer">
+                  Events
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link href="/admin" className="cursor-pointer">
+                  Dashboard
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link href="/admin/users" className="cursor-pointer">
+                  Users
+                </Link>
+              </DropdownMenuItem>
+            </>
+          ) : (
+            <>
+              <DropdownMenuItem asChild>
+                <Link href="/events" className="cursor-pointer">
+                  Events
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link href="/membership" className="cursor-pointer">
+                  Membership
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link href="/calendar" className="cursor-pointer">
+                  Calendar
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link href="/about" className="cursor-pointer">
+                  About
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link
+                  href="https://ghostmammoth.myshopify.com/password"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="cursor-pointer"
+                  aria-label="Shop (opens in new window)"
+                >
+                  Shop
+                </Link>
+              </DropdownMenuItem>
+            </>
+          )}
+          <DropdownMenuSeparator />
+        </div>
+
+        <DropdownMenuItem asChild>
+          <Link href="/settings" className="cursor-pointer">
+            <Settings className="w-4 h-4 mr-2" aria-hidden />
+            Settings
+          </Link>
+        </DropdownMenuItem>
+        {isAdmin && (
+          <DropdownMenuItem asChild>
+            <Link href="/admin" className="cursor-pointer">
+              <Shield className="w-4 h-4 mr-2" aria-hidden />
+              Admin Dashboard
+            </Link>
+          </DropdownMenuItem>
+        )}
+        <DropdownMenuSeparator />
+        <DropdownMenuItem onClick={onSignOut} className="cursor-pointer">
+          <LogOut className="w-4 h-4 mr-2" aria-hidden />
+          Sign Out
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
 
 export interface HeaderProps {
   variant?: "default" | "admin" | "simple";
@@ -81,203 +281,12 @@ export const Header = ({
     );
   }
 
-  // Logo component (consistent across all variants)
-  const Logo = () => (
-    <Link href="/" className="flex items-center gap-1.5 sm:gap-2">
-      <Image
-        src="/icon-32x32.png"
-        alt="Ghost Mammoth PB"
-        width={32}
-        height={32}
-        className="w-6 h-6 sm:w-8 sm:h-8"
-      />
-      <span className="text-base sm:text-xl font-bold text-foreground truncate max-w-[140px] sm:max-w-none">
-        Ghost Mammoth PB
-      </span>
-    </Link>
-  );
-
-  // Default navigation
-  const DefaultNav = () => (
-    <nav className="flex items-center gap-4">
-      <Link
-        href="/events"
-        className="text-muted-foreground hover:text-foreground transition-colors"
-      >
-        Events
-      </Link>
-      <Link
-        href="/membership"
-        className="text-muted-foreground hover:text-foreground transition-colors"
-      >
-        Membership
-      </Link>
-      <Link
-        href="/calendar"
-        className="text-muted-foreground hover:text-foreground transition-colors"
-      >
-        Calendar
-      </Link>
-      <Link
-        href="/about"
-        className="text-muted-foreground hover:text-foreground transition-colors"
-      >
-        About
-      </Link>
-      <Link
-        href="https://ghostmammoth.myshopify.com"
-        target="_blank"
-        rel="noopener noreferrer"
-        className="text-muted-foreground hover:text-foreground transition-colors"
-      >
-        Shop
-      </Link>
-    </nav>
-  );
-
-  // Admin navigation
-  const AdminNav = () => (
-    <nav className="flex items-center gap-4">
-      <Link
-        href="/events"
-        className="text-muted-foreground hover:text-foreground transition-colors"
-      >
-        Events
-      </Link>
-      <Link href="/admin" className="text-foreground font-medium">
-        Dashboard
-      </Link>
-      <Link
-        href="/admin/users"
-        className="text-muted-foreground hover:text-foreground transition-colors"
-      >
-        Users
-      </Link>
-    </nav>
-  );
-
-  // User menu dropdown
-  const UserMenu = () => {
-    if (!user) {
-      return (
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" asChild>
-            <Link href="/login">Login</Link>
-          </Button>
-          <Button size="sm" asChild>
-            <Link href="/signup">Sign Up</Link>
-          </Button>
-        </div>
-      );
-    }
-
-    return (
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button variant="ghost" size="sm" className="gap-1 sm:gap-2">
-            <User className="w-4 h-4" />
-            <span className="max-w-[80px] sm:max-w-[150px] truncate text-xs sm:text-sm">
-              {user.user_metadata?.name || user.email}
-            </span>
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-56">
-          <DropdownMenuLabel>My Account</DropdownMenuLabel>
-          <DropdownMenuSeparator />
-
-          {/* Mobile Navigation Links - Only show on mobile */}
-          <div className="md:hidden">
-            <DropdownMenuLabel className="text-xs text-muted-foreground">
-              Navigation
-            </DropdownMenuLabel>
-            {variant === "admin" ? (
-              <>
-                <DropdownMenuItem asChild>
-                  <Link href="/events" className="cursor-pointer">
-                    Events
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link href="/admin" className="cursor-pointer">
-                    Dashboard
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link href="/admin/users" className="cursor-pointer">
-                    Users
-                  </Link>
-                </DropdownMenuItem>
-              </>
-            ) : (
-              <>
-                <DropdownMenuItem asChild>
-                  <Link href="/events" className="cursor-pointer">
-                    Events
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link href="/membership" className="cursor-pointer">
-                    Membership
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link href="/calendar" className="cursor-pointer">
-                    Calendar
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link href="/about" className="cursor-pointer">
-                    About
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link
-                    href="https://ghostmammoth.myshopify.com/password"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="cursor-pointer"
-                  >
-                    Shop
-                  </Link>
-                </DropdownMenuItem>
-              </>
-            )}
-            <DropdownMenuSeparator />
-          </div>
-
-          <DropdownMenuItem asChild>
-            <Link href="/settings" className="cursor-pointer">
-              <Settings className="w-4 h-4 mr-2" />
-              Settings
-            </Link>
-          </DropdownMenuItem>
-          {isAdmin && (
-            <DropdownMenuItem asChild>
-              <Link href="/admin" className="cursor-pointer">
-                <Shield className="w-4 h-4 mr-2" />
-                Admin Dashboard
-              </Link>
-            </DropdownMenuItem>
-          )}
-          <DropdownMenuSeparator />
-          <DropdownMenuItem
-            onClick={handleSignOut}
-            className="cursor-pointer"
-          >
-            <LogOut className="w-4 h-4 mr-2" />
-            Sign Out
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
-    );
-  };
-
   return (
     <header className="border-b border-border bg-background sticky top-0 z-50">
       <div className="container mx-auto px-2 sm:px-4 py-3 sm:py-4 flex items-center justify-between gap-2">
         {/* Left side: Logo + optional back button */}
         <div className="flex items-center gap-2 sm:gap-4 min-w-0">
-          <Logo />
+          <HeaderLogo />
           {backButton && (
             <>
               <span className="text-muted-foreground hidden sm:inline">/</span>
@@ -303,17 +312,29 @@ export const Header = ({
               {customNav ? (
                 customNav
               ) : variant === "admin" ? (
-                <AdminNav />
+                <HeaderAdminNav />
               ) : (
-                <DefaultNav />
+                <HeaderDefaultNav />
               )}
             </div>
-            <UserMenu />
+            <HeaderUserMenu
+              user={user}
+              variant={variant}
+              isAdmin={isAdmin}
+              onSignOut={handleSignOut}
+            />
           </div>
         )}
 
         {/* Simple variant: just user menu */}
-        {hideNav && <UserMenu />}
+        {hideNav && (
+          <HeaderUserMenu
+            user={user}
+            variant={variant}
+            isAdmin={isAdmin}
+            onSignOut={handleSignOut}
+          />
+        )}
       </div>
     </header>
   );

@@ -41,8 +41,8 @@ export function useRealtimeQueue(eventId: string) {
   };
 
   useEffect(() => {
-    // Initial fetch
-    fetchQueue();
+    // Initial fetch (defer to avoid setState-in-effect)
+    queueMicrotask(() => fetchQueue());
 
     // Subscribe to real-time changes
     const channel = supabase
@@ -68,6 +68,7 @@ export function useRealtimeQueue(eventId: string) {
     return () => {
       supabase.removeChannel(channel);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- fetchQueue is stable, eventId triggers setup
   }, [eventId, supabase]);
 
   return { queue, loading, refetch: fetchQueue };

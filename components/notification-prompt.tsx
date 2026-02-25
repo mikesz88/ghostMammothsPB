@@ -8,14 +8,9 @@ import { useNotifications } from "@/lib/use-notifications"
 
 export function NotificationPrompt() {
   const { permission, requestPermission, isSupported } = useNotifications()
-  const [dismissed, setDismissed] = useState(false)
-
-  useEffect(() => {
-    const wasDismissed = localStorage.getItem("notification-prompt-dismissed")
-    if (wasDismissed) {
-      setDismissed(true)
-    }
-  }, [])
+  const [dismissed, setDismissed] = useState(
+    () => typeof window !== "undefined" && localStorage.getItem("notification-prompt-dismissed") === "true"
+  )
 
   const handleDismiss = () => {
     setDismissed(true)
@@ -38,12 +33,12 @@ export function NotificationPrompt() {
       <Bell className="w-4 h-4 text-primary" />
       <AlertTitle className="text-foreground flex items-center justify-between">
         Enable Notifications
-        <Button variant="ghost" size="icon" onClick={handleDismiss} className="h-6 w-6">
-          <X className="w-4 h-4" />
+        <Button variant="ghost" size="icon" onClick={handleDismiss} className="h-6 w-6" aria-label="Dismiss">
+          <X className="w-4 h-4" aria-hidden />
         </Button>
       </AlertTitle>
       <AlertDescription className="flex items-center justify-between">
-        <span>Get notified when it's your turn to play</span>
+        <span>Get notified when it&apos;s your turn to play</span>
         <Button size="sm" onClick={handleEnable} className="ml-4">
           Enable
         </Button>

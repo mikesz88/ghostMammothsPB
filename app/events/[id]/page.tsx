@@ -2,6 +2,7 @@
 
 import { useState, useEffect, use } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import {
   Trophy,
   ArrowLeft,
@@ -292,10 +293,11 @@ export default function EventDetailPage(props: {
     checkAdmin();
   }, [user]);
 
-  // Set queue link for QR code
+  // Set queue link for QR code (defer to avoid setState-in-effect)
   useEffect(() => {
     if (typeof window !== "undefined") {
-      setQueueLink(`${window.location.origin}/events/${id}`);
+      const link = `${window.location.origin}/events/${id}`;
+      queueMicrotask(() => setQueueLink(link));
     }
   }, [id]);
 
@@ -338,7 +340,7 @@ export default function EventDetailPage(props: {
       }
     }
     if (userPosition > 0) {
-      setLastPosition(userPosition);
+      queueMicrotask(() => setLastPosition(userPosition));
     }
   }, [userPosition, lastPosition, sendNotification]);
 
@@ -628,7 +630,7 @@ export default function EventDetailPage(props: {
               ) : userPosition > 0 ? (
                 <Badge variant="default" className="text-sm">
                   <Bell className="w-3 h-3 mr-1" />
-                  You're #{userPosition}
+                  You&apos;re #{userPosition}
                 </Badge>
               ) : (
                 <>
@@ -711,12 +713,15 @@ export default function EventDetailPage(props: {
           </DialogHeader>
           <div className="flex flex-col items-center gap-4 py-4">
             {queueLink ? (
-              <img
+              <Image
                 src={`https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=${encodeURIComponent(
                   queueLink
                 )}`}
                 alt="Queue QR code"
+                width={240}
+                height={240}
                 className="rounded-md border border-border"
+                unoptimized
               />
             ) : (
               <Loader2 className="w-6 h-6 animate-spin" />

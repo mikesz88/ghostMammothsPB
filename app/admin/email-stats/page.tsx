@@ -24,6 +24,7 @@ export default function EmailStatsPage() {
 
   useEffect(() => {
     fetchStats();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- fetchStats is stable, timeRange triggers refetch
   }, [timeRange]);
 
   const emptyStats = {

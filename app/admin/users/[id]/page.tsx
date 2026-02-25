@@ -67,10 +67,6 @@ export default function AdminUserDetailPage(props: {
     skill_level: "intermediate",
   });
 
-  useEffect(() => {
-    fetchUser();
-  }, [id]);
-
   const fetchUser = async () => {
     setLoading(true);
     const { data, error } = await getUserById(id);
@@ -92,6 +88,11 @@ export default function AdminUserDetailPage(props: {
     }
     setLoading(false);
   };
+
+  useEffect(() => {
+    fetchUser();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- fetchUser depends on id only
+  }, [id]);
 
   const handleSave = async () => {
     if (!user) return;

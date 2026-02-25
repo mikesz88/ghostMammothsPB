@@ -44,14 +44,15 @@ export function EditEventDialog({
   );
 
   useEffect(() => {
-    setName(event.name);
-    setLocation(event.location);
-    setCourtCount(event.courtCount.toString());
-    setRotationType(event.rotationType);
-
-    const eventDate = new Date(event.date);
-    setDate(eventDate.toISOString().split("T")[0]);
-    setTime(eventDate.toTimeString().slice(0, 5));
+    queueMicrotask(() => {
+      setName(event.name);
+      setLocation(event.location);
+      setCourtCount(event.courtCount.toString());
+      setRotationType(event.rotationType);
+      const eventDate = new Date(event.date);
+      setDate(eventDate.toISOString().split("T")[0]);
+      setTime(eventDate.toTimeString().slice(0, 5));
+    });
   }, [event]);
 
   const handleSubmit = (e: React.FormEvent) => {

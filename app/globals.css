@@ -123,12 +123,29 @@ body {
   @apply bg-background text-foreground;
 }
 
-/* Fix button visibility - only target buttons with bg-primary class */
-button.bg-primary {
-  background-color: #3b82f6 !important;
+/* Skip link: visually hidden until focused (WCAG 2.4.1 Bypass Blocks) */
+.skip-link:focus {
+  position: absolute;
+  left: 0.5rem;
+  top: 0.5rem;
+  z-index: 100;
+  padding: 0.5rem 1rem;
+  background: var(--color-primary);
+  color: var(--color-primary-foreground);
+  border-radius: 0.375rem;
+  outline: 2px solid var(--color-ring);
+  outline-offset: 2px;
+}
+
+/* Fix button visibility - use blue-600/700 for WCAG AA contrast (4.5:1) with white text */
+/* Exclude switch so it only shows blue when on, not when off */
+button.bg-primary:not([role="switch"]),
+button[class*="bg-primary"]:not([role="switch"]) {
+  background-color: #2563eb !important;
   color: white !important;
 }
-button.bg-primary:hover {
-  background-color: #2563eb !important;
+button.bg-primary:hover:not([role="switch"]),
+button[class*="bg-primary"]:hover:not([role="switch"]) {
+  background-color: #1d4ed8 !important;
 }
 

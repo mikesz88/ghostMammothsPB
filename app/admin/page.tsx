@@ -39,11 +39,6 @@ export default function AdminPage() {
   const [editingEvent, setEditingEvent] = useState<Event | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Fetch events from Supabase
-  useEffect(() => {
-    fetchEvents();
-  }, []);
-
   const fetchEvents = async () => {
     setLoading(true);
     const supabase = createClient();
@@ -78,6 +73,10 @@ export default function AdminPage() {
     }
     setLoading(false);
   };
+
+  useEffect(() => {
+    queueMicrotask(() => fetchEvents());
+  }, []);
 
   const handleCreateEvent = async (
     eventData: Omit<Event, "id" | "createdAt" | "updatedAt">
@@ -434,15 +433,17 @@ export default function AdminPage() {
                           variant="ghost"
                           size="icon"
                           onClick={() => setEditingEvent(event)}
+                          aria-label="Edit event"
                         >
-                          <Edit className="w-4 h-4" />
+                          <Edit className="w-4 h-4" aria-hidden />
                         </Button>
                         <Button
                           variant="ghost"
                           size="icon"
                           onClick={() => handleDeleteEvent(event.id)}
+                          aria-label="Delete event"
                         >
-                          <Trash2 className="w-4 h-4" />
+                          <Trash2 className="w-4 h-4" aria-hidden />
                         </Button>
                       </div>
                     </div>
@@ -518,8 +519,9 @@ export default function AdminPage() {
                         variant="ghost"
                         size="icon"
                         onClick={() => handleDeleteEvent(event.id)}
+                        aria-label="Delete ended event"
                       >
-                        <Trash2 className="w-4 h-4" />
+                        <Trash2 className="w-4 h-4" aria-hidden />
                       </Button>
                     </div>
                     <CardTitle className="text-foreground">

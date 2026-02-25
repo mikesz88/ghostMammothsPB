@@ -168,9 +168,10 @@ export function QueueList({
                       title={
                         isAdmin ? "Admin: Remove from queue" : "Leave queue"
                       }
+                      aria-label={isAdmin ? "Admin: Remove from queue" : "Leave queue"}
                       className="shrink-0"
                     >
-                      <X className="w-4 h-4" />
+                      <X className="w-4 h-4" aria-hidden />
                     </Button>
                   )}
                 </div>
