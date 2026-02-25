@@ -91,6 +91,8 @@ for (const { path, name } of routesToCheck) {
     page,
   }) => {
     await gotoAndWaitForReady(page, path);
+    // Wait for page content (e.g. h1) so axe runs on loaded content, not loading shell
+    await page.waitForSelector("h1", { state: "attached", timeout: 15_000 });
 
     const builder = new AxeBuilder({ page }).withTags(a11yTags);
     // Calendar embeds Google Calendar iframe; we don't control its DOM (target-size, etc.).
