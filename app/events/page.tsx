@@ -82,9 +82,9 @@ export default function EventsPage() {
             <div className="mt-6 p-4 bg-primary/10 border border-primary/20 rounded-lg">
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                 <div>
-                  <h3 className="text-lg font-semibold text-foreground mb-1">
+                  <h2 className="text-lg font-semibold text-foreground mb-1">
                     Ready to join the action?
-                  </h3>
+                  </h2>
                   <p className="text-muted-foreground">
                     Sign up to join event queues and start playing!
                   </p>
@@ -107,9 +107,9 @@ export default function EventsPage() {
             <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
               <Calendar className="w-8 h-8 text-muted-foreground" />
             </div>
-            <h3 className="text-xl font-semibold text-foreground mb-2">
+            <h2 className="text-xl font-semibold text-foreground mb-2">
               No Events Available
-            </h3>
+            </h2>
             <p className="text-muted-foreground mb-4">
               Check back later for upcoming pickleball events.
             </p>

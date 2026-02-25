@@ -23,6 +23,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import {
   getAllUsers,
@@ -261,9 +262,13 @@ export default function AdminUsersPage() {
 
         {/* Search */}
         <div className="mb-6">
+          <Label htmlFor="user-search" className="sr-only">
+            Search by name, email, or skill level
+          </Label>
           <div className="relative max-w-md">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" aria-hidden />
             <Input
+              id="user-search"
               type="text"
               placeholder="Search by name, email, or skill level..."
               value={searchQuery}
