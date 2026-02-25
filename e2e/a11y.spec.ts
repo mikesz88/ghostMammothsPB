@@ -20,6 +20,7 @@ const routesToCheck = [
   { path: "/about", name: "About" },
   { path: "/calendar", name: "Calendar" },
   { path: "/sitemap", name: "Sitemap" },
+  { path: "/search", name: "Search" },
   // Membership (including pre-Stripe checkout and post-payment)
   { path: "/membership", name: "Membership" },
   { path: "/membership/checkout", name: "Membership Checkout (pre-Stripe)" },

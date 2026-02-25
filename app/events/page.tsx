@@ -46,29 +46,11 @@ export default function EventsPage() {
     checkAdmin();
   }, [user]);
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-background">
-        <h1 className="sr-only">Events</h1>
-        <Header />
-        <div className="container mx-auto px-4 py-20">
-          <div className="flex items-center justify-center">
-            <Loader2 className="w-8 h-8 animate-spin" aria-hidden />
-            <span className="ml-2 text-muted-foreground">
-              Loading events...
-            </span>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
+      <h1 className="sr-only">Events</h1>
       <Header />
 
-      {/* Page Content */}
       <div className="container mx-auto px-4 py-12">
         <div className="mb-8">
           <h1 className="text-4xl font-bold text-foreground mb-2">
@@ -78,7 +60,6 @@ export default function EventsPage() {
             Join the queue for your favorite pickleball events
           </p>
 
-          {/* Call-to-action for anonymous users */}
           {!user && (
             <div className="mt-6 p-4 bg-primary/10 border border-primary/20 rounded-lg">
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
@@ -103,7 +84,12 @@ export default function EventsPage() {
           )}
         </div>
 
-        {events.length === 0 ? (
+        {loading ? (
+          <div className="flex items-center justify-center py-16">
+            <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" aria-hidden />
+            <span className="ml-2 text-muted-foreground">Loading events...</span>
+          </div>
+        ) : events.length === 0 ? (
           <div className="text-center py-12">
             <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
               <Calendar className="w-8 h-8 text-muted-foreground" />

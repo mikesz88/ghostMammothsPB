@@ -103,7 +103,8 @@ function HomeContent() {
       </section>
 
       {/* Features Grid */}
-      <section className="container mx-auto px-4 py-16">
+      <section className="container mx-auto px-4 py-16" aria-labelledby="features-heading">
+        <h2 id="features-heading" className="sr-only">Features</h2>
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
           <Card className="border-border bg-card">
             <CardHeader>
@@ -111,7 +112,7 @@ function HomeContent() {
                 <Users className="w-6 h-6 text-primary" aria-hidden />
               </div>
               <CardTitle className="text-foreground">Real-time Queue</CardTitle>
-              <CardDescription>
+              <CardDescription className="text-base">
                 Join the queue and see your position update in real-time as
                 games progress
               </CardDescription>
@@ -126,7 +127,7 @@ function HomeContent() {
               <CardTitle className="text-foreground">
                 Smart Assignments
               </CardTitle>
-              <CardDescription>
+              <CardDescription className="text-base">
                 Automatic court assignments with configurable rotation logic for
                 fair play
               </CardDescription>
@@ -141,7 +142,7 @@ function HomeContent() {
               <CardTitle className="text-foreground">
                 Event Management
               </CardTitle>
-              <CardDescription>
+              <CardDescription className="text-base">
                 Create and manage multiple events with custom court counts and
                 rules
               </CardDescription>
@@ -154,7 +155,7 @@ function HomeContent() {
                 <Trophy className="w-6 h-6 text-primary" aria-hidden />
               </div>
               <CardTitle className="text-foreground">Group Support</CardTitle>
-              <CardDescription>
+              <CardDescription className="text-base">
                 Join as singles, duos, triples, or full quads with your friends
               </CardDescription>
             </CardHeader>

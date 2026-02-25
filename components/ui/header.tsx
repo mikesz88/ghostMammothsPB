@@ -20,7 +20,11 @@ import type { User as SupabaseUser } from "@supabase/supabase-js";
 
 function HeaderLogo() {
   return (
-    <Link href="/" className="flex items-center gap-1.5 sm:gap-2" aria-label="Ghost Mammoth PB home">
+    <Link
+      href="/"
+      className="flex items-center gap-1.5 sm:gap-2"
+      aria-label="Ghost Mammoth PB home"
+    >
       <Image
         src="/icon-32x32.png"
         alt=""
@@ -69,6 +73,12 @@ function HeaderDefaultNav() {
       >
         Sitemap
       </Link>
+      {/* <Link
+        href="/search"
+        className="text-muted-foreground hover:text-foreground transition-colors"
+      >
+        Search
+      </Link> */}
       <Link
         href="https://ghostmammoth.myshopify.com"
         target="_blank"
@@ -111,7 +121,12 @@ interface HeaderUserMenuProps {
   onSignOut: () => void;
 }
 
-function HeaderUserMenu({ user, variant, isAdmin, onSignOut }: HeaderUserMenuProps) {
+function HeaderUserMenu({
+  user,
+  variant,
+  isAdmin,
+  onSignOut,
+}: HeaderUserMenuProps) {
   if (!user) {
     return (
       <div className="flex items-center gap-2">
@@ -183,6 +198,16 @@ function HeaderUserMenu({ user, variant, isAdmin, onSignOut }: HeaderUserMenuPro
                   About
                 </Link>
               </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link href="/sitemap" className="cursor-pointer">
+                  Sitemap
+                </Link>
+              </DropdownMenuItem>
+              {/* <DropdownMenuItem asChild>
+                <Link href="/search" className="cursor-pointer">
+                  Search
+                </Link>
+              </DropdownMenuItem> */}
               <DropdownMenuItem asChild>
                 <Link
                   href="https://ghostmammoth.myshopify.com/password"
