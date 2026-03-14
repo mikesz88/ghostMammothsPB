@@ -6,9 +6,9 @@
 
 # Ghost Mammoth Pickleball – Membership & Event Management SaaS
 
-A **full-stack membership and event management platform** for pickleball clubs, built with **Next.js, TypeScript, and Supabase**.
+A **full-stack membership and event management platform** for **Ghost Mammoth Pickleball**, a single-club product built with **Next.js, TypeScript, and Supabase**.
 
-The system supports **member management, event sessions, play queues, court assignments, subscription billing, and event coordination** — giving community organizations a centralized alternative to spreadsheets and manual coordination.
+The system supports **member management, event sessions, play queues, court assignments, subscription billing, and event coordination** — giving the club a centralized alternative to spreadsheets and manual coordination.
 
 ---
 
@@ -16,22 +16,22 @@ The system supports **member management, event sessions, play queues, court assi
 
 Production site: [https://www.ghostmammothpbc.com/](https://www.ghostmammothpbc.com/)
 
-Ghost Mammoth Pickleball is a SaaS platform where clubs can manage members, run event sessions with queues and court rotation, and handle payments in one place.
+Ghost Mammoth Pickleball is the club’s platform to manage members, run event sessions with queues and court rotation, and handle payments in one place.
 
 ---
 
 ## Why This Project Exists
 
-Pickleball clubs often rely on spreadsheets and manual coordination to manage sessions and events.
+Clubs often rely on spreadsheets and manual coordination to manage sessions and events.
 
-Ghost Mammoth Pickleball was built to provide a centralized platform for:
+This platform was built for Ghost Mammoth Pickleball to provide a centralized system for:
 
 - Managing memberships and tiers (free vs paid)
 - Running event sessions with configurable queues and court assignments
 - Handling subscriptions and payments via Stripe
 - Coordinating events for a growing community
 
-The project demonstrates how a modern SaaS platform can support **real community organizations** using scalable web technologies. It is suitable both as a production-ready product and as a portfolio piece showcasing full-stack, auth, billing, and accessibility practices.
+The project demonstrates how a modern SaaS platform can support **a real club** using scalable web technologies. It is suitable both as a production-ready product and as a portfolio piece showcasing full-stack, auth, billing, and accessibility practices.
 
 ---
 
@@ -79,7 +79,7 @@ Some of the technical challenges addressed in this project include:
 - **Events** — Create and manage event sessions with location, date, court count, team size, and rotation type
 - **Play queue & courts** — Join/leave queue, assign players to courts, track status (waiting/playing/completed)
 - **Membership & payments** — Tiers (e.g. free, monthly), Stripe checkout, customer portal, cancel/reactivate
-- **Admin tools** — Dashboard for events, users, and email stats; event test controls
+- **Admin tools** — Dashboard for club organizers (events, users, email stats; event test controls)
 - **Settings** — Membership and notification preferences
 - **Accessibility** — Strict jsx-a11y linting and automated WCAG-focused E2E a11y tests
 
@@ -180,7 +180,3 @@ Some of the technical challenges addressed in this project include:
 ```
 
 ---
-
-## License
-
-MIT
