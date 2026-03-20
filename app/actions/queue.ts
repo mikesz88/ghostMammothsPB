@@ -2,7 +2,10 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
-import { sendQueueNotification } from "./notifications";
+import {
+  flushQueueEmailNotifications,
+  sendQueueNotification,
+} from "./notifications";
 import type { Database } from "@/supabase/supa-schema";
 import type { GroupSize } from "@/lib/types";
 
@@ -154,9 +157,12 @@ export async function reorderQueue(eventId: string) {
     .order("position");
 
   if (queue) {
-    // Track notifications to avoid spamming
-    const upNextNotifications: Promise<unknown>[] = [];
-    const positionUpdateNotifications: Promise<unknown>[] = [];
+    const toNotify: Array<{
+      userId: string;
+      eventId: string;
+      position: number;
+      notificationType: "up-next" | "position-update";
+    }> = [];
 
     // Update positions
     for (let i = 0; i < queue.length; i++) {
@@ -170,31 +176,26 @@ export async function reorderQueue(eventId: string) {
 
       // Send "up next" email if they just entered top 4
       if (newPosition <= 4 && oldPosition > 4) {
-        upNextNotifications.push(
-          sendQueueNotification(
-            queue[i].user_id,
-            eventId,
-            newPosition,
-            "up-next",
-          ),
-        );
+        toNotify.push({
+          userId: queue[i].user_id,
+          eventId,
+          position: newPosition,
+          notificationType: "up-next",
+        });
       }
       // Send position update if they moved up significantly (3+ positions)
       else if (oldPosition - newPosition >= 3) {
-        positionUpdateNotifications.push(
-          sendQueueNotification(
-            queue[i].user_id,
-            eventId,
-            newPosition,
-            "position-update",
-          ),
-        );
+        toNotify.push({
+          userId: queue[i].user_id,
+          eventId,
+          position: newPosition,
+          notificationType: "position-update",
+        });
       }
     }
 
-    // Send notifications without blocking
-    Promise.all([...upNextNotifications, ...positionUpdateNotifications]).catch(
-      (err) => console.error("Error sending position update emails:", err),
+    await flushQueueEmailNotifications(toNotify).catch((err) =>
+      console.error("Error sending queue notification emails:", err),
     );
   }
 }
@@ -406,18 +407,19 @@ export async function assignPlayersToNextCourt(eventId: string) {
     if (updateError) {
       console.error(`Failed to update player ${player.id}:`, updateError);
     }
-
-    // Send court assignment email notification
-    sendQueueNotification(
-      player.userId,
-      eventId,
-      player.position,
-      "court-assignment",
-      availableCourt,
-    ).catch((err) =>
-      console.error("Failed to send court assignment email:", err),
-    );
   }
+
+  await flushQueueEmailNotifications(
+    nextPlayers.map((player) => ({
+      userId: player.userId,
+      eventId,
+      position: player.position,
+      notificationType: "court-assignment" as const,
+      courtNumber: availableCourt,
+    })),
+  ).catch((err) =>
+    console.error("Failed to send court assignment emails:", err),
+  );
 
   // Reorder remaining waiting players to fill gaps in positions
   await reorderQueue(eventId);
