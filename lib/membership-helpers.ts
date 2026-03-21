@@ -1,6 +1,30 @@
 import { createClient } from "@/lib/supabase/client";
 import type { MembershipStatus } from "@/lib/types-membership";
 
+type SupabaseBrowserClient = ReturnType<typeof createClient>;
+
+/** Match `users.membership_status` to a row in `membership_tiers` by `name` or `display_name`. */
+async function fetchTierByMembershipStatusLabel(
+  supabase: SupabaseBrowserClient,
+  label: string
+) {
+  const { data: byName } = await supabase
+    .from("membership_tiers")
+    .select("*")
+    .eq("name", label)
+    .maybeSingle();
+
+  if (byName) return byName;
+
+  const { data: byDisplay } = await supabase
+    .from("membership_tiers")
+    .select("*")
+    .eq("display_name", label)
+    .maybeSingle();
+
+  return byDisplay ?? null;
+}
+
 export interface UserMembershipInfo {
   status: MembershipStatus;
   tierName: string;
@@ -21,44 +45,67 @@ export async function getUserMembership(
 ): Promise<UserMembershipInfo> {
   const supabase = createClient();
 
-  const { data: membership } = await supabase
-    .from("user_memberships")
-    .select(
-      `
+  const [{ data: membership }, { data: userData }] = await Promise.all([
+    supabase
+      .from("user_memberships")
+      .select(
+        `
       *,
       tier:membership_tiers(*)
     `
-    )
-    .eq("user_id", userId)
-    .single();
-
-  if (!membership || !membership.tier) {
-    // No membership found in user_memberships, check users.membership_status as fallback
-    const { data: userData } = await supabase
+      )
+      .eq("user_id", userId)
+      .maybeSingle(),
+    supabase
       .from("users")
       .select("membership_status")
       .eq("id", userId)
-      .single();
+      .maybeSingle(),
+  ]);
 
-    if (userData?.membership_status && userData.membership_status !== "free") {
-      // User has membership_status set, fetch that tier
-      // Try to match by name first, then by display_name (in case display_name was stored)
-      const { data: tiers } = await supabase
-        .from("membership_tiers")
-        .select("*")
-        .or(
-          `name.eq.${userData.membership_status},display_name.eq.${userData.membership_status}`
-        );
+  const statusLabel = userData?.membership_status?.trim() ?? "";
+  const usersTableSaysPaid = statusLabel !== "" && statusLabel !== "free";
 
-      const tier = tiers?.[0];
+  const buildFromUserMembershipRow = (
+    tier: {
+      name: string;
+      display_name: string;
+      price: number;
+      billing_period: string;
+    },
+    membershipRow: {
+      status: string;
+      current_period_end: string | null;
+      cancel_at_period_end: boolean | null;
+    }
+  ): UserMembershipInfo => {
+    const isActive =
+      membershipRow.status === "active" || membershipRow.status === "trialing";
+    const isPaid = Number(tier.price) > 0;
+
+    return {
+      status: membershipRow.status as MembershipStatus,
+      tierName: tier.name,
+      tierDisplayName: tier.display_name,
+      tierPrice: tier.price,
+      tierBillingPeriod: tier.billing_period,
+      isActive,
+      isPaid,
+      currentPeriodEnd: membershipRow.current_period_end
+        ? new Date(membershipRow.current_period_end)
+        : undefined,
+      cancelAtPeriodEnd: membershipRow.cancel_at_period_end ?? undefined,
+    };
+  };
+
+  if (!membership || !membership.tier) {
+    if (usersTableSaysPaid) {
+      const tier = await fetchTierByMembershipStatusLabel(
+        supabase,
+        statusLabel
+      );
 
       if (tier) {
-        console.log("Found tier from users.membership_status fallback:", {
-          searchedFor: userData.membership_status,
-          foundName: tier.name,
-          foundDisplayName: tier.display_name,
-        });
-
         return {
           status: "active",
           tierName: tier.name,
@@ -66,12 +113,21 @@ export async function getUserMembership(
           tierPrice: tier.price,
           tierBillingPeriod: tier.billing_period,
           isActive: true,
-          isPaid: tier.price > 0,
+          isPaid: Number(tier.price) > 0,
         };
       }
+
+      return {
+        status: "active",
+        tierName: statusLabel,
+        tierDisplayName: statusLabel,
+        tierPrice: 0,
+        tierBillingPeriod: "monthly",
+        isActive: true,
+        isPaid: true,
+      };
     }
 
-    // Truly no membership found, fetch the free tier from database
     const { data: freeTier } = await supabase
       .from("membership_tiers")
       .select("*")
@@ -89,23 +145,40 @@ export async function getUserMembership(
     };
   }
 
-  const isActive =
-    membership.status === "active" || membership.status === "trialing";
-  const isPaid = membership.tier.price > 0; // Any tier with price > 0 is paid
-
-  return {
-    status: membership.status,
-    tierName: membership.tier.name,
-    tierDisplayName: membership.tier.display_name,
-    tierPrice: membership.tier.price,
-    tierBillingPeriod: membership.tier.billing_period,
-    isActive,
-    isPaid,
-    currentPeriodEnd: membership.current_period_end
-      ? new Date(membership.current_period_end)
-      : undefined,
-    cancelAtPeriodEnd: membership.cancel_at_period_end,
+  const joinedTier = membership.tier as {
+    name: string;
+    display_name: string;
+    price: number;
+    billing_period: string;
   };
+
+  const linkedTierIsFree = joinedTier.name === "free";
+
+  if (linkedTierIsFree && usersTableSaysPaid) {
+    const correctedTier = await fetchTierByMembershipStatusLabel(
+      supabase,
+      statusLabel
+    );
+
+    if (correctedTier && correctedTier.name !== "free") {
+      return buildFromUserMembershipRow(correctedTier, membership);
+    }
+
+    return {
+      ...buildFromUserMembershipRow(
+        {
+          name: statusLabel,
+          display_name: statusLabel,
+          price: 0,
+          billing_period: "monthly",
+        },
+        membership
+      ),
+      isPaid: true,
+    };
+  }
+
+  return buildFromUserMembershipRow(joinedTier, membership);
 }
 
 /**
