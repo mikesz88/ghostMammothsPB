@@ -733,33 +733,53 @@ export default function AdminEventDetailPage(props: {
       }
 
       // 6. Reposition entries based on rotation type
+      // 6. Reposition entries based on rotation type
+      // Must match QueueManager.handleGameCompletion — old code always did winners-first.
       let position = 1;
 
-      // Winners go to front
-      for (const entryId of winnerEntryIds) {
-        await supabase
-          .from("queue_entries")
-          .update({ position })
-          .eq("id", entryId);
-        position++;
-      }
+      if (event.rotationType === "rotate-all") {
+        // Waiting players not in this game first; then everyone from this game in court order.
+        for (const entry of otherEntries) {
+          await supabase
+            .from("queue_entries")
+            .update({ position })
+            .eq("id", entry.id);
+          position++;
+        }
+        for (const entryId of queueEntryIds) {
+          await supabase
+            .from("queue_entries")
+            .update({ position })
+            .eq("id", entryId);
+          position++;
+        }
+      } else {
+        // Winners go to front
+        for (const entryId of winnerEntryIds) {
+          await supabase
+            .from("queue_entries")
+            .update({ position })
+            .eq("id", entryId);
+          position++;
+        }
 
-      // Other players (not in this game) stay in their relative order
-      for (const entry of otherEntries) {
-        await supabase
-          .from("queue_entries")
-          .update({ position })
-          .eq("id", entry.id);
-        position++;
-      }
+        // Other players (not in this game) stay in their relative order
+        for (const entry of otherEntries) {
+          await supabase
+            .from("queue_entries")
+            .update({ position })
+            .eq("id", entry.id);
+          position++;
+        }
 
-      // Losers go to back
-      for (const entryId of loserEntryIds) {
-        await supabase
-          .from("queue_entries")
-          .update({ position })
-          .eq("id", entryId);
-        position++;
+        // Losers go to back
+        for (const entryId of loserEntryIds) {
+          await supabase
+            .from("queue_entries")
+            .update({ position })
+            .eq("id", entryId);
+          position++;
+        }
       }
 
       console.log(`Repositioned ${position - 1} queue entries`);
@@ -767,15 +787,21 @@ export default function AdminEventDetailPage(props: {
       // Final cleanup: reorder queue to ensure no gaps or duplicates
       await reorderQueue(id);
 
-      const stayCount = Array.from(winnerEntryIds).length;
-      toast.success(
-        `Game ended! ${stayCount} queue entr${
-          stayCount === 1 ? "y" : "ies"
-        } moved to front.`,
-        {
+      if (event.rotationType === "rotate-all") {
+        toast.success("Game ended! All players re-queued (rotate all).", {
           description: "Use 'Assign Next' to start the next game.",
-        }
-      );
+        });
+      } else {
+        const stayCount = Array.from(winnerEntryIds).length;
+        toast.success(
+          `Game ended! ${stayCount} queue entr${
+            stayCount === 1 ? "y" : "ies"
+          } moved to front.`,
+          {
+            description: "Use 'Assign Next' to start the next game.",
+          }
+        );
+      }
     } catch (err) {
       console.error("Error ending game:", err);
       toast.error("Failed to end game");
