@@ -16,6 +16,8 @@ interface AuthContextType {
   ) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
   resendVerificationEmail: (email: string) => Promise<{ error: any }>;
+  resetPasswordForEmail: (email: string) => Promise<{ error: any }>;
+  updatePassword: (newPassword: string) => Promise<{ error: any }>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -177,6 +179,35 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return { error };
   };
 
+  const resetPasswordForEmail = async (email: string) => {
+    const baseUrl =
+      process.env.NEXT_PUBLIC_URL ||
+      (typeof window !== "undefined" ? window.location.origin : null);
+
+    if (!baseUrl) {
+      return {
+        error: new Error(
+          "Configuration error: Unable to determine application URL"
+        ),
+      };
+    }
+
+    const base = baseUrl.replace(/\/$/, "");
+    const redirectTo = `${base}/auth/callback?next=${encodeURIComponent("/reset-password")}`;
+
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo,
+    });
+    return { error };
+  };
+
+  const updatePassword = async (newPassword: string) => {
+    const { error } = await supabase.auth.updateUser({
+      password: newPassword,
+    });
+    return { error };
+  };
+
   const value = {
     user,
     session,
@@ -185,6 +216,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     signUp,
     signOut,
     resendVerificationEmail,
+    resetPasswordForEmail,
+    updatePassword,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

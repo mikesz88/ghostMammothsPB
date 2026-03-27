@@ -9,12 +9,15 @@ import AxeBuilder from "@axe-core/playwright";
  * are still recommended for compliance and lawsuit risk mitigation.
  */
 
-test.setTimeout(60_000);
+// Slow first compile + middleware (Supabase session) can exceed 60s on cold starts.
+test.setTimeout(120_000);
 
 const routesToCheck = [
   // Public
   { path: "/", name: "Home" },
   { path: "/login", name: "Login" },
+  { path: "/forgot-password", name: "Forgot password" },
+  { path: "/reset-password", name: "Reset password" },
   { path: "/signup", name: "Signup" },
   { path: "/events", name: "Events" },
   { path: "/about", name: "About" },
@@ -59,13 +62,16 @@ async function gotoAndWaitForReady(
   const msg = (e: Error) => String(e.message);
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
     try {
+      // `commit` can fire before the streamed layout (with #main-content) is in the DOM.
+      // `load` waits for the document; we then wait for `attached` (not `visible`) because
+      // an empty <main> can have zero height until children paint, which fails Playwright visibility.
       await page.goto(path, {
-        waitUntil: "commit",
-        timeout: 20_000,
+        waitUntil: "load",
+        timeout: 60_000,
       });
       await page.waitForSelector("#main-content", {
-        state: "visible",
-        timeout: 20_000,
+        state: "attached",
+        timeout: 30_000,
       });
       return;
     } catch (e) {
@@ -73,9 +79,8 @@ async function gotoAndWaitForReady(
       const aborted =
         msg(err).includes("ERR_ABORTED") || msg(err).includes("frame was detached");
       if (aborted) {
-        const main = await page.locator("#main-content").first();
-        const visible = await main.isVisible().catch(() => false);
-        if (visible) return;
+        const count = await page.locator("#main-content").count();
+        if (count > 0) return;
       }
       if (attempt < maxAttempts) {
         await new Promise((r) => setTimeout(r, 1_500));
