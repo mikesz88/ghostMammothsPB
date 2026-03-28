@@ -60,14 +60,24 @@ export async function GET(request: Request) {
   if (user) {
     const supabaseAdmin = createServiceRoleClient();
     if (supabaseAdmin) {
+      const { data: existing } = await supabaseAdmin
+        .from("users")
+        .select("is_admin")
+        .eq("id", user.id)
+        .maybeSingle();
+
       await supabaseAdmin.from("users").upsert(
         {
           id: user.id,
           email: user.email ?? "",
-          name: (user.user_metadata?.name as string) ?? user.email?.split("@")[0] ?? "User",
-          skill_level: (user.user_metadata?.skill_level as string) ?? "intermediate",
+          name:
+            (user.user_metadata?.name as string) ??
+            user.email?.split("@")[0] ??
+            "User",
+          skill_level:
+            (user.user_metadata?.skill_level as string) ?? "intermediate",
           phone: (user.user_metadata?.phone as string) ?? "",
-          is_admin: false,
+          is_admin: existing?.is_admin ?? false,
         },
         { onConflict: "id" }
       );
