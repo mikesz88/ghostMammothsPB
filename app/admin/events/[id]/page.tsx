@@ -121,6 +121,7 @@ export default function AdminEventDetailPage(props: {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isTestEvent, setIsTestEvent] = useState(false);
+  const [isEndingGame, setIsEndingGame] = useState(false);
 
   // Fetch event data
   useEffect(() => {
@@ -170,7 +171,7 @@ export default function AdminEventDetailPage(props: {
         setIsTestEvent(
           nameUpper.includes("DEVELOPER TEST EVENT") ||
             nameUpper.includes("DYNAMIC ADMIN TEST EVENT") ||
-            nameUpper.includes("TEST EVENT")
+            nameUpper.includes("TEST EVENT"),
         );
       }
       setLoading(false);
@@ -189,7 +190,7 @@ export default function AdminEventDetailPage(props: {
           `
           *,
           user:users(id, name, email, skill_level)
-        `
+        `,
         )
         .eq("event_id", id)
         .order("position");
@@ -240,7 +241,7 @@ export default function AdminEventDetailPage(props: {
                   }
                 : undefined,
             };
-          }
+          },
         );
         setQueue(queueEntries);
       }
@@ -262,7 +263,7 @@ export default function AdminEventDetailPage(props: {
         },
         () => {
           fetchQueue();
-        }
+        },
       )
       .subscribe();
 
@@ -288,7 +289,7 @@ export default function AdminEventDetailPage(props: {
           player6:users!court_assignments_player6_id_fkey(id, name, email, skill_level),
           player7:users!court_assignments_player7_id_fkey(id, name, email, skill_level),
           player8:users!court_assignments_player8_id_fkey(id, name, email, skill_level)
-        `
+        `,
         )
         .eq("event_id", id)
         .order("court_number");
@@ -423,7 +424,7 @@ export default function AdminEventDetailPage(props: {
                   }
                 : undefined,
             };
-          }
+          },
         );
         setAssignments(courtAssignments);
       }
@@ -445,7 +446,7 @@ export default function AdminEventDetailPage(props: {
         },
         () => {
           fetchAssignments();
-        }
+        },
       )
       .subscribe();
 
@@ -469,16 +470,16 @@ export default function AdminEventDetailPage(props: {
           event.teamSize === 1
             ? "solo"
             : event.teamSize === 2
-            ? "doubles"
-            : event.teamSize === 3
-            ? "triplets"
-            : "quads";
+              ? "doubles"
+              : event.teamSize === 3
+                ? "triplets"
+                : "quads";
 
         toast.success(
           `Assigned ${result.playersAssigned} players to Court ${result.courtNumber}`,
           {
             description: `${teamSizeText} game started`,
-          }
+          },
         );
       } else {
         toast.error("Failed to assign players", {
@@ -517,7 +518,7 @@ export default function AdminEventDetailPage(props: {
   const handleClearQueue = async () => {
     if (
       !confirm(
-        "Are you sure you want to clear the entire queue? This cannot be undone."
+        "Are you sure you want to clear the entire queue? This cannot be undone.",
       )
     ) {
       return;
@@ -547,7 +548,7 @@ export default function AdminEventDetailPage(props: {
 
   const handleEndGame = async (
     assignmentId: string,
-    winningTeam: "team1" | "team2"
+    winningTeam: "team1" | "team2",
   ) => {
     const winningTeamName = winningTeam === "team1" ? "Team 1" : "Team 2";
 
@@ -568,8 +569,9 @@ export default function AdminEventDetailPage(props: {
 
   const performEndGame = async (
     assignmentId: string,
-    winningTeam: "team1" | "team2"
+    winningTeam: "team1" | "team2",
   ) => {
+    setIsEndingGame(true);
     try {
       if (!event) return;
 
@@ -587,7 +589,7 @@ export default function AdminEventDetailPage(props: {
           event.rotationType,
           winningTeam,
           queue,
-          event.teamSize
+          event.teamSize,
         );
 
       // 1. Mark the game as ended
@@ -608,7 +610,7 @@ export default function AdminEventDetailPage(props: {
 
       if (queueEntryIds.length === 0) {
         console.warn(
-          "No queue_entry_ids found in assignment, falling back to user_id lookup"
+          "No queue_entry_ids found in assignment, falling back to user_id lookup",
         );
         // Fallback for old assignments that don't have queue_entry_ids
         const allPlayers = [
@@ -635,26 +637,38 @@ export default function AdminEventDetailPage(props: {
 
       console.log("Queue entries that played:", queueEntryIds);
 
-      // 3. Update all these queue entries to 'waiting' status
-      for (const entryId of queueEntryIds) {
-        await supabase
-          .from("queue_entries")
-          .update({ status: "waiting" })
-          .eq("id", entryId);
+      if (queueEntryIds.length === 0) {
+        toast.error("No queue entries linked to this game");
+        return;
       }
 
-      // 4. Get all current queue entries to determine positioning
-      const { data: allQueueEntries } = await supabase
+      // 3–4. Fetch others (waiting) and this game's rows (still playing).
+      // We keep status=playing until positions are final so assignPlayersToNextCourt
+      // cannot pick former court players with stale low positions.
+      const { data: waitingRows } = await supabase
         .from("queue_entries")
         .select("id, user_id, group_size, position")
         .eq("event_id", id)
         .eq("status", "waiting")
         .order("position");
 
-      if (!allQueueEntries) {
+      const { data: playingRows } = await supabase
+        .from("queue_entries")
+        .select("id, user_id, group_size, position")
+        .eq("event_id", id)
+        .in("id", queueEntryIds);
+
+      if (waitingRows === null || playingRows === null) {
         toast.error("Failed to fetch queue entries");
         return;
       }
+
+      if (playingRows.length === 0) {
+        toast.error("Could not load on-court queue entries for this game");
+        return;
+      }
+
+      const playingById = new Map(playingRows.map((e) => [e.id, e]));
 
       // 5. Determine which queue entries belong to which team
       // Since queue entries fill slots sequentially, we can determine team membership
@@ -667,7 +681,7 @@ export default function AdminEventDetailPage(props: {
       // Track which player slots each queue entry filled
       let slotIndex = 0;
       for (const entryId of queueEntryIds) {
-        const entry = allQueueEntries.find((e) => e.id === entryId);
+        const entry = playingById.get(entryId);
         if (entry) {
           const groupSize = entry.group_size || 1;
           // Determine which team this entry's slots belong to
@@ -709,15 +723,15 @@ export default function AdminEventDetailPage(props: {
       }
 
       // Get entries that weren't in this game
-      const otherEntries = allQueueEntries.filter(
-        (e) => !queueEntryIds.includes(e.id)
+      const otherEntries = waitingRows.filter(
+        (e) => !queueEntryIds.includes(e.id),
       );
 
       console.log("Winners:", Array.from(winnerEntryIds));
       console.log("Losers:", Array.from(loserEntryIds));
       console.log(
         "Others:",
-        otherEntries.map((e) => e.id)
+        otherEntries.map((e) => e.id),
       );
 
       // Safety check: ensure all entries are categorized
@@ -726,7 +740,9 @@ export default function AdminEventDetailPage(props: {
         ...Array.from(loserEntryIds),
         ...otherEntries.map((e) => e.id),
       ]);
-      const allEntryIds = allQueueEntries.map((e) => e.id);
+      const allEntryIds = [
+        ...new Set([...waitingRows.map((e) => e.id), ...queueEntryIds]),
+      ];
       const uncategorized = allEntryIds.filter((id) => !categorizedIds.has(id));
       if (uncategorized.length > 0) {
         console.warn("Uncategorized queue entries:", uncategorized);
@@ -784,6 +800,14 @@ export default function AdminEventDetailPage(props: {
 
       console.log(`Repositioned ${position - 1} queue entries`);
 
+      // 7. Now that positions are correct, release court players to the waiting pool
+      for (const entryId of queueEntryIds) {
+        await supabase
+          .from("queue_entries")
+          .update({ status: "waiting" })
+          .eq("id", entryId);
+      }
+
       // Final cleanup: reorder queue to ensure no gaps or duplicates
       await reorderQueue(id);
 
@@ -799,12 +823,14 @@ export default function AdminEventDetailPage(props: {
           } moved to front.`,
           {
             description: "Use 'Assign Next' to start the next game.",
-          }
+          },
         );
       }
     } catch (err) {
       console.error("Error ending game:", err);
       toast.error("Failed to end game");
+    } finally {
+      setIsEndingGame(false);
     }
   };
 
@@ -892,10 +918,10 @@ export default function AdminEventDetailPage(props: {
                       {event.teamSize === 1
                         ? "Solo (1v1)"
                         : event.teamSize === 2
-                        ? "Doubles (2v2)"
-                        : event.teamSize === 3
-                        ? "Triplets (3v3)"
-                        : "Quads (4v4)"}{" "}
+                          ? "Doubles (2v2)"
+                          : event.teamSize === 3
+                            ? "Triplets (3v3)"
+                            : "Quads (4v4)"}{" "}
                       •{" "}
                       {event.rotationType
                         .replace("-", " ")
@@ -976,8 +1002,17 @@ export default function AdminEventDetailPage(props: {
             </Card>
 
             <div className="flex gap-2 mb-4">
-              <Button onClick={handleAssignNext} size="lg" className="flex-1">
-                <Play className="w-4 h-4 mr-2" />
+              <Button
+                onClick={handleAssignNext}
+                size="lg"
+                className="flex-1"
+                disabled={isEndingGame}
+              >
+                {isEndingGame ? (
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                ) : (
+                  <Play className="w-4 h-4 mr-2" />
+                )}
                 Assign Next Players
               </Button>
               <Button
