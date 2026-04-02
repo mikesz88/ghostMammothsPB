@@ -126,6 +126,38 @@ export type Database = {
           },
         ]
       }
+      court_pending_stayers: {
+        Row: {
+          id: string
+          event_id: string
+          court_number: number
+          queue_entry_ids: string[]
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          event_id: string
+          court_number: number
+          queue_entry_ids?: string[]
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          event_id?: string
+          court_number?: number
+          queue_entry_ids?: string[]
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "court_pending_stayers_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       event_registrations: {
         Row: {
           checked_in_at: string | null

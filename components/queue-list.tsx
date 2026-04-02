@@ -68,22 +68,31 @@ export function QueueList({
     .filter((entry) => entry.status === "waiting")
     .sort((a, b) => a.position - b.position);
 
-  const groupedQueue: (QueueEntry | QueueEntry[])[] = [];
-  const processedGroups = new Set<string>();
+  const pendingStayQueue = isAdmin
+    ? queue
+        .filter((entry) => entry.status === "pending_stay")
+        .sort((a, b) => a.position - b.position)
+    : [];
 
-  for (const entry of waitingQueue) {
-    if (entry.groupId && !processedGroups.has(entry.groupId)) {
-      const groupMembers = waitingQueue.filter(
-        (e) => e.groupId === entry.groupId
-      );
-      groupedQueue.push(groupMembers);
-      processedGroups.add(entry.groupId);
-    } else if (!entry.groupId) {
-      groupedQueue.push(entry);
+  function buildGrouped(entries: QueueEntry[]) {
+    const grouped: (QueueEntry | QueueEntry[])[] = [];
+    const processed = new Set<string>();
+    for (const entry of entries) {
+      if (entry.groupId && !processed.has(entry.groupId)) {
+        const groupMembers = entries.filter((e) => e.groupId === entry.groupId);
+        grouped.push(groupMembers);
+        processed.add(entry.groupId);
+      } else if (!entry.groupId) {
+        grouped.push(entry);
+      }
     }
+    return grouped;
   }
 
-  if (waitingQueue.length === 0) {
+  const groupedQueue = buildGrouped(waitingQueue);
+  const groupedPending = buildGrouped(pendingStayQueue);
+
+  if (waitingQueue.length === 0 && pendingStayQueue.length === 0) {
     return (
       <Card className="border-border bg-card">
         <CardContent className="p-12 text-center">
@@ -95,6 +104,37 @@ export function QueueList({
 
   return (
     <div className="space-y-3">
+      {groupedPending.length > 0 && (
+        <div className="space-y-2 mb-4">
+          <p className="text-sm font-medium text-muted-foreground px-1">
+            On deck for next game (winners stay)
+          </p>
+          {groupedPending.map((item) => {
+            const isGroup = Array.isArray(item);
+            const entries = isGroup ? item : [item];
+            const firstEntry = entries[0];
+            return (
+              <Card
+                key={isGroup ? firstEntry.groupId : firstEntry.id}
+                className="border-amber-500/40 bg-amber-500/5"
+              >
+                <CardContent className="p-4">
+                  <div className="flex items-center gap-3 flex-wrap">
+                    <Badge variant="secondary" className="shrink-0">
+                      On deck
+                    </Badge>
+                    <span className="font-medium text-foreground">
+                      {firstEntry.player_names && firstEntry.player_names.length > 0
+                        ? firstEntry.player_names.map((p) => p.name).join(", ")
+                        : firstEntry.user?.name}
+                    </span>
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
+      )}
       {groupedQueue.map((item, index) => {
         const isGroup = Array.isArray(item);
         const entries = isGroup ? item : [item];

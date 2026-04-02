@@ -1,6 +1,10 @@
 export type SkillLevel = "beginner" | "intermediate" | "advanced" | "pro";
 export type EventStatus = "active" | "ended";
-export type QueueStatus = "waiting" | "playing" | "completed";
+export type QueueStatus =
+  | "waiting"
+  | "playing"
+  | "completed"
+  | "pending_stay";
 export type RotationType = "2-stay-4-off" | "winners-stay" | "rotate-all";
 export type GroupSize = 1 | 2 | 3 | 4;
 export type TeamSize = 1 | 2 | 3 | 4;
