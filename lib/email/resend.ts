@@ -2,6 +2,103 @@ import { Resend } from "resend";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
+const RESEND_MAX_ATTEMPTS = 4;
+const RESEND_RETRY_BASE_MS = 400;
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((r) => setTimeout(r, ms));
+}
+
+function errorFingerprint(error: unknown): string {
+  if (error instanceof Error) {
+    return `${error.name} ${error.message}`;
+  }
+  if (typeof error === "string") return error;
+  if (error && typeof error === "object") {
+    const o = error as Record<string, unknown>;
+    const parts = [
+      typeof o.message === "string" ? o.message : "",
+      typeof o.name === "string" ? o.name : "",
+      typeof o.statusCode === "number" ? String(o.statusCode) : "",
+      typeof o.status === "number" ? String(o.status) : "",
+    ];
+    return parts.filter(Boolean).join(" ");
+  }
+  return String(error);
+}
+
+/** Network / rate-limit / upstream issues — safe to retry the same API call. */
+function isTransientSendError(error: unknown): boolean {
+  const msg = errorFingerprint(error).toLowerCase();
+  if (
+    [
+      "greeting never received",
+      "socket disconnected",
+      "tls",
+      "econnreset",
+      "etimedout",
+      "timeout",
+      "econnrefused",
+      "socket hang up",
+      "fetch failed",
+      "network error",
+      "429",
+      "too many requests",
+      "rate limit",
+      "status code 503",
+      "status code 502",
+      "status code 500",
+      "http 503",
+      "http 502",
+      "http 500",
+      "bad gateway",
+      "service unavailable",
+      "try again",
+    ].some((p) => msg.includes(p))
+  ) {
+    return true;
+  }
+  if (error && typeof error === "object") {
+    const s =
+      (error as { statusCode?: number }).statusCode ??
+      (error as { status?: number }).status;
+    if (s === 429 || s === 500 || s === 502 || s === 503) return true;
+  }
+  return false;
+}
+
+type ResendEmailPayload = Parameters<typeof resend.emails.send>[0];
+
+async function sendResendEmailWithRetry(
+  payload: ResendEmailPayload,
+): Promise<
+  { success: true; messageId?: string } | { success: false; error: unknown }
+> {
+  let lastError: unknown;
+  for (let attempt = 0; attempt < RESEND_MAX_ATTEMPTS; attempt++) {
+    try {
+      const { data: result, error } = await resend.emails.send(payload);
+      if (error) {
+        lastError = error;
+        if (isTransientSendError(error) && attempt < RESEND_MAX_ATTEMPTS - 1) {
+          await sleep(RESEND_RETRY_BASE_MS * 3 ** attempt);
+          continue;
+        }
+        return { success: false, error };
+      }
+      return { success: true, messageId: result?.id };
+    } catch (e) {
+      lastError = e;
+      if (isTransientSendError(e) && attempt < RESEND_MAX_ATTEMPTS - 1) {
+        await sleep(RESEND_RETRY_BASE_MS * 3 ** attempt);
+        continue;
+      }
+      return { success: false, error: e };
+    }
+  }
+  return { success: false, error: lastError };
+}
+
 // Resend requires verified domains or onboarding@resend.dev - Gmail/EMAIL_FROM won't work
 const RESEND_DEFAULT_FROM = "Ghost Mammoth Pickleball <onboarding@resend.dev>";
 
@@ -26,7 +123,7 @@ export interface QueueEmailData {
 
 export async function sendQueueJoinEmail(data: QueueEmailData) {
   try {
-    const { data: result, error } = await resend.emails.send({
+    const out = await sendResendEmailWithRetry({
       from: getFromEmail(),
       to: data.userEmail,
       subject: `Queue Confirmation - ${data.eventName}`,
@@ -72,11 +169,11 @@ export async function sendQueueJoinEmail(data: QueueEmailData) {
       text: `Hi ${data.userName},\n\nYou've successfully joined the queue for ${data.eventName}!\n\nEvent: ${data.eventName}\nLocation: ${data.eventLocation}\nDate: ${data.eventDate}\n${data.sentAt ? `Sent at: ${data.sentAt}\n` : ""}Your Position: #${data.currentPosition}\n${data.estimatedWaitTime ? `Estimated Wait: ~${data.estimatedWaitTime} minutes\n` : ""}\nWe'll notify you when you're up next!`,
     });
 
-    if (error) {
-      console.error("Error sending queue join email:", error);
-      return { success: false, error };
+    if (!out.success) {
+      console.error("Error sending queue join email:", out.error);
+      return out;
     }
-    return { success: true, messageId: result?.id };
+    return { success: true, messageId: out.messageId };
   } catch (error) {
     console.error("Error sending queue join email:", error);
     return { success: false, error };
@@ -85,7 +182,7 @@ export async function sendQueueJoinEmail(data: QueueEmailData) {
 
 export async function sendPositionUpdateEmail(data: QueueEmailData) {
   try {
-    const { data: result, error } = await resend.emails.send({
+    const out = await sendResendEmailWithRetry({
       from: getFromEmail(),
       to: data.userEmail,
       subject: `Queue Update - You've moved up!`,
@@ -127,11 +224,11 @@ export async function sendPositionUpdateEmail(data: QueueEmailData) {
       text: `Hi ${data.userName},\n\nYour position in the queue has been updated.\n\nEvent: ${data.eventName}\nCurrent Position: #${data.currentPosition}\n${data.estimatedWaitTime ? `Estimated Wait: ~${data.estimatedWaitTime} minutes\n` : ""}\nStay nearby - you'll be playing soon!`,
     });
 
-    if (error) {
-      console.error("Error sending position update email:", error);
-      return { success: false, error };
+    if (!out.success) {
+      console.error("Error sending position update email:", out.error);
+      return out;
     }
-    return { success: true, messageId: result?.id };
+    return { success: true, messageId: out.messageId };
   } catch (error) {
     console.error("Error sending position update email:", error);
     return { success: false, error };
@@ -140,7 +237,7 @@ export async function sendPositionUpdateEmail(data: QueueEmailData) {
 
 export async function sendUpNextEmail(data: QueueEmailData) {
   try {
-    const { data: result, error } = await resend.emails.send({
+    const out = await sendResendEmailWithRetry({
       from: getFromEmail(),
       to: data.userEmail,
       subject: `🎾 You're Up Next! - ${data.eventName}`,
@@ -186,11 +283,11 @@ export async function sendUpNextEmail(data: QueueEmailData) {
       text: `Hi ${data.userName},\n\n🎾 YOU'RE UP NEXT!\n\nGet ready! You're one of the next players to be assigned to a court.\n\nEvent: ${data.eventName}\nLocation: ${data.eventLocation}\nYour Position: #${data.currentPosition}\n\nPlease make sure you're at the venue and ready to play!`,
     });
 
-    if (error) {
-      console.error("Error sending up next email:", error);
-      return { success: false, error };
+    if (!out.success) {
+      console.error("Error sending up next email:", out.error);
+      return out;
     }
-    return { success: true, messageId: result?.id };
+    return { success: true, messageId: out.messageId };
   } catch (error) {
     console.error("Error sending up next email:", error);
     return { success: false, error };
@@ -203,7 +300,7 @@ export async function sendCourtAssignmentEmail(data: QueueEmailData) {
   }
 
   try {
-    const { data: result, error } = await resend.emails.send({
+    const out = await sendResendEmailWithRetry({
       from: getFromEmail(),
       to: data.userEmail,
       subject: `🎾 Time to Play! Court ${data.courtNumber} - ${data.eventName}`,
@@ -250,11 +347,11 @@ export async function sendCourtAssignmentEmail(data: QueueEmailData) {
       text: `Hi ${data.userName},\n\n🎾 IT'S YOUR TURN TO PLAY!\n\nYou've been assigned to Court #${data.courtNumber}\n\nEvent: ${data.eventName}\nLocation: ${data.eventLocation}\n\nPlease head to Court #${data.courtNumber} now!\n\nHave a great game! 🏓`,
     });
 
-    if (error) {
-      console.error("Error sending court assignment email:", error);
-      return { success: false, error };
+    if (!out.success) {
+      console.error("Error sending court assignment email:", out.error);
+      return out;
     }
-    return { success: true, messageId: result?.id };
+    return { success: true, messageId: out.messageId };
   } catch (error) {
     console.error("Error sending court assignment email:", error);
     return { success: false, error };
