@@ -67,16 +67,19 @@ export class QueueManager {
   }
 
   /**
-   * Gets next N players from queue using optimal subset sum algorithm
-   * Finds best combination of groups that fills exactly 'count' players
-   * Prioritizes: 1) Exact match, 2) Fewer groups, 3) Earlier positions
+   * Gets next N players from queue using subset-sum over atomic groups.
    *
    * IMPORTANT: Groups are NEVER split - they are treated as atomic units.
-   * A group of 3 players will always be taken together or skipped entirely.
+   *
+   * Queue order is by ascending `position` (index 0 = front of line). Among all
+   * combinations of groups whose sizes sum to exactly `count`, pick the most
+   * front-loaded (FIFO):
+   * 1) Minimize sum of selected group indices — take from the front of the queue
+   *    first (rotate-all: players who just finished are at the back and must not
+   *    be chosen ahead of people who were already waiting when both sets fit).
+   * 2) Tie: lexicographically smaller sorted index list (earlier groups win).
    */
   static getNextPlayers(queue: QueueEntry[], count: number): QueueEntry[] {
-    // Group entries by their group_id or as solo players
-    // Each group is treated as an atomic unit that cannot be split
     const groups: QueueEntry[][] = [];
     const processedGroupIds = new Set<string>();
 
@@ -86,155 +89,88 @@ export class QueueManager {
         groups.push(groupMembers);
         processedGroupIds.add(entry.groupId);
       } else if (!entry.groupId) {
-        groups.push([entry]); // Solo player as single-member group
+        groups.push([entry]);
       }
     }
 
-    // Helper to count total players in a group
     const countPlayers = (entries: QueueEntry[]): number => {
       return entries.reduce((sum, entry) => sum + (entry.groupSize || 1), 0);
     };
 
-    // Calculate player counts for each group
     const groupSizes = groups.map(countPlayers);
+    const solutions: number[][] = [];
+    this.collectExactCombinations(groupSizes, count, 0, [], 0, solutions);
 
-    // Find best combination using backtracking
-    const bestIndices = this.findBestCombination(groupSizes, count, 0, [], 0);
-
-    if (bestIndices && bestIndices.length > 0) {
-      // Flatten selected groups into individual entries
-      return bestIndices.flatMap((idx) => groups[idx]);
+    if (solutions.length === 0) {
+      return [];
     }
 
-    // Fallback: return empty if no valid combination found
-    return [];
+    const bestIndices = solutions.reduce((best, cur) =>
+      this.isFifoBetterCombination(cur, best) ? cur : best
+    );
+
+    return bestIndices.flatMap((idx) => groups[idx]);
   }
 
-  /**
-   * Backtracking algorithm to find best subset of groups that sum to target
-   * Returns indices of groups that should be selected
-   * Prioritizes: 1) Exact match, 2) Fewer groups, 3) Sequential groups, 4) Earlier positions
-   *
-   * IMPORTANT: This algorithm explores ALL possible combinations to find the optimal one.
-   * It doesn't stop at the first valid solution - it continues to find the best sequential match.
-   */
-  private static findBestCombination(
+  /** DFS: collect every subset of group indices whose sizes sum to `target`. */
+  private static collectExactCombinations(
     groupSizes: number[],
     target: number,
     startIdx: number,
-    currentCombination: number[],
+    current: number[],
     currentSum: number,
-    bestExact: number[] | null = null
-  ): number[] | null {
-    // Perfect match found
+    out: number[][]
+  ): void {
     if (currentSum === target) {
-      if (!bestExact) {
-        bestExact = [...currentCombination];
-      } else {
-        // Compare with current best and update if this is better
-        let isBetter = false;
-
-        // Prioritize sequential groups over fewer groups
-        const currentIsSequential = this.isSequential(currentCombination);
-        const bestIsSequential = this.isSequential(bestExact);
-
-        if (currentIsSequential && !bestIsSequential) {
-          // Current is sequential, best is not - prefer current
-          isBetter = true;
-        } else if (!currentIsSequential && bestIsSequential) {
-          // Current is not sequential, best is - keep best
-          isBetter = false;
-        } else if (currentCombination.length < bestExact.length) {
-          // Both have same sequential status - prefer fewer groups
-          isBetter = true;
-        } else if (currentCombination.length === bestExact.length) {
-          // Same number of groups and same sequential status - prefer earlier positions
-          const currentIndexSum = currentCombination.reduce((a, b) => a + b, 0);
-          const bestIndexSum = bestExact.reduce((a, b) => a + b, 0);
-          if (currentIndexSum < bestIndexSum) {
-            isBetter = true;
-          }
-        }
-
-        if (isBetter) {
-          bestExact = [...currentCombination];
-        }
-      }
-
-      // Continue exploring to find even better solutions
-      // Don't return early - keep searching for optimal sequential solution
+      out.push([...current]);
+      return;
     }
-
-    // Exceeded target or reached end without exact match
     if (currentSum > target || startIdx >= groupSizes.length) {
-      return bestExact;
+      return;
     }
 
-    // Try including current group (explores "take early groups" path first)
-    const withCurrent = this.findBestCombination(
+    this.collectExactCombinations(
       groupSizes,
       target,
       startIdx + 1,
-      [...currentCombination, startIdx],
+      [...current, startIdx],
       currentSum + groupSizes[startIdx],
-      bestExact
+      out
     );
-
-    // If we found exact match with current, update bestExact
-    const updatedBest = withCurrent || bestExact;
-
-    // Try skipping current group
-    const withoutCurrent = this.findBestCombination(
+    this.collectExactCombinations(
       groupSizes,
       target,
       startIdx + 1,
-      currentCombination,
+      current,
       currentSum,
-      updatedBest
+      out
     );
-
-    // Return best result
-    if (withCurrent && withoutCurrent) {
-      // Prefer fewer groups
-      if (withCurrent.length !== withoutCurrent.length) {
-        return withCurrent.length < withoutCurrent.length
-          ? withCurrent
-          : withoutCurrent;
-      }
-      // Same length - prefer sequential groups
-      const withSequential = this.isSequential(withCurrent);
-      const withoutSequential = this.isSequential(withoutCurrent);
-
-      if (withSequential && !withoutSequential) {
-        return withCurrent;
-      }
-      if (!withSequential && withoutSequential) {
-        return withoutCurrent;
-      }
-
-      // If both are sequential or both aren't, prefer earlier positions (lower sum of indices)
-      const currentIndexSum = withCurrent.reduce((a, b) => a + b, 0);
-      const withoutIndexSum = withoutCurrent.reduce((a, b) => a + b, 0);
-      return currentIndexSum <= withoutIndexSum ? withCurrent : withoutCurrent;
-    }
-
-    return withCurrent || withoutCurrent;
   }
 
-  /**
-   * Helper method to check if indices are sequential (consecutive)
-   * Returns true if all indices are consecutive numbers
-   */
-  private static isSequential(indices: number[]): boolean {
-    if (indices.length <= 1) return true;
-
-    const sorted = [...indices].sort((a, b) => a - b);
-    for (let i = 1; i < sorted.length; i++) {
-      if (sorted[i] !== sorted[i - 1] + 1) {
+  /** True if `a` is preferred over `b` under FIFO (front-of-queue first) rules. */
+  private static isFifoBetterCombination(a: number[], b: number[]): boolean {
+    const sumA = a.reduce((s, i) => s + i, 0);
+    const sumB = b.reduce((s, i) => s + i, 0);
+    if (sumA !== sumB) {
+      return sumA < sumB;
+    }
+    const sa = [...a].sort((x, y) => x - y);
+    const sb = [...b].sort((x, y) => x - y);
+    const len = Math.max(sa.length, sb.length);
+    for (let i = 0; i < len; i++) {
+      const va = sa[i];
+      const vb = sb[i];
+      if (va === undefined) {
+        return true;
+      }
+      if (vb === undefined) {
         return false;
       }
+      if (va !== vb) {
+        return va < vb;
+      }
     }
-    return true;
+    return false;
   }
 
   /**

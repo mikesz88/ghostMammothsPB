@@ -30,6 +30,8 @@ const TEST_USER_IDS = [
 export async function resetTestEvent(eventId: string) {
   const supabase = await createClient();
 
+  await supabase.from("court_pending_stayers").delete().eq("event_id", eventId);
+
   // 1. Clear all queue entries for this event
   await supabase.from("queue_entries").delete().eq("event_id", eventId);
 

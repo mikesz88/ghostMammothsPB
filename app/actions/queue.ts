@@ -2,9 +2,12 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
-import { sendQueueNotification } from "./notifications";
+import {
+  flushQueueEmailNotifications,
+  sendQueueNotification,
+} from "./notifications";
 import type { Database } from "@/supabase/supa-schema";
-import type { GroupSize } from "@/lib/types";
+import type { GroupSize, RotationType, TeamSize } from "@/lib/types";
 
 type QueueEntryRow = Database["public"]["Tables"]["queue_entries"]["Row"];
 type CourtAssignmentInsert =
@@ -23,6 +26,92 @@ type QueueEntryWithUser = QueueEntryRow & {
     skill_level: string;
   } | null;
 };
+
+const ASSIGNMENT_PLAYER_KEYS = [
+  "player1_id",
+  "player2_id",
+  "player3_id",
+  "player4_id",
+  "player5_id",
+  "player6_id",
+  "player7_id",
+  "player8_id",
+] as const;
+
+type GameEntryRow = {
+  id: string;
+  user_id: string;
+  group_size: number | null;
+  position: number;
+};
+
+function isWinnersStayStyleRotation(rt: RotationType): boolean {
+  return rt === "winners-stay" || rt === "2-stay-4-off";
+}
+
+function isRotateAllStyleRotation(rt: RotationType): boolean {
+  return rt === "rotate-all";
+}
+
+function entryIdForGameUser(
+  gameQueueEntryIds: string[],
+  userId: string,
+  entriesById: Map<string, GameEntryRow>,
+): string | undefined {
+  for (const eid of gameQueueEntryIds) {
+    const e = entriesById.get(eid);
+    if (e?.user_id === userId) return eid;
+  }
+  return undefined;
+}
+
+/** Queue entry ids for one side in court slot order (player1 →), unique entries first-seen. */
+function getSideEntryIdsSlotOrder(
+  assignmentRow: Record<string, string | null | undefined>,
+  teamSize: number,
+  gameQueueEntryIds: string[],
+  entriesById: Map<string, GameEntryRow>,
+  side: "team1" | "team2",
+): string[] {
+  const out: string[] = [];
+  const seen = new Set<string>();
+  for (let slotIdx = 0; slotIdx < teamSize * 2; slotIdx++) {
+    const key = ASSIGNMENT_PLAYER_KEYS[slotIdx];
+    const uid = assignmentRow[key];
+    if (!uid) continue;
+    const team: "team1" | "team2" =
+      slotIdx < teamSize ? "team1" : "team2";
+    if (team !== side) continue;
+    const eid = entryIdForGameUser(gameQueueEntryIds, uid, entriesById);
+    if (eid && !seen.has(eid)) {
+      seen.add(eid);
+      out.push(eid);
+    }
+  }
+  return out;
+}
+
+/** All participants in slot order (both teams), unique entries first-seen. */
+function getAllParticipantEntryIdsSlotOrder(
+  assignmentRow: Record<string, string | null | undefined>,
+  teamSize: number,
+  gameQueueEntryIds: string[],
+  entriesById: Map<string, GameEntryRow>,
+): string[] {
+  const out: string[] = [];
+  const seen = new Set<string>();
+  for (let slotIdx = 0; slotIdx < teamSize * 2; slotIdx++) {
+    const key = ASSIGNMENT_PLAYER_KEYS[slotIdx];
+    const uid = assignmentRow[key];
+    if (!uid) continue;
+    const eid = entryIdForGameUser(gameQueueEntryIds, uid, entriesById);
+    if (eid && !seen.has(eid)) {
+      seen.add(eid);
+      out.push(eid);
+    }
+  }
+  return out;
+}
 
 export async function getQueue(eventId: string) {
   const supabase = await createClient();
@@ -154,9 +243,12 @@ export async function reorderQueue(eventId: string) {
     .order("position");
 
   if (queue) {
-    // Track notifications to avoid spamming
-    const upNextNotifications: Promise<unknown>[] = [];
-    const positionUpdateNotifications: Promise<unknown>[] = [];
+    const toNotify: Array<{
+      userId: string;
+      eventId: string;
+      position: number;
+      notificationType: "up-next" | "position-update";
+    }> = [];
 
     // Update positions
     for (let i = 0; i < queue.length; i++) {
@@ -170,39 +262,329 @@ export async function reorderQueue(eventId: string) {
 
       // Send "up next" email if they just entered top 4
       if (newPosition <= 4 && oldPosition > 4) {
-        upNextNotifications.push(
-          sendQueueNotification(
-            queue[i].user_id,
-            eventId,
-            newPosition,
-            "up-next",
-          ),
-        );
+        toNotify.push({
+          userId: queue[i].user_id,
+          eventId,
+          position: newPosition,
+          notificationType: "up-next",
+        });
       }
       // Send position update if they moved up significantly (3+ positions)
       else if (oldPosition - newPosition >= 3) {
-        positionUpdateNotifications.push(
-          sendQueueNotification(
-            queue[i].user_id,
-            eventId,
-            newPosition,
-            "position-update",
-          ),
-        );
+        toNotify.push({
+          userId: queue[i].user_id,
+          eventId,
+          position: newPosition,
+          notificationType: "position-update",
+        });
       }
     }
 
-    // Send notifications without blocking
-    Promise.all([...upNextNotifications, ...positionUpdateNotifications]).catch(
-      (err) => console.error("Error sending position update emails:", err),
+    await flushQueueEmailNotifications(toNotify).catch((err) =>
+      console.error("Error sending queue notification emails:", err),
     );
   }
+}
+
+export async function endGameAndReorderQueue(
+  eventId: string,
+  assignmentId: string,
+  winningTeam: "team1" | "team2",
+) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) {
+    return { success: false, error: "Not authenticated" };
+  }
+  const { data: profile } = await supabase
+    .from("users")
+    .select("is_admin")
+    .eq("id", user.id)
+    .single();
+  if (!profile?.is_admin) {
+    return { success: false, error: "Unauthorized" };
+  }
+
+  const { data: eventRow, error: eventErr } = await supabase
+    .from("events")
+    .select("team_size, rotation_type")
+    .eq("id", eventId)
+    .single();
+  if (eventErr || !eventRow) {
+    return { success: false, error: "Event not found" };
+  }
+  const teamSize = (eventRow.team_size || 2) as TeamSize;
+  const rotationType = eventRow.rotation_type as RotationType;
+
+  const { data: assignmentRow, error: assignErr } = await supabase
+    .from("court_assignments")
+    .select("*")
+    .eq("id", assignmentId)
+    .eq("event_id", eventId)
+    .single();
+  if (assignErr || !assignmentRow) {
+    return { success: false, error: "Assignment not found" };
+  }
+
+  let queueEntryIds: string[] = [];
+  const rawIds = assignmentRow.queue_entry_ids;
+  if (rawIds) {
+    try {
+      const p = rawIds as unknown as string[];
+      if (Array.isArray(p)) queueEntryIds = p;
+    } catch {
+      /* empty */
+    }
+  }
+  if (queueEntryIds.length === 0) {
+    const allPlayers = [
+      assignmentRow.player1_id,
+      assignmentRow.player2_id,
+      assignmentRow.player3_id,
+      assignmentRow.player4_id,
+      assignmentRow.player5_id,
+      assignmentRow.player6_id,
+      assignmentRow.player7_id,
+      assignmentRow.player8_id,
+    ].filter(Boolean) as string[];
+    const { data: entries } = await supabase
+      .from("queue_entries")
+      .select("id")
+      .eq("event_id", eventId)
+      .in("user_id", allPlayers);
+    if (entries) queueEntryIds = entries.map((e) => e.id);
+  }
+
+  const { data: gameEntries } = await supabase
+    .from("queue_entries")
+    .select("id, user_id, group_size, position")
+    .in("id", queueEntryIds);
+  const entriesById = new Map(
+    (gameEntries || []).map((e) => [e.id, e as GameEntryRow]),
+  );
+
+  const queueEntryToTeam = new Map<string, "team1" | "team2">();
+  let slotIndex = 0;
+  for (const entryId of queueEntryIds) {
+    const entry = entriesById.get(entryId);
+    if (!entry) continue;
+    const groupSize = entry.group_size || 1;
+    const endSlot = slotIndex + groupSize - 1;
+    if (endSlot < teamSize) {
+      queueEntryToTeam.set(entryId, "team1");
+    } else if (slotIndex >= teamSize) {
+      queueEntryToTeam.set(entryId, "team2");
+    } else {
+      if (teamSize - slotIndex >= endSlot - teamSize + 1) {
+        queueEntryToTeam.set(entryId, "team1");
+      } else {
+        queueEntryToTeam.set(entryId, "team2");
+      }
+    }
+    slotIndex += groupSize;
+  }
+
+  const winnerEntryIds = new Set<string>();
+  for (const [eid, team] of queueEntryToTeam) {
+    if (team === winningTeam) winnerEntryIds.add(eid);
+  }
+
+  const { error: endErr } = await supabase
+    .from("court_assignments")
+    .update({ ended_at: new Date().toISOString() })
+    .eq("id", assignmentId);
+  if (endErr) {
+    console.error("Error ending game:", endErr);
+    return { success: false, error: "Failed to end game" };
+  }
+
+  const courtNumber = assignmentRow.court_number;
+
+  await supabase
+    .from("court_pending_stayers")
+    .delete()
+    .eq("event_id", eventId)
+    .eq("court_number", courtNumber);
+
+  const ar = assignmentRow as Record<string, string | null | undefined>;
+
+  for (const entryId of queueEntryIds) {
+    const isWinner = winnerEntryIds.has(entryId);
+    if (isWinnersStayStyleRotation(rotationType)) {
+      if (isWinner) {
+        await supabase
+          .from("queue_entries")
+          .update({ status: "pending_stay" })
+          .eq("id", entryId);
+      } else {
+        await supabase
+          .from("queue_entries")
+          .update({ status: "waiting" })
+          .eq("id", entryId);
+      }
+    } else {
+      await supabase
+        .from("queue_entries")
+        .update({ status: "waiting" })
+        .eq("id", entryId);
+    }
+  }
+
+  const { data: allWaitingRows } = await supabase
+    .from("queue_entries")
+    .select("id, user_id, group_size, position")
+    .eq("event_id", eventId)
+    .eq("status", "waiting")
+    .order("position");
+
+  const allWaiting = allWaitingRows || [];
+  const otherEntries = allWaiting.filter((e) => !queueEntryIds.includes(e.id));
+  const losingSide = winningTeam === "team1" ? "team2" : "team1";
+  const loserIdsOrdered = getSideEntryIdsSlotOrder(
+    ar,
+    teamSize,
+    queueEntryIds,
+    entriesById,
+    losingSide,
+  );
+
+  let pos = 1;
+  if (isRotateAllStyleRotation(rotationType)) {
+    const participantsOrdered = getAllParticipantEntryIdsSlotOrder(
+      ar,
+      teamSize,
+      queueEntryIds,
+      entriesById,
+    );
+    for (const e of otherEntries) {
+      await supabase
+        .from("queue_entries")
+        .update({ position: pos })
+        .eq("id", e.id);
+      pos++;
+    }
+    for (const eid of participantsOrdered) {
+      await supabase
+        .from("queue_entries")
+        .update({ position: pos })
+        .eq("id", eid);
+      pos++;
+    }
+  } else if (isWinnersStayStyleRotation(rotationType)) {
+    for (const e of otherEntries) {
+      await supabase
+        .from("queue_entries")
+        .update({ position: pos })
+        .eq("id", e.id);
+      pos++;
+    }
+    for (const eid of loserIdsOrdered) {
+      await supabase
+        .from("queue_entries")
+        .update({ position: pos })
+        .eq("id", eid);
+      pos++;
+    }
+    const winningSide = winningTeam;
+    const winnerIdsOrdered = getSideEntryIdsSlotOrder(
+      ar,
+      teamSize,
+      queueEntryIds,
+      entriesById,
+      winningSide,
+    );
+    if (winnerIdsOrdered.length > 0) {
+      await supabase.from("court_pending_stayers").upsert(
+        {
+          event_id: eventId,
+          court_number: courtNumber,
+          queue_entry_ids: winnerIdsOrdered,
+        },
+        { onConflict: "event_id,court_number" },
+      );
+    }
+  } else {
+    const participantsOrdered = getAllParticipantEntryIdsSlotOrder(
+      ar,
+      teamSize,
+      queueEntryIds,
+      entriesById,
+    );
+    for (const e of otherEntries) {
+      await supabase
+        .from("queue_entries")
+        .update({ position: pos })
+        .eq("id", e.id);
+      pos++;
+    }
+    for (const eid of participantsOrdered) {
+      await supabase
+        .from("queue_entries")
+        .update({ position: pos })
+        .eq("id", eid);
+      pos++;
+    }
+  }
+
+  await reorderQueue(eventId);
+
+  revalidatePath(`/events/${eventId}`);
+  revalidatePath(`/admin/events/${eventId}`);
+
+  return { success: true };
+}
+
+function mapDbEntryToManagerEntry(entry: QueueEntryWithUser) {
+  let playerNamesArray: Array<{ name: string; skillLevel: string }> = [];
+  if (entry.player_names) {
+    try {
+      const parsed = entry.player_names as unknown as Array<{
+        name: string;
+        skillLevel: string;
+      }>;
+      playerNamesArray = Array.isArray(parsed) ? parsed : [];
+    } catch {
+      playerNamesArray = [];
+    }
+  }
+  return {
+    id: entry.id,
+    eventId: entry.event_id,
+    userId: entry.user_id,
+    groupId: entry.group_id || undefined,
+    groupSize: (entry.group_size || 1) as GroupSize,
+    player_names: playerNamesArray,
+    position: entry.position,
+    status: entry.status as "waiting" | "playing" | "completed" | "pending_stay",
+    joinedAt: new Date(entry.joined_at),
+    user: entry.user
+      ? {
+          id: entry.user.id,
+          name: entry.user.name,
+          email: entry.user.email,
+          skillLevel: entry.user.skill_level as
+            | "beginner"
+            | "intermediate"
+            | "advanced"
+            | "pro",
+          isAdmin: false,
+          createdAt: new Date(),
+        }
+      : undefined,
+  };
+}
+
+function countSlotsForEntries(
+  entries: Array<{ groupSize?: GroupSize }>,
+): number {
+  return entries.reduce((sum, entry) => sum + (entry.groupSize || 1), 0);
 }
 
 export async function assignPlayersToNextCourt(eventId: string) {
   const supabase = await createClient();
 
-  // Get event details
   const { data: event, error: eventError } = await supabase
     .from("events")
     .select("*")
@@ -215,88 +597,6 @@ export async function assignPlayersToNextCourt(eventId: string) {
 
   const playersPerCourt = event.team_size * 2;
 
-  // Get waiting queue entries with user data
-  const { data: queueData, error: queueError } = await supabase
-    .from("queue_entries")
-    .select(
-      `
-      *,
-      user:users(id, name, email, skill_level)
-    `,
-    )
-    .eq("event_id", eventId)
-    .eq("status", "waiting")
-    .order("position");
-
-  if (queueError) {
-    return { success: false, error: "Failed to fetch queue" };
-  }
-
-  // Import QueueManager dynamically to use getNextPlayers
-  const { QueueManager } = await import("@/lib/queue-manager");
-
-  // Map to QueueEntry type
-  const waitingQueue = (queueData || []).map((entry: QueueEntryWithUser) => {
-    // Parse player_names JSON if it exists
-    let playerNamesArray: Array<{ name: string; skillLevel: string }> = [];
-    if (entry.player_names) {
-      try {
-        const parsed = entry.player_names as unknown as Array<{
-          name: string;
-          skillLevel: string;
-        }>;
-        playerNamesArray = Array.isArray(parsed) ? parsed : [];
-      } catch {
-        playerNamesArray = [];
-      }
-    }
-
-    return {
-      id: entry.id,
-      eventId: entry.event_id,
-      userId: entry.user_id,
-      groupId: entry.group_id || undefined,
-      groupSize: (entry.group_size || 1) as GroupSize,
-      player_names: playerNamesArray,
-      position: entry.position,
-      status: entry.status as "waiting" | "playing" | "completed",
-      joinedAt: new Date(entry.joined_at),
-      user: entry.user
-        ? {
-            id: entry.user.id,
-            name: entry.user.name,
-            email: entry.user.email,
-            skillLevel: entry.user.skill_level as
-              | "beginner"
-              | "intermediate"
-              | "advanced"
-              | "pro",
-            isAdmin: false,
-            createdAt: new Date(),
-          }
-        : undefined,
-    };
-  });
-
-  const nextPlayers = QueueManager.getNextPlayers(
-    waitingQueue,
-    playersPerCourt,
-  );
-
-  // Count total players (considering group_size)
-  const totalPlayerCount = nextPlayers.reduce(
-    (sum, entry) => sum + (entry.groupSize || 1),
-    0,
-  );
-
-  if (totalPlayerCount < playersPerCourt) {
-    return {
-      success: false,
-      error: `Not enough players in queue. Need ${playersPerCourt} players.`,
-    };
-  }
-
-  // Find an available court
   const { data: activeAssignments } = await supabase
     .from("court_assignments")
     .select("court_number")
@@ -319,7 +619,6 @@ export async function assignPlayersToNextCourt(eventId: string) {
     return { success: false, error: "No available courts" };
   }
 
-  // Delete any ended assignments for this court to avoid unique constraint violation
   await supabase
     .from("court_assignments")
     .delete()
@@ -327,7 +626,122 @@ export async function assignPlayersToNextCourt(eventId: string) {
     .eq("court_number", availableCourt)
     .not("ended_at", "is", null);
 
-  // Create court assignment with dynamic player slots
+  const { QueueManager } = await import("@/lib/queue-manager");
+
+  const { data: pendingRow } = await supabase
+    .from("court_pending_stayers")
+    .select("*")
+    .eq("event_id", eventId)
+    .eq("court_number", availableCourt)
+    .maybeSingle();
+
+  let stayingMapped: ReturnType<typeof mapDbEntryToManagerEntry>[] = [];
+
+  const pendingIds = pendingRow?.queue_entry_ids;
+  if (
+    pendingRow &&
+    Array.isArray(pendingIds) &&
+    (pendingIds as string[]).length > 0
+  ) {
+    const ids = pendingIds as string[];
+    const { data: stayRows, error: stayErr } = await supabase
+      .from("queue_entries")
+      .select(
+        `
+        *,
+        user:users(id, name, email, skill_level)
+      `,
+      )
+      .in("id", ids);
+
+    if (stayErr) {
+      return { success: false, error: "Failed to load pending stayers" };
+    }
+
+    const byId = new Map(
+      (stayRows || []).map((r) => [r.id, r as QueueEntryWithUser]),
+    );
+    const ordered = ids
+      .map((id) => byId.get(id))
+      .filter((r): r is QueueEntryWithUser => Boolean(r));
+
+    if (ordered.length === 0) {
+      await supabase
+        .from("court_pending_stayers")
+        .delete()
+        .eq("event_id", eventId)
+        .eq("court_number", availableCourt);
+    } else {
+      stayingMapped = ordered.map(mapDbEntryToManagerEntry);
+      const sc = countSlotsForEntries(stayingMapped);
+      if (sc > playersPerCourt) {
+        return {
+          success: false,
+          error: "Pending stayers exceed court capacity.",
+        };
+      }
+    }
+  }
+
+  const stayingCount = countSlotsForEntries(stayingMapped);
+  let playersNeeded = playersPerCourt - stayingCount;
+
+  if (playersNeeded < 0) {
+    return {
+      success: false,
+      error: "Invalid pending stayer count for this court.",
+    };
+  }
+
+  const { data: queueData, error: queueError } = await supabase
+    .from("queue_entries")
+    .select(
+      `
+      *,
+      user:users(id, name, email, skill_level)
+    `,
+    )
+    .eq("event_id", eventId)
+    .eq("status", "waiting")
+    .order("position");
+
+  if (queueError) {
+    return { success: false, error: "Failed to fetch queue" };
+  }
+
+  const waitingQueue = (queueData || []).map((entry: QueueEntryWithUser) =>
+    mapDbEntryToManagerEntry(entry),
+  );
+
+  let newFromQueue: ReturnType<typeof mapDbEntryToManagerEntry>[] = [];
+  if (playersNeeded > 0) {
+    newFromQueue = QueueManager.getNextPlayers(
+      waitingQueue,
+      playersNeeded,
+    ) as ReturnType<typeof mapDbEntryToManagerEntry>[];
+    const got = countSlotsForEntries(newFromQueue);
+    if (got < playersNeeded) {
+      return {
+        success: false,
+        error: `Not enough players in queue. Need ${playersNeeded} more player slot(s) to fill the court.`,
+      };
+    }
+  } else if (playersNeeded === 0 && stayingCount !== playersPerCourt) {
+    return {
+      success: false,
+      error: "Pending stayers do not fill the court.",
+    };
+  }
+
+  const nextPlayers = [...stayingMapped, ...newFromQueue];
+  const totalSlots = countSlotsForEntries(nextPlayers);
+  if (totalSlots !== playersPerCourt) {
+    return {
+      success: false,
+      error: "Could not form a full court from queue and pending stayers.",
+    };
+  }
+
   const assignmentData: CourtAssignmentInsert = {
     event_id: eventId,
     court_number: availableCourt,
@@ -336,7 +750,6 @@ export async function assignPlayersToNextCourt(eventId: string) {
     queue_entry_ids: nextPlayers.map((p) => p.id),
   };
 
-  // Expand queue entries to individual player slots (handling group_size)
   const playerSlots: Array<{
     userId: string;
     name: string;
@@ -347,7 +760,6 @@ export async function assignPlayersToNextCourt(eventId: string) {
     const groupSize = entry.groupSize || 1;
     const playerNames = entry.player_names || [];
 
-    // If we have player_names stored, use those
     if (playerNames.length > 0) {
       for (let i = 0; i < groupSize; i++) {
         playerSlots.push({
@@ -360,7 +772,6 @@ export async function assignPlayersToNextCourt(eventId: string) {
         });
       }
     } else {
-      // Fallback: use the user's name for all slots
       for (let i = 0; i < groupSize; i++) {
         playerSlots.push({
           userId: entry.userId,
@@ -371,10 +782,8 @@ export async function assignPlayersToNextCourt(eventId: string) {
     }
   }
 
-  // Store player names for display (schema may be out of date, so we extend the type)
   assignmentData.player_names = playerSlots.map((p) => p.name);
 
-  // Assign players to slots (using userId for database)
   if (playerSlots[0]) assignmentData.player1_id = playerSlots[0].userId;
   if (playerSlots[1]) assignmentData.player2_id = playerSlots[1].userId;
   if (playerSlots[2]) assignmentData.player3_id = playerSlots[2].userId;
@@ -396,7 +805,14 @@ export async function assignPlayersToNextCourt(eventId: string) {
     };
   }
 
-  // Update queue entries to "playing"
+  if (pendingRow && stayingMapped.length > 0) {
+    await supabase
+      .from("court_pending_stayers")
+      .delete()
+      .eq("event_id", eventId)
+      .eq("court_number", availableCourt);
+  }
+
   for (const player of nextPlayers) {
     const { error: updateError } = await supabase
       .from("queue_entries")
@@ -406,20 +822,20 @@ export async function assignPlayersToNextCourt(eventId: string) {
     if (updateError) {
       console.error(`Failed to update player ${player.id}:`, updateError);
     }
-
-    // Send court assignment email notification
-    sendQueueNotification(
-      player.userId,
-      eventId,
-      player.position,
-      "court-assignment",
-      availableCourt,
-    ).catch((err) =>
-      console.error("Failed to send court assignment email:", err),
-    );
   }
 
-  // Reorder remaining waiting players to fill gaps in positions
+  await flushQueueEmailNotifications(
+    nextPlayers.map((player) => ({
+      userId: player.userId,
+      eventId,
+      position: player.position,
+      notificationType: "court-assignment" as const,
+      courtNumber: availableCourt,
+    })),
+  ).catch((err) =>
+    console.error("Failed to send court assignment emails:", err),
+  );
+
   await reorderQueue(eventId);
 
   revalidatePath(`/events/${eventId}`);

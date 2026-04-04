@@ -1,8 +1,15 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
-import { ArrowLeft, Mail, CheckCircle, XCircle, Loader2 } from "lucide-react";
+import {
+  Mail,
+  CheckCircle,
+  XCircle,
+  Loader2,
+  RefreshCw,
+  ExternalLink,
+} from "lucide-react";
 import {
   Card,
   CardContent,
@@ -13,43 +20,100 @@ import {
 import { Button } from "@/components/ui/button";
 import { Header } from "@/components/ui/header";
 import { Badge } from "@/components/ui/badge";
-import { getEmailStats } from "@/app/actions/notifications";
+import {
+  getEmailStats,
+  resendQueueEmailFromLog,
+  type EmailLogRow,
+  type GetEmailStatsResult,
+} from "@/app/actions/notifications";
+import { toast } from "sonner";
+
+type EmailStatsResult = Extract<GetEmailStatsResult, { total: number }>;
+
+const initialStats: EmailStatsResult = {
+  total: 0,
+  successful: 0,
+  failed: 0,
+  failedOther: 0,
+  byType: {},
+  logs: [],
+  failedDeliveryLogs: [],
+};
 
 export default function EmailStatsPage() {
-  const [stats, setStats] = useState<any>(null);
+  const [stats, setStats] = useState<EmailStatsResult>(initialStats);
   const [timeRange, setTimeRange] = useState<
     "today" | "week" | "month" | "all"
   >("week");
   const [loading, setLoading] = useState(true);
+  const [resendingId, setResendingId] = useState<string | null>(null);
 
-  useEffect(() => {
-    fetchStats();
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- fetchStats is stable, timeRange triggers refetch
-  }, [timeRange]);
-
-  const emptyStats = {
-    total: 0,
-    successful: 0,
-    failed: 0,
-    byType: {} as Record<string, number>,
-    logs: [] as any[],
-  };
-
-  const fetchStats = async () => {
+  const fetchStats = useCallback(async () => {
+    const empty: EmailStatsResult = {
+      total: 0,
+      successful: 0,
+      failed: 0,
+      failedOther: 0,
+      byType: {},
+      logs: [],
+      failedDeliveryLogs: [],
+    };
     setLoading(true);
     try {
       const result = await getEmailStats(timeRange);
-      if (!result.error) {
-        setStats(result);
+      if ("error" in result) {
+        setStats(empty);
+        toast.error(result.error);
       } else {
-        setStats(emptyStats);
+        setStats(result);
       }
     } catch {
-      setStats(emptyStats);
+      setStats(empty);
     } finally {
       setLoading(false);
     }
+  }, [timeRange]);
+
+  useEffect(() => {
+    fetchStats();
+  }, [fetchStats]);
+
+  const handleResend = async (log: EmailLogRow) => {
+    setResendingId(log.id);
+    try {
+      const result = await resendQueueEmailFromLog(log.id);
+      if (result.success) {
+        toast.success("Email sent again");
+        await fetchStats();
+      } else {
+        toast.error(
+          typeof result.error === "string"
+            ? result.error
+            : "Could not resend email",
+        );
+      }
+    } catch {
+      toast.error("Could not resend email");
+    } finally {
+      setResendingId(null);
+    }
   };
+
+  function formatLogTime(iso: string) {
+    try {
+      return new Date(iso).toLocaleString(undefined, {
+        dateStyle: "short",
+        timeStyle: "short",
+      });
+    } catch {
+      return iso;
+    }
+  }
+
+  function truncateError(msg: string | null, max = 96) {
+    if (!msg) return "—";
+    return msg.length <= max ? msg : `${msg.slice(0, max)}…`;
+  }
 
   if (loading) {
     return (
@@ -127,7 +191,7 @@ export default function EmailStatsPage() {
                     Total Emails
                   </p>
                   <p className="text-3xl font-bold text-foreground">
-                    {stats?.total || 0}
+                    {stats.total || 0}
                   </p>
                 </div>
                 <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
@@ -145,7 +209,7 @@ export default function EmailStatsPage() {
                     Successful
                   </p>
                   <p className="text-3xl font-bold text-green-600">
-                    {stats?.successful || 0}
+                    {stats.successful || 0}
                   </p>
                 </div>
                 <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
@@ -159,10 +223,19 @@ export default function EmailStatsPage() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-muted-foreground mb-1">Failed</p>
-                  <p className="text-3xl font-bold text-red-600">
-                    {stats?.failed || 0}
+                  <p className="text-sm text-muted-foreground mb-1">
+                    Failed (delivery)
                   </p>
+                  <p className="text-3xl font-bold text-red-600">
+                    {stats.failed || 0}
+                  </p>
+                  {(stats.failedOther ?? 0) > 0 && (
+                    <p className="text-xs text-muted-foreground mt-1 max-w-[14rem]">
+                      {stats.failedOther} other failure
+                      {stats.failedOther === 1 ? "" : "s"} (missing email, bad
+                      data) hidden below
+                    </p>
+                  )}
                 </div>
                 <div className="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center">
                   <XCircle className="w-6 h-6 text-red-600" />
@@ -182,7 +255,7 @@ export default function EmailStatsPage() {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {Object.entries(stats?.byType || {}).map(([type, count]) => (
+              {Object.entries(stats.byType || {}).map(([type, count]) => (
                 <div
                   key={type}
                   className="flex items-center justify-between p-4 bg-muted/30 rounded-lg"
@@ -199,12 +272,115 @@ export default function EmailStatsPage() {
                   <span className="text-lg font-bold">{count as number}</span>
                 </div>
               ))}
-              {Object.keys(stats?.byType || {}).length === 0 && (
+              {Object.keys(stats.byType || {}).length === 0 && (
                 <p className="text-center text-muted-foreground py-8">
                   No emails sent yet
                 </p>
               )}
             </div>
+          </CardContent>
+        </Card>
+
+        {/* Failed sends — retry when queue/court state still matches */}
+        <Card className="border-border bg-card mb-8">
+          <CardHeader>
+            <CardTitle>Failed sends</CardTitle>
+            <CardDescription>
+              Resend send failures after automatic retries (network, TLS, rate
+              limits, etc.). Rows where we never attempted delivery—missing
+              account email, missing event, invalid data—are excluded. Resend
+              uses the player&apos;s current queue position or active court when
+              you resend.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {(() => {
+              const failed = stats.failedDeliveryLogs ?? [];
+              if (failed.length === 0) {
+                return (
+                  <p className="text-center text-muted-foreground py-6">
+                    No delivery failures in this range
+                  </p>
+                );
+              }
+              return (
+                <div className="overflow-x-auto rounded-lg border border-border">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-border bg-muted/40 text-left">
+                        <th className="p-3 font-medium">When</th>
+                        <th className="p-3 font-medium">Type</th>
+                        <th className="p-3 font-medium">Player</th>
+                        <th className="p-3 font-medium">Event</th>
+                        <th className="p-3 font-medium">Error</th>
+                        <th className="p-3 font-medium w-[120px]">Action</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {failed.map((log) => (
+                        <tr
+                          key={log.id}
+                          className="border-b border-border last:border-0"
+                        >
+                          <td className="p-3 whitespace-nowrap text-muted-foreground">
+                            {formatLogTime(log.sent_at)}
+                          </td>
+                          <td className="p-3">
+                            <Badge variant="outline">
+                              {log.notification_type}
+                            </Badge>
+                          </td>
+                          <td className="p-3">
+                            <div className="font-medium text-foreground">
+                              {log.user?.name ?? "—"}
+                            </div>
+                            <div className="text-muted-foreground text-xs truncate max-w-[200px]">
+                              {log.user?.email ?? "—"}
+                            </div>
+                          </td>
+                          <td className="p-3">
+                            {log.event_id ? (
+                              <Link
+                                href={`/admin/events/${log.event_id}`}
+                                className="inline-flex items-center gap-1 text-primary hover:underline"
+                              >
+                                {log.event?.name ?? "Event"}
+                                <ExternalLink className="w-3 h-3 shrink-0" />
+                              </Link>
+                            ) : (
+                              "—"
+                            )}
+                          </td>
+                          <td
+                            className="p-3 text-muted-foreground max-w-[280px]"
+                            title={log.error_message ?? undefined}
+                          >
+                            {truncateError(log.error_message)}
+                          </td>
+                          <td className="p-3">
+                            <Button
+                              type="button"
+                              variant="secondary"
+                              size="sm"
+                              disabled={resendingId === log.id}
+                              onClick={() => handleResend(log)}
+                              className="gap-1.5"
+                            >
+                              {resendingId === log.id ? (
+                                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                              ) : (
+                                <RefreshCw className="w-3.5 h-3.5" />
+                              )}
+                              Resend
+                            </Button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              );
+            })()}
           </CardContent>
         </Card>
 
@@ -228,7 +404,7 @@ export default function EmailStatsPage() {
                     Low Estimate ($0.0075/SMS)
                   </p>
                   <p className="text-2xl font-bold text-foreground">
-                    ${((stats?.total || 0) * 0.0075).toFixed(2)}
+                    ${((stats.total || 0) * 0.0075).toFixed(2)}
                   </p>
                 </div>
                 <div className="p-4 bg-muted/30 rounded-lg">
@@ -236,31 +412,31 @@ export default function EmailStatsPage() {
                     High Estimate ($0.02/SMS)
                   </p>
                   <p className="text-2xl font-bold text-foreground">
-                    ${((stats?.total || 0) * 0.02).toFixed(2)}
+                    ${((stats.total || 0) * 0.02).toFixed(2)}
                   </p>
                 </div>
               </div>
-              {timeRange === "week" && stats?.total > 0 && (
+              {timeRange === "week" && stats.total > 0 && (
                 <p className="text-sm text-muted-foreground mt-4">
                   Estimated monthly cost:{" "}
                   <strong>
-                    ${((stats?.total || 0) * 4 * 0.0075).toFixed(2)}
+                    ${((stats.total || 0) * 4 * 0.0075).toFixed(2)}
                   </strong>{" "}
                   -{" "}
                   <strong>
-                    ${((stats?.total || 0) * 4 * 0.02).toFixed(2)}
+                    ${((stats.total || 0) * 4 * 0.02).toFixed(2)}
                   </strong>
                 </p>
               )}
-              {timeRange === "today" && stats?.total > 0 && (
+              {timeRange === "today" && stats.total > 0 && (
                 <p className="text-sm text-muted-foreground mt-4">
                   If this daily rate continues, estimated monthly cost:{" "}
                   <strong>
-                    ${((stats?.total || 0) * 30 * 0.0075).toFixed(2)}
+                    ${((stats.total || 0) * 30 * 0.0075).toFixed(2)}
                   </strong>{" "}
                   -{" "}
                   <strong>
-                    ${((stats?.total || 0) * 30 * 0.02).toFixed(2)}
+                    ${((stats.total || 0) * 30 * 0.02).toFixed(2)}
                   </strong>
                 </p>
               )}
