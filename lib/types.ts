@@ -2,6 +2,7 @@ export type SkillLevel = "beginner" | "intermediate" | "advanced" | "pro";
 export type EventStatus = "active" | "ended";
 export type QueueStatus =
   | "waiting"
+  | "pending_solo"
   | "playing"
   | "completed"
   | "pending_stay";

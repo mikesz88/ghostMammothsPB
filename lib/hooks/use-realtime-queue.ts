@@ -22,7 +22,7 @@ export function useRealtimeQueue(eventId: string) {
         `
         )
         .eq("event_id", eventId)
-        .eq("status", "waiting")
+        .in("status", ["waiting", "pending_solo"])
         .order("position");
 
       if (error) {
@@ -34,6 +34,7 @@ export function useRealtimeQueue(eventId: string) {
           userId: entry.user_id,
           groupId: entry.group_id,
           groupSize: entry.group_size,
+          status: entry.status,
           joinedAt: new Date(entry.joined_at),
         }));
         setQueue(queueWithDates);

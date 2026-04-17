@@ -453,7 +453,9 @@ export default function AdminEventDetailPage(props: {
     };
   }, [id]);
 
-  const waitingCount = queue.filter((e) => e.status === "waiting").length;
+  const waitingCount = queue.filter(
+    (e) => e.status === "waiting" || e.status === "pending_solo",
+  ).length;
   const playingCount =
     assignments.filter((a) => !a.endedAt).length * (event?.teamSize || 2) * 2;
 
@@ -533,7 +535,7 @@ export default function AdminEventDetailPage(props: {
         .from("queue_entries")
         .delete()
         .eq("event_id", id)
-        .eq("status", "waiting");
+        .in("status", ["waiting", "pending_solo"]);
 
       if (error) {
         console.error("Error clearing queue:", error);
