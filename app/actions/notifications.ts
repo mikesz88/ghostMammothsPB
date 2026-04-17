@@ -481,7 +481,7 @@ export async function resendQueueEmailFromLog(logId: string) {
     .select("position")
     .eq("event_id", eventId)
     .eq("user_id", userId)
-    .eq("status", "waiting")
+    .in("status", ["waiting", "pending_solo"])
     .maybeSingle();
 
   if (!waiting) {

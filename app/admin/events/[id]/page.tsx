@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, use } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import {
   Trophy,
@@ -11,7 +12,6 @@ import {
   Calendar,
   Play,
   Trash2,
-  History,
   Loader2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -23,35 +23,23 @@ import { TestControls } from "./test-controls";
 import { Header } from "@/components/ui/header";
 import { createClient } from "@/lib/supabase/client";
 import {
-  leaveQueue,
+  adminQueueQueryKey,
+  fetchAdminQueueEntries,
+} from "@/lib/admin-queue";
+import {
   adminRemoveFromQueue,
   assignPlayersToNextCourt,
   endGameAndReorderQueue,
 } from "@/app/actions/queue";
-import { sendQueueNotification } from "@/app/actions/notifications";
 import type {
   Event,
-  QueueEntry,
   CourtAssignment,
   TeamSize,
   RotationType,
   EventStatus,
-  GroupSize,
-  QueueStatus,
   SkillLevel,
 } from "@/lib/types";
 import type { Database } from "@/supabase/supa-schema";
-
-type QueueEntryRow = Database["public"]["Tables"]["queue_entries"]["Row"];
-type QueueEntryWithUser = QueueEntryRow & {
-  player_names?: unknown; // JSON field that may not be in schema
-  user: {
-    id: string;
-    name: string;
-    email: string;
-    skill_level: string;
-  } | null;
-};
 
 type CourtAssignmentRow =
   Database["public"]["Tables"]["court_assignments"]["Row"];
@@ -114,8 +102,8 @@ export default function AdminEventDetailPage(props: {
 }) {
   const params = use(props.params);
   const { id } = params;
+  const queryClient = useQueryClient();
   const [event, setEvent] = useState<Event | null>(null);
-  const [queue, setQueue] = useState<QueueEntry[]>([]);
   const [assignments, setAssignments] = useState<CourtAssignment[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -178,76 +166,13 @@ export default function AdminEventDetailPage(props: {
     fetchEvent();
   }, [id]);
 
-  // Fetch queue data
+  const { data: queue = [] } = useQuery({
+    queryKey: adminQueueQueryKey(id),
+    queryFn: () => fetchAdminQueueEntries(id),
+    enabled: Boolean(id),
+  });
+
   useEffect(() => {
-    const fetchQueue = async () => {
-      const supabase = createClient();
-      const { data, error } = await supabase
-        .from("queue_entries")
-        .select(
-          `
-          *,
-          user:users(id, name, email, skill_level)
-        `,
-        )
-        .eq("event_id", id)
-        .order("position");
-
-      if (error) {
-        console.error("Error fetching queue:", error);
-        return;
-      }
-
-      if (data) {
-        const queueEntries: QueueEntry[] = data.map(
-          (entry: QueueEntryWithUser) => {
-            // Parse player_names JSON if it exists
-            let playerNamesArray: Array<{
-              name: string;
-              skillLevel: string;
-            }> = [];
-            if (entry.player_names) {
-              try {
-                const parsed = entry.player_names as unknown as Array<{
-                  name: string;
-                  skillLevel: string;
-                }>;
-                playerNamesArray = Array.isArray(parsed) ? parsed : [];
-              } catch {
-                playerNamesArray = [];
-              }
-            }
-
-            return {
-              id: entry.id,
-              eventId: entry.event_id,
-              userId: entry.user_id,
-              groupSize: (entry.group_size || 1) as GroupSize,
-              groupId: entry.group_id || undefined,
-              player_names: playerNamesArray,
-              position: entry.position,
-              status: entry.status as QueueStatus,
-              joinedAt: new Date(entry.joined_at),
-              user: entry.user
-                ? {
-                    id: entry.user.id,
-                    name: entry.user.name,
-                    email: entry.user.email,
-                    skillLevel: entry.user.skill_level as SkillLevel,
-                    isAdmin: false,
-                    createdAt: new Date(),
-                  }
-                : undefined,
-            };
-          },
-        );
-        setQueue(queueEntries);
-      }
-    };
-
-    fetchQueue();
-
-    // Set up real-time subscription
     const supabase = createClient();
     const channel = supabase
       .channel(`admin-queue-${id}`)
@@ -260,7 +185,9 @@ export default function AdminEventDetailPage(props: {
           filter: `event_id=eq.${id}`,
         },
         () => {
-          fetchQueue();
+          void queryClient.invalidateQueries({
+            queryKey: adminQueueQueryKey(id),
+          });
         },
       )
       .subscribe();
@@ -268,7 +195,7 @@ export default function AdminEventDetailPage(props: {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [id]);
+  }, [id, queryClient]);
 
   // Fetch court assignments
   useEffect(() => {
@@ -453,7 +380,9 @@ export default function AdminEventDetailPage(props: {
     };
   }, [id]);
 
-  const waitingCount = queue.filter((e) => e.status === "waiting").length;
+  const waitingCount = queue.filter(
+    (e) => e.status === "waiting" || e.status === "pending_solo",
+  ).length;
   const playingCount =
     assignments.filter((a) => !a.endedAt).length * (event?.teamSize || 2) * 2;
 
@@ -506,6 +435,9 @@ export default function AdminEventDetailPage(props: {
         });
       } else {
         toast.success("Player removed from queue");
+        await queryClient.invalidateQueries({
+          queryKey: adminQueueQueryKey(id),
+        });
       }
     } catch (err) {
       console.error("❌ [ADMIN PAGE] Exception in handleForceRemove:", err);
@@ -533,7 +465,7 @@ export default function AdminEventDetailPage(props: {
         .from("queue_entries")
         .delete()
         .eq("event_id", id)
-        .eq("status", "waiting");
+        .in("status", ["waiting", "pending_solo"]);
 
       if (error) {
         console.error("Error clearing queue:", error);
@@ -542,6 +474,9 @@ export default function AdminEventDetailPage(props: {
         });
       } else {
         toast.success("Queue cleared successfully");
+        await queryClient.invalidateQueries({
+          queryKey: adminQueueQueryKey(id),
+        });
       }
     } catch (err) {
       console.error("Error clearing queue:", err);
@@ -657,6 +592,11 @@ export default function AdminEventDetailPage(props: {
               currentRotationType={event.rotationType}
               currentTeamSize={event.teamSize}
               currentCourtCount={event.courtCount}
+              onQueueUpdated={() =>
+                void queryClient.invalidateQueries({
+                  queryKey: adminQueueQueryKey(id),
+                })
+              }
             />
           </div>
         )}
