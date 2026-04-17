@@ -44,6 +44,17 @@ function leaderFriendLabel(leaderName: string, friendSlotIndex: number): string 
   return `${leaderShortName(leaderName)}'s friend ${suffix}`;
 }
 
+/** Match production queue rules after bulk test inserts (pending_solo, positions). */
+async function normalizeQueueAfterTestSeed(eventId: string) {
+  const { reconcilePendingSoloForEvent, reorderQueue } = await import(
+    "./queue"
+  );
+  await reconcilePendingSoloForEvent(eventId);
+  await reorderQueue(eventId);
+  revalidatePath(`/events/${eventId}`);
+  revalidatePath(`/admin/events/${eventId}`);
+}
+
 export async function resetTestEvent(eventId: string) {
   const supabase = await createClient();
 
@@ -141,7 +152,13 @@ export async function resetTestEvent(eventId: string) {
     }
   }
 
-  revalidatePath(`/admin/events/${eventId}`);
+  if (successCount > 0) {
+    await normalizeQueueAfterTestSeed(eventId);
+  } else {
+    revalidatePath(`/events/${eventId}`);
+    revalidatePath(`/admin/events/${eventId}`);
+  }
+
   return {
     success: successCount > 0,
     error: successCount === 0 ? "Failed to reset event" : null,
@@ -233,7 +250,13 @@ export async function addDummyUsersToQueue(
     }
   }
 
-  revalidatePath(`/admin/events/${eventId}`);
+  if (successCount > 0) {
+    await normalizeQueueAfterTestSeed(eventId);
+  } else {
+    revalidatePath(`/events/${eventId}`);
+    revalidatePath(`/admin/events/${eventId}`);
+  }
+
   return {
     success: successCount > 0,
     added: successCount,

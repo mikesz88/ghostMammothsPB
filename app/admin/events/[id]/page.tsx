@@ -658,6 +658,7 @@ export default function AdminEventDetailPage(props: {
               currentRotationType={event.rotationType}
               currentTeamSize={event.teamSize}
               currentCourtCount={event.courtCount}
+              onQueueUpdated={() => void fetchQueue()}
             />
           </div>
         )}
