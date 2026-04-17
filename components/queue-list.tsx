@@ -186,9 +186,9 @@ export function QueueList({
                   </div>
                 </div>
                 <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground ">
                     <Clock className="w-4 h-4 shrink-0" />
-                    <span className="whitespace-nowrap">
+                    <span className="whitespace-nowrap ">
                       {(() => {
                         const minutesAgo = Math.floor(
                           (Date.now() - firstEntry.joinedAt.getTime()) / 60000,
@@ -212,9 +212,9 @@ export function QueueList({
                       aria-label={
                         isAdmin ? "Admin: Remove from queue" : "Leave queue"
                       }
-                      className="shrink-0"
+                      className="shrink-0 [&_svg]:size-5"
                     >
-                      <UserX className="w-4 h-4" aria-hidden />
+                      <UserX color={"red"} strokeWidth={3} aria-hidden />
                     </Button>
                   )}
                 </div>
