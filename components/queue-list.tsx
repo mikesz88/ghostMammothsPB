@@ -1,6 +1,6 @@
 "use client";
 
-import { Clock, X } from "lucide-react";
+import { Clock, UserX } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -31,7 +31,7 @@ const numberToSkillLevel: Record<number, string> = {
 // Calculate weighted average skill level for a group
 function getAverageSkillLevel(
   playerNames: Array<{ name: string; skillLevel: string }> | undefined,
-  fallbackSkillLevel?: string
+  fallbackSkillLevel?: string,
 ): string {
   if (!playerNames || playerNames.length === 0) {
     return fallbackSkillLevel || "intermediate";
@@ -128,7 +128,8 @@ export function QueueList({
                       On deck
                     </Badge>
                     <span className="font-medium text-foreground">
-                      {firstEntry.player_names && firstEntry.player_names.length > 0
+                      {firstEntry.player_names &&
+                      firstEntry.player_names.length > 0
                         ? firstEntry.player_names.map((p) => p.name).join(", ")
                         : firstEntry.user?.name}
                     </span>
@@ -179,7 +180,7 @@ export function QueueList({
                       <Badge variant="outline" className="text-xs shrink-0">
                         {getAverageSkillLevel(
                           firstEntry.player_names,
-                          firstEntry.user?.skillLevel
+                          firstEntry.user?.skillLevel,
                         )}
                       </Badge>
                     </div>
@@ -200,12 +201,12 @@ export function QueueList({
                   </div>
                 </div>
                 <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground ">
                     <Clock className="w-4 h-4 shrink-0" />
-                    <span className="whitespace-nowrap">
+                    <span className="whitespace-nowrap ">
                       {(() => {
                         const minutesAgo = Math.floor(
-                          (Date.now() - firstEntry.joinedAt.getTime()) / 60000
+                          (Date.now() - firstEntry.joinedAt.getTime()) / 60000,
                         );
                         if (minutesAgo < 0) return "Just now";
                         if (minutesAgo === 0) return "Just now";
@@ -223,10 +224,12 @@ export function QueueList({
                       title={
                         isAdmin ? "Admin: Remove from queue" : "Leave queue"
                       }
-                      aria-label={isAdmin ? "Admin: Remove from queue" : "Leave queue"}
-                      className="shrink-0"
+                      aria-label={
+                        isAdmin ? "Admin: Remove from queue" : "Leave queue"
+                      }
+                      className="shrink-0 [&_svg]:size-5"
                     >
-                      <X className="w-4 h-4" aria-hidden />
+                      <UserX color={"red"} strokeWidth={3} aria-hidden />
                     </Button>
                   )}
                 </div>
