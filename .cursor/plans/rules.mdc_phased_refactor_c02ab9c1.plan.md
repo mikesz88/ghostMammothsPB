@@ -1,35 +1,74 @@
 ---
 name: rules.mdc phased refactor
-overview: "Align the codebase with [.curser/rules.mdc](.curser/rules.mdc) through phased refactors: RSC-first route pages (no whole-file `use client`), small client islands for interactivity, server data fetching with props, shrink route files, domain folders under `components/`, server-side data access, and split oversized `lib/` and `app/actions/` modules—without changing product behavior per phase."
+overview: "Align the codebase with [.cursor/rules.mdc](.cursor/rules.mdc) through phased refactors: RSC-first route pages (no whole-file `use client`), small client islands for interactivity, server data fetching with props, shrink route files, domain folders under `components/`, server-side data access, and split oversized `lib/` and `app/actions/` modules—without changing product behavior per slice. Prefer **one sub-phase per PR** (~2–3 commits: extract → wire → lint/smoke) for a live app."
 todos:
   - id: phase-1
     content: "Phase 1: Conventions + RSC guardrails (page.tsx server-first), optional max-lines ESLint, imports"
     status: pending
-  - id: phase-2
-    content: "Phase 2: app/events/[id] — server page + client islands (events/*) + hooks + server data"
+  - id: phase-2a
+    content: "Phase 2a: events/[id] — extract client islands only (page stays client); components/events/*"
     status: pending
-  - id: phase-3
-    content: "Phase 3: app/admin/events/[id] + test-controls — server shell + small client components + actions"
+  - id: phase-2b
+    content: "Phase 2b: events/[id] — server page.tsx + initial server data; temporary large client child OK"
     status: pending
-  - id: phase-4
-    content: "Phase 4: Admin dashboard, users, email-stats — server pages; client widgets only where interactive"
+  - id: phase-2c
+    content: "Phase 2c: events/[id] — shrink client (Realtime leaf, server actions for reads)"
     status: pending
-  - id: phase-5
-    content: "Phase 5: Settings, membership, auth — server fetch; forms as client children; no raw Supabase in pages"
+  - id: phase-2d
+    content: "Phase 2d: events/[id] — cleanup duplicate fetches, imports, file size compliance"
     status: pending
-  - id: phase-6
-    content: "Phase 6: Split app/actions/queue.ts and notifications.ts; thin stripe webhook route"
+  - id: phase-3a
+    content: "Phase 3a: admin/events/[id] — extract islands OR split test-controls (low-risk first)"
     status: pending
-  - id: phase-7
-    content: "Phase 7: Split lib/email/resend.ts templates; optional lib/queue-manager.ts modules"
+  - id: phase-3b
+    content: "Phase 3b: admin/events/[id] — server shell + props; client panels queue/assignments"
     status: pending
-  - id: phase-8
-    content: "Phase 8 (optional): Home/events/about server-first + header client subcomponents with server parent props"
+  - id: phase-3c
+    content: "Phase 3c: admin/events/[id] — server actions for reads, auth server-side, types tidy"
+    status: pending
+  - id: phase-4a
+    content: "Phase 4a: admin dashboard — server stats/summary + data loading"
+    status: pending
+  - id: phase-4b
+    content: "Phase 4b: admin dashboard + users + email-stats — interactive client widgets per concern"
+    status: pending
+  - id: phase-5a
+    content: "Phase 5a: settings/membership/auth — extract presentational components"
+    status: pending
+  - id: phase-5b
+    content: "Phase 5b: settings/membership/auth — server fetch + props; client form shells only"
+    status: pending
+  - id: phase-6a
+    content: "Phase 6a: Split queue.ts — reads (getQueue + helpers); re-export from queue.ts"
+    status: pending
+  - id: phase-6b
+    content: "Phase 6b: Split queue.ts — reconcile/join/leave/reorder + adminRemove"
+    status: pending
+  - id: phase-6c
+    content: "Phase 6c: Split queue.ts — endGameAndReorderQueue (large; own PR)"
+    status: pending
+  - id: phase-6d
+    content: "Phase 6d: Split queue.ts — assignPlayersToNextCourt (large; own PR)"
+    status: pending
+  - id: phase-6e
+    content: "Phase 6e: Split notifications.ts (queue email vs admin/stats); thin stripe webhook route"
+    status: pending
+  - id: phase-7a
+    content: "Phase 7a: lib/email/resend — templates per slice or lib/email/templates/"
+    status: pending
+  - id: phase-7b
+    content: "Phase 7b (optional): lib/queue-manager.ts — split if still >200 lines after 2–3"
+    status: pending
+  - id: phase-8a
+    content: "Phase 8a (optional): Home/events/about server-first"
+    status: pending
+  - id: phase-8b
+    content: "Phase 8b (optional): header — server parent props + small client subcomponents"
     status: pending
 isProject: false
 ---
 
-# Phased refactor plan (per `.curser/rules.mdc`)
+# Phased refactor plan (per `.cursor/rules.mdc`)
 
 ## Server vs Client strategy (rules § Server vs Client Components)
 
@@ -44,13 +83,21 @@ These rules apply to **every phase** that touches routes:
 
 ---
 
+## PR / commit rhythm (live app)
+
+- **One sub-phase per PR** when possible; avoid RSC conversion + full queue split + `queue.ts` surgery in the same PR.
+- **~2–3 commits per PR** (suggested): (1) add modules/components or move code, (2) wire imports/call sites, (3) lint + remove dead code — or squash after review.
+- **Do not** split [app/actions/queue.ts](app/actions/queue.ts) in the same PR as large admin event queue UI changes without coordination.
+
+---
+
 ## Gap summary (current vs rules)
 
 
 | Rule                                    | Current issue                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
 | --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Server vs Client (§66–89)**           | Many routes are **entire-file** `"use client"` ([app/events/[id]/page.tsx](app/events/[id]/page.tsx), [app/admin/events/[id]/page.tsx](app/admin/events/[id]/page.tsx), settings, membership, etc.) — conflicts with **page.tsx server-first**, **fetch on server**, and **small client islands**                                                                                                                                                                                                                                                                               |
-| Files > 200 lines → refactor            | Many violations; worst: [app/admin/events/[id]/page.tsx](app/admin/events/[id]/page.tsx) (~~988), [app/events/[id]/page.tsx](app/events/[id]/page.tsx) (~~756), [app/admin/page.tsx](app/admin/page.tsx) (~~563), [app/actions/queue.ts](app/actions/queue.ts) (~~510), [app/actions/notifications.ts](app/actions/notifications.ts) (~~501), [app/membership/page.tsx](app/membership/page.tsx) (~~475), [components/ui/header.tsx](components/ui/header.tsx) (~~371), [lib/email/resend.ts](lib/email/resend.ts) (~~359), [lib/queue-manager.ts](lib/queue-manager.ts) (~411) |
+| Files > 200 lines → refactor            | Many violations; largest movers (approx., will drift): [app/admin/events/[id]/page.tsx](app/admin/events/[id]/page.tsx) (~750–990), [app/events/[id]/page.tsx](app/events/[id]/page.tsx) (~770+), [app/actions/queue.ts](app/actions/queue.ts) (~1100+), [app/admin/page.tsx](app/admin/page.tsx) (~560+), [app/actions/notifications.ts](app/actions/notifications.ts) (~500+), [app/membership/page.tsx](app/membership/page.tsx) (~475), [components/ui/header.tsx](components/ui/header.tsx) (~370+), [lib/email/resend.ts](lib/email/resend.ts), [lib/queue-manager.ts](lib/queue-manager.ts) |
 | Components < ~100 lines, single purpose | Large route components and [header.tsx](components/ui/header.tsx) mix many concerns                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
 | No DB / external calls from frontend UI | Client pages use `createClient()` + `.from(...)` directly — conflicts with **Data & API**; should be server fetch + props or server actions                                                                                                                                                                                                                                                                                                                                                                                                                                     |
 | Logic in hooks / services               | Some logic in [lib/hooks/](lib/hooks/) and [app/actions/](app/actions/); megapages still hold fetch + state + JSX                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
@@ -74,35 +121,64 @@ No feature changes beyond agreeing conventions.
 
 ## Phase 2 — Event experience: member event detail ([app/events/[id]/page.tsx](app/events/[id]/page.tsx))
 
-**Goals:** `**page.tsx` is a Server Component**; initial event/court/assignment data loaded on the server (actions, `fetch` to route handlers, or parallel server data loaders); **no Supabase in the page file**.
+**End state:** `page.tsx` is a Server Component; initial event/court/assignment data on the server; **no Supabase in the page file**; interactive regions in [components/events/](components/events/); hooks only imported from client leaves.
 
-- **Split:** move interactive regions into **small client components** under [components/events/](components/events/), e.g. `event-queue-live.tsx` (Realtime + join/leave), `event-qr-dialog.tsx`, `event-actions-card.tsx` — each **<100 lines** where possible, each with `"use client"` only on the file that needs it.
-- **Server page** composes: static/event metadata from server + client islands for queue, dialogs, payment CTA as needed.
-- **Hooks:** `useRealtimeQueue` and similar stay in [lib/hooks/](lib/hooks/) but **only imported inside client leaf components**, not the page.
-- **Data:** server actions / extended [app/actions/events.ts](app/actions/events.ts) for initial reads; Realtime remains client-only in the smallest wrapper.
-- **QueueManager:** used from actions or client hooks per existing boundaries, not in server `page.tsx` unless moved to an action.
+Split into **sub-phases (separate PRs)**:
 
-Deliverable: `**page.tsx` has no `"use client"`**; file is composition + async server data.
+### Phase 2a — Extract-only (lowest risk)
+
+- Move **one or two** interactive regions into `components/events/*` (e.g. queue + join/leave, or QR/join dialogs).
+- **Keep** file-level `"use client"` on `page.tsx` for this PR — mechanical move only, behavior unchanged.
+
+### Phase 2b — Server shell
+
+- Introduce async **server** `page.tsx` that loads event (and optionally assignments snapshot) via server actions / helpers.
+- **Allowed:** one **temporary** large client child that holds remaining state until 2c.
+
+### Phase 2c — Narrow client surface
+
+- Isolate **Realtime** in the smallest leaf (e.g. `event-queue-live.tsx` using `useRealtimeQueue`).
+- Move remaining client `createClient()` reads toward **server data + props** or server actions where possible.
+
+### Phase 2d — Cleanup
+
+- Remove duplicate fetches; import grouping; ensure new files respect **<200 / <100** targets where practical.
+
+**Hooks:** `useRealtimeQueue` stays in [lib/hooks/](lib/hooks/) — **only** imported inside client leaf components.
+
+**QueueManager:** actions or existing client boundaries, not in server `page.tsx` unless moved to an action.
 
 ---
 
 ## Phase 3 — Admin event console ([app/admin/events/[id]/page.tsx](app/admin/events/[id]/page.tsx) + [test-controls.tsx](app/admin/events/[id]/test-controls.tsx))
 
-**Goals:** Same RSC-first pattern as Phase 2 for the largest file in the repo.
+**End state:** Same RSC-first pattern as Phase 2; server loads event + queue snapshot + assignments; client panels small; admin auth server-side.
 
-- **Server `page.tsx`:** load event + queue snapshot + assignments on server; pass **serializable props** into client sections.
-- Move interactive UI to [components/admin/events/](components/admin/events/) — queue panel, court controls, history, dialogs; **each file client-only if it needs state/effects**.
-- Split [test-controls.tsx](app/admin/events/[id]/test-controls.tsx) into **small** client components + optional hooks.
-- Replace client Supabase reads with **server actions**; keep admin auth checks server-side.
-- Types: shared DB row types → [lib/types.ts](lib/types.ts) or `lib/types-queue.ts`.
+### Phase 3a — First extractions
+
+- **Either** split [test-controls.tsx](app/admin/events/[id]/test-controls.tsx) into small client pieces **or** extract one major island (queue panel / assignments) — **one concern per PR** to start.
+
+### Phase 3b — Server `page.tsx` + composition
+
+- Server page loads data; pass **serializable props** into client sections (queue, courts, history, dialogs).
+
+### Phase 3c — Data layer + types
+
+- Replace client Supabase reads with **server actions**; shared DB row types → [lib/types.ts](lib/types.ts) or `lib/types-queue.ts`.
 
 ---
 
 ## Phase 4 — Admin dashboard and roster ([app/admin/page.tsx](app/admin/page.tsx), [app/admin/users/page.tsx](app/admin/users/page.tsx), [app/admin/users/[id]/page.tsx](app/admin/users/[id]/page.tsx), [app/admin/email-stats/page.tsx](app/admin/email-stats/page.tsx))
 
-- **Default:** server `page.tsx` where possible; **tables and stats** can be server-rendered from server actions or loaders.
-- **Client islands** for: search-as-you-type, row actions with optimistic UI, toast-heavy flows — **one concern per file**.
-- Route Supabase reads through **server actions** ([app/actions/admin-users.ts](app/actions/admin-users.ts)); avoid client `createClient` in pages.
+### Phase 4a
+
+- **Dashboard:** server-rendered stats/summary; load data via server actions or loaders.
+
+### Phase 4b
+
+- **Interactive** pieces: search-as-you-type, row actions, toasts — **one concern per file**; apply the same pattern to [app/admin/users/](app/admin/users/) and [app/admin/email-stats/](app/admin/email-stats/).
+- If the diff is large, ship **users** and **email-stats** as **separate PRs** after the dashboard interactive slice.
+- Route reads through **server actions** ([app/actions/admin-users.ts](app/actions/admin-users.ts)); avoid client `createClient` in pages.
 
 ---
 
@@ -110,31 +186,62 @@ Deliverable: `**page.tsx` has no `"use client"`**; file is composition + async s
 
 Targets: [app/settings/page.tsx](app/settings/page.tsx), [app/settings/membership/page.tsx](app/settings/membership/page.tsx), [app/settings/notifications/page.tsx](app/settings/notifications/page.tsx), [app/membership/page.tsx](app/membership/page.tsx), [app/membership/checkout/page.tsx](app/membership/checkout/page.tsx), [app/membership/success/page.tsx](app/membership/success/page.tsx), [app/login/page.tsx](app/login/page.tsx), [app/signup/page.tsx](app/signup/page.tsx), [app/reset-password/page.tsx](app/reset-password/page.tsx).
 
-- **Auth/membership pages** often need client forms — use **server `page.tsx`** that passes initial session/membership data as props where possible; `**components/auth/*` client** form shells for inputs, submit, and client-only APIs (e.g. `signIn` from context).
-- Split forms/cards into `components/settings/`, `components/membership/`, `components/auth/`.
-- **Profile/membership fetch:** server actions or server-only loaders; **no** `useEffect` + `createClient` on the page file.
+### Phase 5a
+
+- **Extract** presentational pieces into `components/settings/`, `components/membership/`, `components/auth/` without changing data flow yet if needed for review size.
+
+### Phase 5b
+
+- **Server `page.tsx`** where possible; pass session/membership as props; **client** form shells for inputs/submit; **no** `useEffect` + `createClient` on the page file for profile/membership reads.
 
 ---
 
 ## Phase 6 — Server actions and domain services (split only; behavior unchanged)
 
-- **[app/actions/queue.ts](app/actions/queue.ts):** split by responsibility (`queue-read`, `queue-mutations`, `court-assignment`, etc.); each **<200 lines**. Re-export from `queue.ts` temporarily if needed.
-- **[app/actions/notifications.ts](app/actions/notifications.ts):** split modules; shared helpers → `lib/email/notifications-helpers.ts` if reused.
-- **[app/api/webhooks/stripe/route.ts](app/api/webhooks/stripe/route.ts):** handlers → [lib/stripe/](lib/stripe/); route stays a thin dispatcher.
+### Phase 6a — `queue.ts` reads
+
+- `getQueue` + small read helpers → e.g. `queue-read.ts`; **re-export** from [app/actions/queue.ts](app/actions/queue.ts) so imports can migrate gradually.
+
+### Phase 6b — `queue.ts` core mutations
+
+- `reconcilePendingSoloForEvent`, `joinQueue`, `leaveQueue`, `reorderQueue`, and `adminRemoveFromQueue` (or split admin remove into 6b-2 if PR too large).
+
+### Phase 6c — `endGameAndReorderQueue`
+
+- **Dedicated PR** — large function; heavy regression surface (admin end game).
+
+### Phase 6d — `assignPlayersToNextCourt`
+
+- **Dedicated PR** — large function; pair with 6c only if coordinated and tests are solid.
+
+### Phase 6e — Notifications + Stripe
+
+- [app/actions/notifications.ts](app/actions/notifications.ts): **PR 1** — queue email (`sendQueueNotification`, `flushQueueEmailNotifications`); **PR 2** — admin (`getEmailStats`, `resendQueueEmailFromLog`); shared helpers → `lib/email/notifications-helpers.ts` if needed.
+- [app/api/webhooks/stripe/route.ts](app/api/webhooks/stripe/route.ts): handlers → [lib/stripe/](lib/stripe/); route = thin dispatcher (often **one PR**; split by event type if it grows).
 
 ---
 
 ## Phase 7 — Email templates and queue algorithm ([lib/email/resend.ts](lib/email/resend.ts), [lib/queue-manager.ts](lib/queue-manager.ts))
 
-- **Resend:** shared HTML shell; per-template small files or `lib/email/templates/`.
-- **QueueManager:** split algorithms if files still **>200 lines** after Phases 2–3.
+### Phase 7a
+
+- **Resend:** shared HTML shell; per-template files under `lib/email/templates/` or similar — **one template group per PR** when possible for easy verification.
+
+### Phase 7b (optional)
+
+- **QueueManager:** split algorithms only if still **>200 lines** after Phases 2–3.
 
 ---
 
 ## Phase 8 (optional) — Marketing / public pages and shell
 
-- [app/page.tsx](app/page.tsx), [app/events/page.tsx](app/events/page.tsx), [app/about/page.tsx](app/about/page.tsx): **server-first**; fetch lists on server; client only for filters/carousels if needed.
-- [components/ui/header.tsx](components/ui/header.tsx): split nav; **server parent** passes user/role flags from layout or page; **client subcomponents** only for mobile menu open state and dropdowns.
+### Phase 8a
+
+- [app/page.tsx](app/page.tsx), [app/events/page.tsx](app/events/page.tsx), [app/about/page.tsx](app/about/page.tsx): **server-first**; client only for filters/carousels if needed.
+
+### Phase 8b
+
+- [components/ui/header.tsx](components/ui/header.tsx): **PR 1** — structure + server props; **PR 2** — mobile menu / dropdown client subcomponents.
 
 ---
 
@@ -142,14 +249,14 @@ Targets: [app/settings/page.tsx](app/settings/page.tsx), [app/settings/membershi
 
 ```mermaid
 flowchart LR
-  P1[Phase1 Conventions RSC]
-  P2[Phase2 Event detail]
-  P3[Phase3 Admin event]
-  P4[Phase4 Admin list stats]
-  P5[Phase5 Settings membership auth]
-  P6[Phase6 Split actions stripe]
-  P7[Phase7 Email queue lib]
-  P8[Phase8 Shell marketing]
+  P1[Phase1 Conventions]
+  P2[Phase2a-d Event detail]
+  P3[Phase3a-c Admin event]
+  P4[Phase4a-b Admin lists]
+  P5[Phase5a-b Settings auth]
+  P6[Phase6a-e Actions stripe]
+  P7[Phase7a-b Email QM]
+  P8[Phase8a-b Shell]
   P1 --> P2
   P2 --> P3
   P3 --> P4
@@ -167,8 +274,8 @@ Phases 6–7 can partially overlap with 4–5 if different owners work in parall
 
 ## PR readability (per rules § PR Readability)
 
-Each phase PR should state: **what changed**, **where logic lives**, **data flow** (Server Component → props → client islands → server actions → Supabase), and **which boundaries are `"use client"`** and why. Prefer one phase per PR.
+Each PR should state: **what changed**, **where logic lives**, **data flow** (Server Component → props → client islands → server actions → Supabase), and **which boundaries are `"use client"`** and why.
 
 ## Testing
 
-After each phase: `npm run lint`, `npm run build`, and `npm run test:a11y` (or full `npm run ci`). Manually smoke-test event queue and admin event flows after Phases 2–3; verify **no regression** in hydrated interactive areas (join queue, admin assign).
+After each PR: `npm run lint`, `npm run build`, and `npm run test:a11y` (or full `npm run ci`). Manually smoke-test event queue and admin event flows after Phase 2–3 slices; verify **no regression** in hydrated interactive areas (join queue, admin assign).
