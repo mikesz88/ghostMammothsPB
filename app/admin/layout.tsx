@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { AdminQueryProvider } from "./query-provider";
 
 export const metadata: Metadata = {
   title: "Admin | Ghost Mammoth PB",
@@ -10,5 +11,5 @@ export default function AdminLayout({
 }: {
   children: React.ReactNode;
 }) {
-  return children;
+  return <AdminQueryProvider>{children}</AdminQueryProvider>;
 }

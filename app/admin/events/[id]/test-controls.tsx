@@ -35,6 +35,8 @@ interface TestControlsProps {
   currentRotationType: RotationType;
   currentTeamSize: number;
   currentCourtCount: number;
+  /** Called after queue-changing actions so admin UI refreshes without full reload. */
+  onQueueUpdated?: () => void | Promise<void>;
 }
 
 export function TestControls({
@@ -42,6 +44,7 @@ export function TestControls({
   currentRotationType,
   currentTeamSize,
   currentCourtCount,
+  onQueueUpdated,
 }: TestControlsProps) {
   const [loading, setLoading] = useState(false);
   const [rotationType, setRotationType] =
@@ -174,6 +177,7 @@ export function TestControls({
         const groupText =
           addGroupSize === 1 ? "solo player" : `group of ${addGroupSize}`;
         toast.success(`Added ${groupText} to queue`);
+        await onQueueUpdated?.();
       } else {
         toast.error(result.error || "Failed to add users");
       }

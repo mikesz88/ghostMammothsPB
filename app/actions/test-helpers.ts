@@ -27,6 +27,34 @@ const TEST_USER_IDS = [
   "00000000-0000-0000-0000-000000000020",
 ];
 
+const FRIEND_SUFFIXES = ["A", "B", "C", "D", "E", "F", "G", "H"] as const;
+
+/** First token of display name for leader-scoped test labels, e.g. "Alex Smith" -> "Alex". */
+function leaderShortName(leaderName: string): string {
+  const trimmed = leaderName.trim();
+  if (!trimmed) return "Leader";
+  const first = trimmed.split(/\s+/)[0];
+  return first || "Leader";
+}
+
+/** e.g. "Alex's friend A", "Alex's friend B" — makes groups easy to spot in queue/court screenshots. */
+function leaderFriendLabel(leaderName: string, friendSlotIndex: number): string {
+  const suffix =
+    FRIEND_SUFFIXES[friendSlotIndex] ?? String(friendSlotIndex + 1);
+  return `${leaderShortName(leaderName)}'s friend ${suffix}`;
+}
+
+/** Match production queue rules after bulk test inserts (pending_solo, positions). */
+async function normalizeQueueAfterTestSeed(eventId: string) {
+  const { reconcilePendingSoloForEvent, reorderQueue } = await import(
+    "./queue"
+  );
+  await reconcilePendingSoloForEvent(eventId);
+  await reorderQueue(eventId);
+  revalidatePath(`/events/${eventId}`);
+  revalidatePath(`/admin/events/${eventId}`);
+}
+
 export async function resetTestEvent(eventId: string) {
   const supabase = await createClient();
 
@@ -73,21 +101,10 @@ export async function resetTestEvent(eventId: string) {
 
   const usersMap = new Map(usersData?.map((u) => [u.id, u]) || []);
 
-  // Names for additional group members
-  const friendNames = [
-    "Friend A",
-    "Friend B",
-    "Friend C",
-    "Friend D",
-    "Friend E",
-    "Friend F",
-    "Friend G",
-    "Friend H",
-  ];
   const skillLevels = ["beginner", "intermediate", "advanced", "pro"];
 
   let successCount = 0;
-  let friendIndex = 0;
+  let friendSkillIndex = 0;
 
   for (let i = 0; i < usersToAdd.length; i++) {
     const groupSize = groupSizes[i] || 1;
@@ -108,12 +125,11 @@ export async function resetTestEvent(eventId: string) {
           skillLevel: userData.skill_level || "intermediate",
         });
       } else {
-        // Additional players get unique friend names
         playerNames.push({
-          name: friendNames[friendIndex % friendNames.length],
-          skillLevel: skillLevels[(friendIndex + j) % skillLevels.length],
+          name: leaderFriendLabel(userData.name, j - 1),
+          skillLevel: skillLevels[(friendSkillIndex + j) % skillLevels.length],
         });
-        friendIndex++;
+        friendSkillIndex++;
       }
     }
 
@@ -136,7 +152,13 @@ export async function resetTestEvent(eventId: string) {
     }
   }
 
-  revalidatePath(`/admin/events/${eventId}`);
+  if (successCount > 0) {
+    await normalizeQueueAfterTestSeed(eventId);
+  } else {
+    revalidatePath(`/events/${eventId}`);
+    revalidatePath(`/admin/events/${eventId}`);
+  }
+
   return {
     success: successCount > 0,
     error: successCount === 0 ? "Failed to reset event" : null,
@@ -180,17 +202,6 @@ export async function addDummyUsersToQueue(
 
   const usersMap = new Map(usersData?.map((u) => [u.id, u]) || []);
 
-  // Names for additional group members
-  const friendNames = [
-    "Friend A",
-    "Friend B",
-    "Friend C",
-    "Friend D",
-    "Friend E",
-    "Friend F",
-    "Friend G",
-    "Friend H",
-  ];
   const skillLevels = ["beginner", "intermediate", "advanced", "pro"];
 
   // Check for insert errors
@@ -213,9 +224,8 @@ export async function addDummyUsersToQueue(
           skillLevel: userData.skill_level || "intermediate",
         });
       } else {
-        // Additional players get unique friend names
         playerNames.push({
-          name: friendNames[(i + j - 1) % friendNames.length],
+          name: leaderFriendLabel(userData.name, j - 1),
           skillLevel: skillLevels[(i + j) % skillLevels.length],
         });
       }
@@ -240,7 +250,13 @@ export async function addDummyUsersToQueue(
     }
   }
 
-  revalidatePath(`/admin/events/${eventId}`);
+  if (successCount > 0) {
+    await normalizeQueueAfterTestSeed(eventId);
+  } else {
+    revalidatePath(`/events/${eventId}`);
+    revalidatePath(`/admin/events/${eventId}`);
+  }
+
   return {
     success: successCount > 0,
     added: successCount,
