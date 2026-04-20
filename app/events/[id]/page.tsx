@@ -715,6 +715,7 @@ export default function EventDetailPage(props: {
         onOpenChange={setShowJoinDialog}
         onJoin={handleJoinQueue}
         eventTeamSize={event.teamSize}
+        rotationType={event.rotationType}
       />
 
       <Dialog open={showQrDialog} onOpenChange={setShowQrDialog}>

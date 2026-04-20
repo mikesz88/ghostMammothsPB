@@ -523,6 +523,13 @@ export default function AdminEventDetailPage(props: {
         toast.success("Game ended — players re-queued (others first, then court order).", {
           description: "Use Assign Next to start the next game.",
         });
+      } else if (event.rotationType === "2-stay-2-off") {
+        toast.success(
+          "Game ended — winners stay and will split to opposite teams; losers re-queued.",
+          {
+            description: "Use Assign Next to fill partner spots from the queue.",
+          },
+        );
       } else if (
         event.rotationType === "winners-stay" ||
         event.rotationType === "2-stay-4-off"

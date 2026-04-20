@@ -249,6 +249,13 @@ export class QueueManager {
           playersToQueue: losers,
         };
 
+      case "2-stay-2-off":
+        // Same as winners-stay for stay/queue split; court placement splits winners next game.
+        return {
+          playersToStay: winners,
+          playersToQueue: losers,
+        };
+
       case "rotate-all":
         // Everyone goes back to queue
         return {

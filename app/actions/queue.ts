@@ -8,6 +8,11 @@ import {
 } from "./notifications";
 import type { Database } from "@/supabase/supa-schema";
 import type { GroupSize, RotationType, TeamSize } from "@/lib/types";
+import {
+  is2Stay2OffRotation,
+  isRotateAllStyleRotation,
+  isWinnersStayStyleRotation,
+} from "@/lib/rotation-policy";
 
 type QueueEntryRow = Database["public"]["Tables"]["queue_entries"]["Row"];
 type CourtAssignmentInsert =
@@ -44,14 +49,6 @@ type GameEntryRow = {
   group_size: number | null;
   position: number;
 };
-
-function isWinnersStayStyleRotation(rt: RotationType): boolean {
-  return rt === "winners-stay" || rt === "2-stay-4-off";
-}
-
-function isRotateAllStyleRotation(rt: RotationType): boolean {
-  return rt === "rotate-all";
-}
 
 /** Subsets of group indices whose sizes sum to `target` (same semantics as QueueManager). */
 function collectExactCombinationIndices(
@@ -283,6 +280,32 @@ export async function joinQueue(
 
   if (!user || user.id !== userId) {
     return { error: "Not authenticated" };
+  }
+
+  const { data: eventRow } = await supabase
+    .from("events")
+    .select("rotation_type, team_size")
+    .eq("id", eventId)
+    .single();
+
+  const eventRotation = (eventRow?.rotation_type as RotationType) ?? "rotate-all";
+  if (is2Stay2OffRotation(eventRotation)) {
+    if ((eventRow?.team_size ?? 2) !== 2) {
+      return {
+        error:
+          "2 Stay 2 Off is only available for doubles events (team size 2).",
+      };
+    }
+    if (groupId) {
+      return {
+        error: "2 Stay 2 Off only allows solo queue entries (no groups).",
+      };
+    }
+    if (groupSize !== 1) {
+      return {
+        error: "2 Stay 2 Off only allows solo queue entries.",
+      };
+    }
   }
 
   const { data: currentQueue } = await supabase
@@ -851,6 +874,20 @@ export async function assignPlayersToNextCourt(eventId: string) {
     }
   }
 
+  const rotationType = event.rotation_type as RotationType;
+  if (
+    is2Stay2OffRotation(rotationType) &&
+    event.team_size === 2 &&
+    stayingMapped.length > 0 &&
+    stayingMapped.length !== 2
+  ) {
+    return {
+      success: false,
+      error:
+        "2 Stay 2 Off requires exactly two pending winners on this court before assigning the next game.",
+    };
+  }
+
   const stayingCount = countSlotsForEntries(stayingMapped);
   let playersNeeded = playersPerCourt - stayingCount;
 
@@ -901,7 +938,26 @@ export async function assignPlayersToNextCourt(eventId: string) {
     };
   }
 
-  const nextPlayers = [...stayingMapped, ...newFromQueue];
+  let nextPlayers: ReturnType<typeof mapDbEntryToManagerEntry>[] = [
+    ...stayingMapped,
+    ...newFromQueue,
+  ];
+  if (
+    is2Stay2OffRotation(rotationType) &&
+    event.team_size === 2 &&
+    stayingMapped.length === 2 &&
+    newFromQueue.length === 2 &&
+    countSlotsForEntries(stayingMapped) === 2 &&
+    countSlotsForEntries(newFromQueue) === 2
+  ) {
+    nextPlayers = [
+      stayingMapped[0],
+      newFromQueue[0],
+      stayingMapped[1],
+      newFromQueue[1],
+    ];
+  }
+
   const totalSlots = countSlotsForEntries(nextPlayers);
   if (totalSlots !== playersPerCourt) {
     return {

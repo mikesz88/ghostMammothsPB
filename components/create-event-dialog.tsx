@@ -20,6 +20,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import type { Event, RotationType, TeamSize } from "@/lib/types";
+import {
+  is2Stay2OffRotation,
+  is2Stay2OffValidTeamSize,
+} from "@/lib/rotation-policy";
 
 interface CreateEventDialogProps {
   open: boolean;
@@ -40,10 +44,19 @@ export function CreateEventDialog({
   const [teamSize, setTeamSize] = useState<TeamSize>(2);
   const [rotationType, setRotationType] =
     useState<RotationType>("2-stay-4-off");
+  const [formError, setFormError] = useState("");
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    setFormError("");
     if (name.trim() && location.trim() && date && time) {
+      if (
+        is2Stay2OffRotation(rotationType) &&
+        !is2Stay2OffValidTeamSize(teamSize)
+      ) {
+        setFormError("2 Stay 2 Off requires doubles (team size 2).");
+        return;
+      }
       const eventDate = new Date(`${date}T${time}`);
       onCreate({
         name,
@@ -80,6 +93,11 @@ export function CreateEventDialog({
           onSubmit={handleSubmit}
           className="flex-1 min-h-0 overflow-y-auto space-y-4 pr-1 -mr-1"
         >
+          {formError ? (
+            <p className="text-sm text-destructive" role="alert">
+              {formError}
+            </p>
+          ) : null}
           <div className="grid md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="name">Event Name</Label>
@@ -188,6 +206,9 @@ export function CreateEventDialog({
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="2-stay-4-off">2 Stay, 4 Off</SelectItem>
+                  <SelectItem value="2-stay-2-off" disabled={teamSize !== 2}>
+                    2 Stay, 2 Off (doubles, solo queue)
+                  </SelectItem>
                   <SelectItem value="winners-stay">Winners Stay</SelectItem>
                   <SelectItem value="rotate-all">Rotate All</SelectItem>
                 </SelectContent>
@@ -206,6 +227,10 @@ export function CreateEventDialog({
               rotate
               <br />
               <strong>Rotate All:</strong> All players rotate after each game
+              <br />
+              <strong>2 Stay, 2 Off:</strong> Doubles only. Solo queue entries
+              only. Winners stay for the next game on opposite teams; two
+              players from the queue fill the open spots.
             </p>
           </div>
 

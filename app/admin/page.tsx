@@ -29,6 +29,10 @@ import { EditEventDialog } from "@/components/edit-event-dialog";
 import { Header } from "@/components/ui/header";
 import { createClient } from "@/lib/supabase/client";
 import type { Event, TeamSize, RotationType, EventStatus } from "@/lib/types";
+import {
+  is2Stay2OffRotation,
+  is2Stay2OffValidTeamSize,
+} from "@/lib/rotation-policy";
 import type { Database } from "@/supabase/supa-schema";
 
 type EventRow = Database["public"]["Tables"]["events"]["Row"];
@@ -82,6 +86,14 @@ export default function AdminPage() {
     eventData: Omit<Event, "id" | "createdAt" | "updatedAt">
   ) => {
     try {
+      if (
+        is2Stay2OffRotation(eventData.rotationType) &&
+        !is2Stay2OffValidTeamSize(eventData.teamSize)
+      ) {
+        toast.error("2 Stay 2 Off requires doubles (team size 2).");
+        return;
+      }
+
       const supabase = createClient();
 
       // Extract date and time from the date object
@@ -130,6 +142,14 @@ export default function AdminPage() {
     if (!editingEvent) return;
 
     try {
+      if (
+        is2Stay2OffRotation(eventData.rotationType) &&
+        !is2Stay2OffValidTeamSize(eventData.teamSize)
+      ) {
+        toast.error("2 Stay 2 Off requires doubles (team size 2).");
+        return;
+      }
+
       const supabase = createClient();
 
       // Extract date and time from the date object

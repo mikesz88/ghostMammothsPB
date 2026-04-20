@@ -20,6 +20,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import type { Event, RotationType } from "@/lib/types";
+import {
+  is2Stay2OffRotation,
+  is2Stay2OffValidTeamSize,
+} from "@/lib/rotation-policy";
 
 interface EditEventDialogProps {
   open: boolean;
@@ -42,6 +46,7 @@ export function EditEventDialog({
   const [rotationType, setRotationType] = useState<RotationType>(
     event.rotationType
   );
+  const [formError, setFormError] = useState("");
 
   useEffect(() => {
     queueMicrotask(() => {
@@ -49,6 +54,7 @@ export function EditEventDialog({
       setLocation(event.location);
       setCourtCount(event.courtCount.toString());
       setRotationType(event.rotationType);
+      setFormError("");
       const eventDate = new Date(event.date);
       setDate(eventDate.toISOString().split("T")[0]);
       setTime(eventDate.toTimeString().slice(0, 5));
@@ -57,7 +63,15 @@ export function EditEventDialog({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    setFormError("");
     if (name.trim() && location.trim() && date && time) {
+      if (
+        is2Stay2OffRotation(rotationType) &&
+        !is2Stay2OffValidTeamSize(event.teamSize)
+      ) {
+        setFormError("2 Stay 2 Off requires doubles (team size 2) for this event.");
+        return;
+      }
       const eventDate = new Date(`${date}T${time}`);
       onUpdate({
         name,
@@ -81,6 +95,11 @@ export function EditEventDialog({
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
+          {formError ? (
+            <p className="text-sm text-destructive" role="alert">
+              {formError}
+            </p>
+          ) : null}
           <div className="grid md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="edit-name">Event Name</Label>
@@ -159,6 +178,12 @@ export function EditEventDialog({
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="2-stay-4-off">2 Stay, 4 Off</SelectItem>
+                  <SelectItem
+                    value="2-stay-2-off"
+                    disabled={!is2Stay2OffValidTeamSize(event.teamSize)}
+                  >
+                    2 Stay, 2 Off (doubles, solo queue)
+                  </SelectItem>
                   <SelectItem value="winners-stay">Winners Stay</SelectItem>
                   <SelectItem value="rotate-all">Rotate All</SelectItem>
                 </SelectContent>
