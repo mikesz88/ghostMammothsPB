@@ -1,39 +1,30 @@
 "use client";
 
-import { useState, useEffect, use } from "react";
-import Link from "next/link";
-import Image from "next/image";
 import {
   Trophy,
-  ArrowLeft,
   Users,
   Clock,
   MapPin,
   Calendar,
   Bell,
-  RefreshCw,
-  Settings,
   Loader2,
   QrCode,
   Copy,
 } from "lucide-react";
+import Image from "next/image";
+import Link from "next/link";
+import { useState, useEffect, use } from "react";
 import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { QueueList } from "@/components/queue-list";
+
+import { joinQueue, leaveQueue, endGameAndReorderQueue } from "@/app/actions/queue";
 import { CourtStatus } from "@/components/court-status";
 import { JoinQueueDialog } from "@/components/join-queue-dialog";
-import { QueuePositionAlert } from "@/components/queue-position-alert";
 import { NotificationPrompt } from "@/components/notification-prompt";
-import { QueueManager } from "@/lib/queue-manager";
-import { useNotifications } from "@/lib/use-notifications";
-import { useRealtimeQueue } from "@/lib/hooks/use-realtime-queue";
-import { useAuth } from "@/lib/auth-context";
-import { joinQueue, leaveQueue, endGameAndReorderQueue } from "@/app/actions/queue";
-import { createClient } from "@/lib/supabase/client";
-import { canUserJoinEvent, formatPrice } from "@/lib/membership-helpers";
-import { Header } from "@/components/ui/header";
+import { QueueList } from "@/components/queue-list";
+import { QueuePositionAlert } from "@/components/queue-position-alert";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -42,7 +33,15 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import type { Event, QueueEntry, CourtAssignment } from "@/lib/types";
+import { Header } from "@/components/ui/header";
+import { useAuth } from "@/lib/auth-context";
+import { useRealtimeQueue } from "@/lib/hooks/use-realtime-queue";
+import { canUserJoinEvent, formatPrice } from "@/lib/membership-helpers";
+import { QueueManager } from "@/lib/queue-manager";
+import { createClient } from "@/lib/supabase/client";
+import { useNotifications } from "@/lib/use-notifications";
+
+import type { Event, CourtAssignment } from "@/lib/types";
 
 export default function EventDetailPage(props: {
   params: Promise<{ id: string }>;

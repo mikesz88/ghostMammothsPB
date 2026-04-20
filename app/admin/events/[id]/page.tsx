@@ -1,8 +1,6 @@
 "use client";
 
-import { useState, useEffect, use } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import Link from "next/link";
 import {
   Trophy,
   ArrowLeft,
@@ -14,23 +12,30 @@ import {
   Trash2,
   Loader2,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { QueueList } from "@/components/queue-list";
-import { CourtStatus } from "@/components/court-status";
-import { TestControls } from "./test-controls";
-import { Header } from "@/components/ui/header";
-import { createClient } from "@/lib/supabase/client";
-import {
-  adminQueueQueryKey,
-  fetchAdminQueueEntries,
-} from "@/lib/admin-queue";
+import Link from "next/link";
+import { useState, useEffect, use } from "react";
+import { toast } from "sonner";
+
 import {
   adminRemoveFromQueue,
   assignPlayersToNextCourt,
   endGameAndReorderQueue,
 } from "@/app/actions/queue";
+import { CourtStatus } from "@/components/court-status";
+import { QueueList } from "@/components/queue-list";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Header } from "@/components/ui/header";
+import {
+  adminQueueQueryKey,
+  fetchAdminQueueEntries,
+} from "@/lib/admin-queue";
+import { createClient } from "@/lib/supabase/client";
+
+import { TestControls } from "./test-controls";
+
+
 import type {
   Event,
   CourtAssignment,
@@ -40,6 +45,7 @@ import type {
   SkillLevel,
 } from "@/lib/types";
 import type { Database } from "@/supabase/supa-schema";
+
 
 type CourtAssignmentRow =
   Database["public"]["Tables"]["court_assignments"]["Row"];
@@ -95,7 +101,6 @@ type CourtAssignmentWithPlayers = CourtAssignmentRow & {
     skill_level: string;
   } | null;
 };
-import { toast } from "sonner";
 
 export default function AdminEventDetailPage(props: {
   params: Promise<{ id: string }>;

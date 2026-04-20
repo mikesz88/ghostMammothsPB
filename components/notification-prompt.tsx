@@ -1,9 +1,10 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { Bell, X } from "lucide-react"
+import { useState } from "react"
+
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
-import { Bell, X } from "lucide-react"
 import { useNotifications } from "@/lib/use-notifications"
 
 export function NotificationPrompt() {

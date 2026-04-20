@@ -1,12 +1,15 @@
 "use server";
 
-import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
-import type { RotationType, TeamSize } from "@/lib/types";
+
 import {
   is2Stay2OffRotation,
   is2Stay2OffValidTeamSize,
 } from "@/lib/rotation-policy";
+import { createClient } from "@/lib/supabase/server";
+
+import type { RotationType, TeamSize } from "@/lib/types";
+
 
 const TEST_USER_IDS = [
   "00000000-0000-0000-0000-000000000001",

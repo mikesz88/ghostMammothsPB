@@ -1,17 +1,19 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import Link from "next/link";
 import {
   Crown,
   CreditCard,
   Calendar,
   AlertCircle,
-  ExternalLink,
   Loader2,
   Check,
 } from "lucide-react";
+import Link from "next/link";
+import { useState, useEffect } from "react";
 import { toast } from "sonner";
+
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -20,8 +22,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Header } from "@/components/ui/header";
 import { useAuth } from "@/lib/auth-context";
 import {
@@ -30,6 +30,7 @@ import {
   getMembershipBadgeVariant,
 } from "@/lib/membership-helpers";
 import { createClient } from "@/lib/supabase/client";
+
 import type { UserMembershipInfo } from "@/lib/membership-helpers";
 
 export default function MembershipSettingsPage() {
