@@ -1,6 +1,8 @@
 "use server";
 
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
+import { createServiceRoleClient } from "@/lib/supabase/service-role";
 import { revalidatePath } from "next/cache";
 import {
   flushQueueEmailNotifications,
@@ -44,6 +46,8 @@ type GameEntryRow = {
   group_size: number | null;
   position: number;
 };
+
+type DbClient = SupabaseClient<Database>;
 
 function isWinnersStayStyleRotation(rt: RotationType): boolean {
   return rt === "winners-stay" || rt === "2-stay-4-off";
@@ -109,8 +113,11 @@ function soloGroupIndexCanFillCourt(
  * no full-court combination can include them (e.g. one solo + only duos for doubles).
  * TODO: optional email when status flips waiting <-> pending_solo
  */
-export async function reconcilePendingSoloForEvent(eventId: string) {
-  const supabase = await createClient();
+export async function reconcilePendingSoloForEvent(
+  eventId: string,
+  db?: DbClient,
+) {
+  const supabase = db ?? (await createClient());
 
   const { data: eventRow } = await supabase
     .from("events")
@@ -390,8 +397,8 @@ export async function leaveQueue(queueEntryId: string) {
   return { error: null };
 }
 
-export async function reorderQueue(eventId: string) {
-  const supabase = await createClient();
+export async function reorderQueue(eventId: string, db?: DbClient) {
+  const supabase = db ?? (await createClient());
 
   const { data: queue } = await supabase
     .from("queue_entries")
@@ -506,6 +513,15 @@ export async function endGameAndReorderQueue(
     return { success: false, error: "Unauthorized" };
   }
 
+  const db = createServiceRoleClient();
+  if (!db) {
+    console.error("endGameAndReorderQueue: SUPABASE_SERVICE_ROLE_KEY missing");
+    return {
+      success: false,
+      error: "Server configuration error",
+    };
+  }
+
   let queueEntryIds: string[] = [];
   const rawIds = assignmentRow.queue_entry_ids;
   if (rawIds) {
@@ -527,7 +543,7 @@ export async function endGameAndReorderQueue(
       assignmentRow.player7_id,
       assignmentRow.player8_id,
     ].filter(Boolean) as string[];
-    const { data: entries } = await supabase
+    const { data: entries } = await db
       .from("queue_entries")
       .select("id")
       .eq("event_id", eventId)
@@ -535,7 +551,7 @@ export async function endGameAndReorderQueue(
     if (entries) queueEntryIds = entries.map((e) => e.id);
   }
 
-  const { data: gameEntries } = await supabase
+  const { data: gameEntries } = await db
     .from("queue_entries")
     .select("id, user_id, group_size, position")
     .in("id", queueEntryIds);
@@ -569,7 +585,7 @@ export async function endGameAndReorderQueue(
     if (team === winningTeam) winnerEntryIds.add(eid);
   }
 
-  const { error: endErr } = await supabase
+  const { error: endErr } = await db
     .from("court_assignments")
     .update({ ended_at: new Date().toISOString() })
     .eq("id", assignmentId);
@@ -580,7 +596,7 @@ export async function endGameAndReorderQueue(
 
   const courtNumber = assignmentRow.court_number;
 
-  await supabase
+  await db
     .from("court_pending_stayers")
     .delete()
     .eq("event_id", eventId)
@@ -592,25 +608,25 @@ export async function endGameAndReorderQueue(
     const isWinner = winnerEntryIds.has(entryId);
     if (isWinnersStayStyleRotation(rotationType)) {
       if (isWinner) {
-        await supabase
+        await db
           .from("queue_entries")
           .update({ status: "pending_stay" })
           .eq("id", entryId);
       } else {
-        await supabase
+        await db
           .from("queue_entries")
           .update({ status: "waiting" })
           .eq("id", entryId);
       }
     } else {
-      await supabase
+      await db
         .from("queue_entries")
         .update({ status: "waiting" })
         .eq("id", entryId);
     }
   }
 
-  const { data: allWaitingRows } = await supabase
+  const { data: allWaitingRows } = await db
     .from("queue_entries")
     .select("id, user_id, group_size, position")
     .eq("event_id", eventId)
@@ -637,14 +653,14 @@ export async function endGameAndReorderQueue(
       entriesById,
     );
     for (const e of otherEntries) {
-      await supabase
+      await db
         .from("queue_entries")
         .update({ position: pos })
         .eq("id", e.id);
       pos++;
     }
     for (const eid of participantsOrdered) {
-      await supabase
+      await db
         .from("queue_entries")
         .update({ position: pos })
         .eq("id", eid);
@@ -652,14 +668,14 @@ export async function endGameAndReorderQueue(
     }
   } else if (isWinnersStayStyleRotation(rotationType)) {
     for (const e of otherEntries) {
-      await supabase
+      await db
         .from("queue_entries")
         .update({ position: pos })
         .eq("id", e.id);
       pos++;
     }
     for (const eid of loserIdsOrdered) {
-      await supabase
+      await db
         .from("queue_entries")
         .update({ position: pos })
         .eq("id", eid);
@@ -674,7 +690,7 @@ export async function endGameAndReorderQueue(
       winningSide,
     );
     if (winnerIdsOrdered.length > 0) {
-      await supabase.from("court_pending_stayers").upsert(
+      await db.from("court_pending_stayers").upsert(
         {
           event_id: eventId,
           court_number: courtNumber,
@@ -691,14 +707,14 @@ export async function endGameAndReorderQueue(
       entriesById,
     );
     for (const e of otherEntries) {
-      await supabase
+      await db
         .from("queue_entries")
         .update({ position: pos })
         .eq("id", e.id);
       pos++;
     }
     for (const eid of participantsOrdered) {
-      await supabase
+      await db
         .from("queue_entries")
         .update({ position: pos })
         .eq("id", eid);
@@ -706,8 +722,8 @@ export async function endGameAndReorderQueue(
     }
   }
 
-  await reconcilePendingSoloForEvent(eventId);
-  await reorderQueue(eventId);
+  await reconcilePendingSoloForEvent(eventId, db);
+  await reorderQueue(eventId, db);
 
   revalidatePath(`/events/${eventId}`);
   revalidatePath(`/admin/events/${eventId}`);
