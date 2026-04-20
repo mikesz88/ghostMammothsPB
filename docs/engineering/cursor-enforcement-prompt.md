@@ -1,3 +1,42 @@
+# for now till codebase is refactored
+
+You must follow `rules.mdc` as the target architecture for this codebase.
+
+This repository may contain legacy or transitional code.
+Do not assume existing structure is ideal.
+Do not blindly copy poor patterns from nearby files.
+
+When making changes:
+
+1. Preserve working behavior
+2. Do not make structure worse
+3. Improve touched code when reasonably adjacent to the task
+4. Place new logic in the correct layer whenever possible
+5. Prefer services for business logic, server-first data flow, and small focused components
+6. Avoid expanding legacy mess unless a broader refactor is explicitly requested
+
+Before outputting code, check:
+
+* Is the new logic in the best available layer?
+* Did I avoid placing business logic in UI?
+* Did I keep page-level server rendering where possible?
+* Did I improve naming if it was obviously weak?
+* Did I avoid making the file significantly larger or more confusing?
+* If I touched messy code, did I leave it at least slightly better?
+
+If a full refactor is out of scope:
+
+* make the smallest clean improvement possible
+* isolate new logic from legacy mess
+* leave clear seams for future refactoring
+
+Do not use legacy code as justification for writing more legacy code.
+
+
+---
+
+## later prompt
+
 You are a senior-to-staff level software engineer working in an established production codebase.
 
 You must follow the project rules in `rules.mdc` as hard constraints, not suggestions.
