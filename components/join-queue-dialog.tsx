@@ -22,6 +22,8 @@ import {
 } from "@/components/ui/select";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Users } from "lucide-react";
+import type { RotationType } from "@/lib/types";
+import { is2Stay2OffRotation } from "@/lib/rotation-policy";
 
 interface JoinQueueDialogProps {
   open: boolean;
@@ -31,6 +33,7 @@ interface JoinQueueDialogProps {
     groupSize: number
   ) => void;
   eventTeamSize: number;
+  rotationType: RotationType;
 }
 
 export function JoinQueueDialog({
@@ -38,11 +41,22 @@ export function JoinQueueDialog({
   onOpenChange,
   onJoin,
   eventTeamSize,
+  rotationType,
 }: JoinQueueDialogProps) {
+  const soloOnlyMode = is2Stay2OffRotation(rotationType);
+
   const [groupSize, setGroupSize] = useState("1");
   const [players, setPlayers] = useState([
     { name: "", skillLevel: "intermediate" },
   ]);
+
+  const handleOpenChange = (next: boolean) => {
+    if (next && soloOnlyMode) {
+      setGroupSize("1");
+      setPlayers([{ name: "", skillLevel: "intermediate" }]);
+    }
+    onOpenChange(next);
+  };
 
   const handleGroupSizeChange = (value: string) => {
     setGroupSize(value);
@@ -91,38 +105,64 @@ export function JoinQueueDialog({
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="bg-card border-border max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-foreground">Join Queue</DialogTitle>
           <DialogDescription>
-            Enter your details to join the queue for this event
+            {soloOnlyMode
+              ? "This event uses solo queue entries only. Enter your details below."
+              : "Enter your details to join the queue for this event"}
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="group">Group Size</Label>
-            <Select value={groupSize} onValueChange={handleGroupSizeChange}>
-              <SelectTrigger id="group">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {getAvailableGroupSizes().map((size) => (
-                  <SelectItem key={size} value={size.toString()}>
-                    {size === 1
-                      ? "Solo (1 player)"
-                      : size === 2
-                      ? "Duo (2 players)"
-                      : size === 3
-                      ? "Triple (3 players)"
-                      : "Quad (4 players)"}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          {!soloOnlyMode ? (
+            <div className="space-y-2">
+              <Label htmlFor="group">Group Size</Label>
+              <Select value={groupSize} onValueChange={handleGroupSizeChange}>
+                <SelectTrigger id="group">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {getAvailableGroupSizes().map((size) => (
+                    <SelectItem key={size} value={size.toString()}>
+                      {size === 1
+                        ? "Solo (1 player)"
+                        : size === 2
+                          ? "Duo (2 players)"
+                          : size === 3
+                            ? "Triple (3 players)"
+                            : "Quad (4 players)"}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          ) : null}
 
-          {Number.parseInt(groupSize) > 1 && (
+          {soloOnlyMode ? (
+            <Alert>
+              <Users className="w-4 h-4" />
+              <AlertDescription className="space-y-2">
+                <span className="block">
+                  2 Stay 2 Off: join as one player only (no duos or groups).
+                </span>
+                {eventTeamSize > 1 ? (
+                  <span className="block text-muted-foreground">
+                    You&apos;ll be paired with other players to form{" "}
+                    {eventTeamSize === 2
+                      ? "doubles"
+                      : eventTeamSize === 3
+                        ? "triplet"
+                        : "quad"}{" "}
+                    teams.
+                  </span>
+                ) : null}
+              </AlertDescription>
+            </Alert>
+          ) : null}
+
+          {!soloOnlyMode && Number.parseInt(groupSize) > 1 && (
             <Alert>
               <Users className="w-4 h-4" />
               <AlertDescription>
@@ -132,7 +172,9 @@ export function JoinQueueDialog({
             </Alert>
           )}
 
-          {Number.parseInt(groupSize) === 1 && eventTeamSize > 1 && (
+          {!soloOnlyMode &&
+            Number.parseInt(groupSize) === 1 &&
+            eventTeamSize > 1 && (
             <Alert>
               <Users className="w-4 h-4" />
               <AlertDescription>
@@ -140,8 +182,8 @@ export function JoinQueueDialog({
                 {eventTeamSize === 2
                   ? "doubles"
                   : eventTeamSize === 3
-                  ? "triplet"
-                  : "quad"}{" "}
+                    ? "triplet"
+                    : "quad"}{" "}
                 teams.
               </AlertDescription>
             </Alert>

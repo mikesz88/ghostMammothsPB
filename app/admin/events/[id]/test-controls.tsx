@@ -85,7 +85,11 @@ export function TestControls({
         // Reload page to reflect changes
         setTimeout(() => window.location.reload(), 500);
       } else {
-        toast.error("Failed to update rotation type");
+        setRotationType(currentRotationType);
+        toast.error("Failed to update rotation type", {
+          description:
+            typeof result.error === "string" ? result.error : undefined,
+        });
       }
     } catch (err) {
       console.error(err);
@@ -119,7 +123,11 @@ export function TestControls({
         // Reload page to reflect changes in court display
         setTimeout(() => window.location.reload(), 500);
       } else {
-        toast.error("Failed to update team size");
+        setTeamSize(currentTeamSize);
+        toast.error("Failed to update team size", {
+          description:
+            typeof result.error === "string" ? result.error : undefined,
+        });
       }
     } catch (err) {
       console.error(err);
@@ -300,6 +308,9 @@ export function TestControls({
               <SelectItem value="winners-stay">Winners Stay</SelectItem>
               <SelectItem value="rotate-all">Rotate All</SelectItem>
               <SelectItem value="2-stay-4-off">2 Stay 4 Off</SelectItem>
+              <SelectItem value="2-stay-2-off" disabled={currentTeamSize !== 2}>
+                2 Stay 2 Off
+              </SelectItem>
             </SelectContent>
           </Select>
         </div>
