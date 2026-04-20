@@ -30,7 +30,7 @@ import { QueueManager } from "@/lib/queue-manager";
 import { useNotifications } from "@/lib/use-notifications";
 import { useRealtimeQueue } from "@/lib/hooks/use-realtime-queue";
 import { useAuth } from "@/lib/auth-context";
-import { joinQueue, leaveQueue } from "@/app/actions/queue";
+import { joinQueue, leaveQueue, endGameAndReorderQueue } from "@/app/actions/queue";
 import { createClient } from "@/lib/supabase/client";
 import { canUserJoinEvent, formatPrice } from "@/lib/membership-helpers";
 import { Header } from "@/components/ui/header";
@@ -327,6 +327,58 @@ export default function EventDetailPage(props: {
             assignment.player8Id === user.id)
       )
     : false;
+
+  const handleEndGame = async (
+    assignmentId: string,
+    winningTeam: "team1" | "team2",
+  ) => {
+    const winningTeamName = winningTeam === "team1" ? "Team 1" : "Team 2";
+    toast(`Mark this game as complete?`, {
+      description: `${winningTeamName} wins!`,
+      action: {
+        label: "End Game",
+        onClick: async () => {
+          try {
+            if (!event) return;
+            const result = await endGameAndReorderQueue(
+              id,
+              assignmentId,
+              winningTeam,
+            );
+            if (!result.success) {
+              toast.error(result.error || "Failed to end game");
+              return;
+            }
+            if (event.rotationType === "rotate-all") {
+              toast.success(
+                "Game ended — players re-queued (others first, then court order).",
+                {
+                  description:
+                    "Wait for the next group to be assigned to the court.",
+                },
+              );
+            } else if (
+              event.rotationType === "winners-stay" ||
+              event.rotationType === "2-stay-4-off"
+            ) {
+              toast.success(
+                "Game ended — winners stay on this court; losers re-queued.",
+              );
+            } else {
+              toast.success("Game ended.");
+            }
+          } catch (err) {
+            console.error("Error ending game:", err);
+            toast.error("Failed to end game");
+          }
+        },
+      },
+      cancel: {
+        label: "Cancel",
+        onClick: () => {},
+      },
+    });
+  };
 
   // Handle position change notifications (only when assignable in line)
   useEffect(() => {
@@ -628,6 +680,9 @@ export default function EventDetailPage(props: {
               courtCount={event.courtCount}
               assignments={assignments}
               teamSize={event.teamSize}
+              currentUserId={user?.id}
+              isAdmin={isAdmin}
+              onCompleteGame={handleEndGame}
             />
           </div>
 

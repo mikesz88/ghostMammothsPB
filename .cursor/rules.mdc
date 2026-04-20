@@ -1,307 +1,659 @@
 ---
 alwaysApply: true
 description: >
-  These rules are strict and must be followed when generating or modifying code.
-  If a request conflicts with these rules, follow the rules.
----
+These rules are strict and must be followed when generating or modifying code.
+If a request conflicts with these rules, follow the rules.
+----------------------------------------------------------
 
-# Project Rules (rules.mdc)
-
-## Rule Priority Order
-
-1. Readability
-2. Separation of concerns
-3. Simplicity
-4. Consistency
-5. Performance (only when needed)
+# Project Rules (rules.mdc) — v3
 
 ---
 
-## Core Principles
+# Rule Priority Order
 
-* Code must be readable within 30 seconds
-* Favor simplicity over cleverness
-* Every file should have a single responsibility
-* If a file exceeds 200 lines, refactor it
-* Prefer smaller files (50–150 lines ideal)
+1. Correctness
+2. Maintainability
+3. Clarity
+4. Simplicity
+5. Consistency
+6. Performance (only when measured)
 
 ---
 
-## Senior-Level Code Expectations
+# Core Principles
 
-* Write code at a senior engineer standard: prioritize maintainability, clarity, and separation of concerns over quick fixes
-* Do NOT produce junior-style code that only solves the immediate problem without considering structure, readability, and reuse
-* Prefer the cleanest reasonable implementation over the fastest implementation
-* Before writing code, determine the correct architectural location for the logic
-* Solutions must be easy for another experienced developer to understand, extend, and debug
-* Code should reduce complexity, not add to it
+* Code must be understandable within 30 seconds
+* Favor clarity over cleverness
+* Every file has a single responsibility
+* Prefer explicit, simple solutions over clever abstractions
+* Reduce complexity — never introduce it without justification
 
-### Architecture Expectations
+---
 
-* Place logic where it naturally belongs, not wherever it is fastest to write
-* Prefer composable patterns over large monolithic files
-* Shared or repeated logic must be abstracted appropriately
-* Business logic must be separated from UI code
-* Avoid shallow abstractions that add indirection without improving clarity
-* Reuse existing patterns in the codebase when they are clean and aligned with these rules
+# Senior / Staff-Level Expectations
 
-### Readability Expectations
+* Write code that another experienced engineer can extend without guidance
+* Optimize for long-term maintainability, not short-term speed
+* Place logic in the correct architectural layer before writing code
+* Avoid “task-only” solutions — design within the system
 
-* Code should read clearly without requiring extra explanation
-* Names should reveal intent immediately
-* Avoid vague, generic, or placeholder naming
-* Prefer explicit and predictable logic over clever shortcuts
-* Optimize for the next developer reading the code, not just the current task
+---
 
-### Implementation Decision Rule
+# System Design & Data Flow (Critical)
 
-* Before generating or modifying code, determine:
+## Required
 
-  * where the logic belongs
-  * whether it should be extracted
-  * whether an existing abstraction should be reused
-  * whether the change increases or reduces codebase complexity
+* Every feature must define:
 
-* Do NOT implement until the structure is clear
+  * where data originates
+  * where business logic executes
+  * where state is owned
+  * how data flows through the system
 
-### Refactoring Standard
+---
 
-* Do NOT layer new code on top of poor structure without improving it
-* If existing code is messy, make reasonable structural improvements as part of the change
-* Refactor toward cleaner boundaries when modifying related code
-* Avoid temporary-looking code unless explicitly requested
+## Data Flow Standard
 
-### Anti-Junior Patterns (Avoid These)
+Server → Client → UI
 
-* :x: Solving the task in the fastest possible way without regard for structure
-* :x: Putting business logic directly in components
-* :x: Large handlers or functions that do many things
-* :x: Repetition instead of extraction
-* :x: Weak naming that hides intent
-* :x: Overusing comments to explain confusing code instead of rewriting it clearly
-* :x: Adding unnecessary abstractions “just in case”
-* :x: Leaving obvious code smells in touched files
+* Server owns data + decisions
+* Client handles interactivity only
+* UI renders state
 
-### Output Quality Check
+---
 
-Before completing a task, verify:
+## Layer Responsibilities
 
-* Is this the cleanest reasonable implementation?
-* Does the code fit the existing architecture and folder boundaries?
-* Would a senior engineer approve this in a PR?
-* Is the logic placed in the correct file and layer?
-* Did I reduce complexity instead of adding to it?
+* UI (components): rendering only
+* Hooks: client behavior (state, effects)
+* Services (`lib/`, `server/services/`): business logic
+* Database: persistence + source of truth
 
-If any answer is “no” → improve the implementation before finishing
+---
 
-## Project Structure (Next.js 13+/16+ compatible)
+## Forbidden
 
-### Frontend (Routes & Pages)
+* ❌ UI calling database logic directly
+* ❌ Business logic inside components
+* ❌ Circular dependencies between layers
+* ❌ Hidden or implicit data flow
 
-* All route-level components, layouts, and API routes live in `app/` or `src/app/`
-* Keep `page.tsx`, layout, and thin client components here
-* Avoid placing reusable components directly in the route folder — they belong in `components/` or `src/components/`
+---
 
-### Shared UI Components
+# State Ownership Rules (Non-Negotiable)
 
-* `components/` or `src/components/` holds all reusable UI components
-* Organize by domain (e.g., `boards/`, `tasks/`, `kanban/`)
-* Components should be single-purpose and under 100 lines
+* Every piece of state must have a single source of truth
 
-### Backend / Services
+---
 
-* `lib/` or `src/lib/` holds business logic, database adapters, utilities, and API helpers
-* Optional: `server/services/` or `src/server/services/` if you want clearer separation
-* Avoid placing server logic in the route folder (except thin API route handlers)
+## Server Owns
+
+* Business state
+* Persisted data
+* Authorization decisions
+* External system synchronization
+
+---
+
+## Client Owns
+
+* UI state only
+* Ephemeral interaction state
+
+---
+
+## Required Pattern
+
+External System → Webhook → Database → Application reads DB
+
+---
+
+## Forbidden Patterns
+
+* ❌ Multiple sources of truth
+* ❌ Calling external APIs in hot paths when data exists in DB
+* ❌ Business logic derived in client
+
+---
+
+# Database, RLS & Security Rules
+
+## Core Principle
+
+The database enforces access — not the application.
+
+---
+
+## Required
+
+* All access must be scoped via:
+
+  * authenticated user context
+  * token context
+  * session context (DB-level where applicable)
+
+* Use explicit context passing (e.g., DB session variables)
+
+* Context must be scoped to request lifecycle and cleared after use
+
+---
+
+## Runtime Roles
+
+System must distinguish between:
+
+* Owner / migration role
+* Restricted token-flow role
+* (Future) staff runtime role
+
+---
+
+## Forbidden
+
+* ❌ Using owner-level DB access in user-facing or token flows
+* ❌ Bypassing RLS through application logic
+* ❌ Trusting client-provided identifiers
+
+---
+
+# Token-Based Access Rules
+
+## Required
+
+* Token is the ONLY access context unless explicitly designed otherwise
+* All queries must be scoped to token-derived context
+* Access must be resolved via database
+
+---
+
+## Pattern
+
+Token → Resolve Context → Query Scoped Data → Return
+
+---
+
+## Forbidden
+
+* ❌ Mixing token scope with authenticated user implicitly
+* ❌ Accessing unrelated data outside token scope
+* ❌ Expanding access beyond token permissions
+
+---
+
+# Multi-Tenant & Isolation Rules
+
+* All data must be scoped to a tenant (organization, project, or token)
+
+---
+
+## Required
+
+* Every query must include a scoping condition
+* Isolation must be enforced at database level
+
+---
+
+## Forbidden
+
+* ❌ Cross-tenant access without explicit authorization
+* ❌ Relying on frontend filtering for isolation
+
+---
+
+# External Systems Integration
+
+## Required Pattern
+
+External System → Webhook → Database → Application reads DB
+
+---
+
+## Forbidden
+
+* ❌ Calling external APIs in hot paths
+* ❌ Deriving runtime state from external APIs
+* ❌ Relying on external availability for core logic
+
+---
+
+## Reliability Rule
+
+* Webhook-driven systems must be replayable and recoverable
+
+---
+
+# Architecture & Project Structure
+
+## File Size
+
+* Ideal: 50–150 lines
+* Hard limit: ~200 lines → refactor required
+
+---
+
+## Next.js Structure
+
+### Routes
+
+* `app/` or `src/app/`
+* `page.tsx` must be a Server Component
+* Keep route files thin
+
+---
+
+### Components
+
+* `components/` or `src/components/`
+* Domain-based organization
+* Single-purpose
+* < 100 lines
+
+---
+
+### Services / Backend
+
+* `lib/` or `src/lib/`
+* Optional: `server/services/`
+* Contains:
+
+  * business logic
+  * validation
+  * transformations
+  * integrations
+
+---
 
 ### Hooks
 
-* `hooks/` or `src/hooks/` contains reusable client logic (`useX`)
-* Hooks should be under 100–150 lines and single-purpose
+* `hooks/` or `src/hooks/`
+* Reusable client logic only
+* 100–150 lines max
 
 ---
 
-## Component Rules
+# Server vs Client Components
 
-* Components must be single-purpose and under 100 lines
-* Extract subcomponents early (don’t wait until large files)
-* No deeply nested JSX (max 2–3 levels)
-* Move logic out of components into hooks or services
+## Default
 
----
-
-## Server vs Client Components
-
-* `page.tsx` must be a Server Component by default (no `"use client"`)
-* Prefer Server Components over Client Components whenever possible
-* Only use Client Components when interactivity is required (state, effects, event handlers)
-
-### Client Component Usage
-
-* Client Components must be small and isolated
-* Do NOT make entire pages or large sections client components
-* Keep client logic (state, `useEffect`, event handlers) contained to small components or hooks
-* Wrap interactive UI in small client components and import them into Server Components
-
-### Data & Rendering
-
-* Fetch data in Server Components whenever possible
-* Pass data down to Client Components via props
-* Avoid fetching data inside Client Components unless absolutely necessary
-
-### Objective (server vs client)
-
-* Minimize client-side JavaScript
-* Improve performance and SEO by maximizing server-rendered content
-
-## Hooks & Logic
-
-* Reusable logic must be extracted into hooks (`useX`)
-* No business logic directly inside UI components
-* Hooks should not exceed 100–150 lines
+* Prefer Server Components
 
 ---
 
-## Data & API
+## Client Components
 
-* No direct database or external calls from frontend components
-* All data fetching must go through a defined layer (API routes or backend services)
-* Do not mix fetching logic with UI rendering
+Only when necessary:
+
+* state
+* effects
+* event handlers
 
 ---
 
-## Function Design Rules
+## Rules
 
-* Functions must have a single responsibility
-* Functions should be small and focused (5–15 lines preferred)
-* If a function exceeds ~20 lines → refactor into smaller functions
-* Each function should do one clear, well-defined task
+* Must be small and isolated
+* Never wrap entire pages or large sections
+* Extract interactivity into small client islands
 
-### Refactoring Guidelines
+---
 
-* If a function handles multiple concerns → split it
-* If a function has nested logic (multiple conditionals/loops) → extract helper functions
-* If a function name cannot clearly describe what it does → it is too complex
+## Objective
 
-### Readability Standard
+* Minimize client-side JS
+* Maximize SSR for performance and SEO
 
-* A function should be understandable at a glance
-* Avoid deep nesting (max 2–3 levels)
-* Prefer clear, descriptive names over comments
+---
 
-### Objective (functions)
+# Component Rules
 
-* Small, composable functions that are easy to read, test, and reuse
+* Single responsibility
+* < 100 lines
+* No deep JSX nesting (max 2–3 levels)
+* No business logic inside components
 
-## Naming Conventions
+---
 
-* Files: kebab-case or PascalCase (be consistent)
+# Hooks & Logic
+
+* Extract reusable client logic into hooks
+* Hooks must be focused and readable
+* No backend/business logic in hooks
+
+---
+
+# Service Boundary Rules
+
+* Business logic must live in services
+
+---
+
+## API Routes / Server Actions
+
+Must be thin:
+
+* validate input
+* call service
+* return result
+
+---
+
+## Forbidden
+
+* ❌ Complex logic in routes
+* ❌ Scattered DB calls
+* ❌ Repeating business logic
+
+---
+
+## Principle
+
+Routes orchestrate — services decide
+
+---
+
+# Function Design
+
+## Rules
+
+* Single responsibility
+* 5–15 lines preferred
+* > 20 lines → refactor
+
+---
+
+## Standard
+
+* Clear intent through naming
+* No deep nesting
+* Easy to understand at a glance
+
+---
+
+# Mutation & Side Effects
+
+## Required
+
+* Separate reads and writes
+* Mutations must be explicit
+
+---
+
+## Pattern
+
+Validate → Execute → Persist → Return
+
+---
+
+## Forbidden
+
+* ❌ Hidden side effects
+* ❌ Mutations in UI components
+
+---
+
+# Naming Conventions
+
 * Components: PascalCase
-* Hooks: useCamelCase (must start with "use")
+* Hooks: useCamelCase
 * Functions: camelCase
-* Avoid vague names like `data`, `stuff`, `handler`
+* Files: consistent casing
 
 ---
 
-## Imports
+## Avoid
 
-* Use absolute imports when possible
-* Avoid deeply nested relative paths (../../../../)
-* Group imports in order:
-
-  1. External libraries
-  2. Internal modules
-  3. Styles/types
+* `data`, `stuff`, `handler`, `util`
 
 ---
 
-## Error Handling
+# Imports
 
-* Do not silently fail
+Order:
+
+1. External
+2. Internal
+3. Types/styles
+
+---
+
+## Rules
+
+* Prefer absolute imports
+* Avoid deep relative paths
+
+---
+
+# Data & API Rules
+
+* No direct DB access from UI
+* All data access goes through services
+* Do not mix fetching with rendering
+
+---
+
+# Error Handling
+
+* Never silently fail
 * Always handle async errors
-* Surface meaningful error messages
+* Return meaningful errors
 
 ---
 
-## Comments
+# Comments
 
-* Do NOT add obvious comments
-* Only explain "why", not "what"
-* Keep comments minimal and high value
-
----
-
-## File Creation Rules
-
-* Do NOT create new .md files unless explicitly approved
-* Do NOT introduce new folders without justification
+* Explain WHY, not WHAT
+* Avoid obvious comments
+* Prefer readable code over comments
 
 ---
 
-## Refactoring Expectations
+# Complexity Management
 
-* If touching messy code, improve it slightly
-* Leave files better than you found them
-* Break large components into smaller ones during edits
+## Red Flags
 
----
-
-## Decision Rules (Enforced)
-
-* If logic is reused in 2+ places → extract a hook or shared function
-* If logic involves data transformation, validation, or business rules → move to backend/service (`lib/` or `server/services/`)
-* If a component exceeds 100 lines → split into smaller components
-* If a component has more than 3 responsibilities → split immediately
-* If state management becomes complex → extract into a hook
-* If a function is longer than 30–40 lines → refactor into smaller functions
-* If a component needs state or effects → isolate that logic into a small client component
-* If a function grows beyond ~20 lines or handles multiple concerns → split it immediately
+* Deep call chains
+* Over-abstraction
+* Hidden behavior
+* Excessive configuration
 
 ---
 
-## Code Smell Detection (Refactor Triggers)
+## Rule
 
-* If you need to scroll more than 2 screens → refactor the file
-* If a variable or function name requires explanation → rename it
-* If a file does more than one clear responsibility → split it
-* If logic is duplicated → extract it
-* If a component mixes UI + business logic → separate concerns
-* If props are passed down more than 2 levels (prop drilling) → rethink structure (context or state)
-* If a file is hard to explain in 1–2 sentences → it’s too complex
+If understanding requires:
 
----
+* jumping across multiple files
+* holding too much context
 
-## PR Readability Standard
-
-* A reviewer should understand:
-
-  * What was changed
-  * Where logic lives
-  * How data flows
-
-* If this is unclear, the PR is not ready
+→ simplify immediately
 
 ---
 
-## PR Self-Check (Before Submitting)
+# Tradeoff Rules
 
-* Can another developer find where logic lives in under 30 seconds?
-* Are components small and focused?
-* Is business logic separated from UI?
-* Are names clear without needing comments?
-* Did I improve any messy code I touched?
+## Priority
 
-If any answer is “no” → refactor before submitting
+1. Correctness
+2. Maintainability
+3. Clarity
+4. Performance (only when measured)
 
 ---
 
-## Anti-Patterns (Avoid These)
+## When to Break Rules
+
+Allowed ONLY if:
+
+* Reduces overall complexity
+* Improves clarity significantly
+
+---
+
+## Avoid
+
+* Premature optimization
+* Abstracting for future unknowns
+
+---
+
+# Abstraction Rules
+
+Only abstract when:
+
+* Logic is reused OR
+* Clear pattern exists OR
+* It simplifies the system
+
+---
+
+## Avoid
+
+* Generic utilities
+* Premature abstractions
+
+---
+
+# Testability Rules
+
+* Business logic must be:
+
+  * isolated
+  * deterministic
+  * testable without UI
+
+---
+
+## Required
+
+* Logic exists outside components
+
+---
+
+## Avoid
+
+* Framework-coupled logic
+* Hidden side effects
+
+---
+
+# Refactoring Expectations
+
+* Leave code better than you found it
+* Improve structure when touching code
+* Do not layer new logic on poor structure
+
+---
+
+# Code Smell Detection
+
+Refactor if:
+
+* File is too large
+* Naming is unclear
+* Logic is duplicated
+* Responsibilities are mixed
+* UI + business logic combined
+
+---
+
+# Decision Rules (Enforced)
+
+* Logic reused 2+ times → extract
+* Business logic → services
+* Component >100 lines → split
+* Function >20 lines → refactor
+* Complex state → extract hook
+
+---
+
+# PR Readability Standard
+
+A PR must clearly show:
+
+* Where logic lives
+* How data flows
+* What owns state
+
+---
+
+## If unclear → not ready
+
+---
+
+# Staff-Level PR Review Gate
+
+A change is acceptable only if:
+
+* Data flow is obvious
+* Ownership is clear
+* Boundaries are respected
+* Complexity is reduced or unchanged
+
+---
+
+# Observability Rules
+
+* Systems must be easy to debug
+
+---
+
+## Required
+
+* Clear error messages
+* Deterministic behavior
+* Traceable data flow
+
+---
+
+## Avoid
+
+* Silent failures
+* Ambiguous states
+
+---
+
+# Engineering Judgment Rule
+
+Do NOT blindly follow rules.
+
+Instead:
+
+1. Understand intent
+2. Evaluate context
+3. Apply rules to improve the system
+
+---
+
+## Goal
+
+Not rule-compliant code
+
+But:
+
+* predictable systems
+* maintainable architecture
+* scalable design
+
+---
+
+# Anti-Patterns (Strictly Avoid)
 
 * ❌ 300+ line components
-* ❌ Business logic in UI components
-* ❌ Mixing concerns in one file
-* ❌ Massive utility files doing everything
-* ❌ Unnamed or unclear abstractions
-* ❌ Copy-pasting logic instead of reusing hooks/services
+* ❌ Business logic in UI
+* ❌ Mixed concerns
+* ❌ Massive utils files
+* ❌ Copy-paste reuse
+* ❌ Hidden behavior
 
 ---
+
+# Final Standard
+
+Before completing any task:
+
+* Is this the cleanest reasonable solution?
+* Does it fit architecture?
+* Is ownership clear?
+* Does it reduce complexity?
+
+If not → refactor before finishing

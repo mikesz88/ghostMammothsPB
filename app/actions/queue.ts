@@ -465,9 +465,6 @@ export async function endGameAndReorderQueue(
     .select("is_admin")
     .eq("id", user.id)
     .single();
-  if (!profile?.is_admin) {
-    return { success: false, error: "Unauthorized" };
-  }
 
   const { data: eventRow, error: eventErr } = await supabase
     .from("events")
@@ -488,6 +485,25 @@ export async function endGameAndReorderQueue(
     .single();
   if (assignErr || !assignmentRow) {
     return { success: false, error: "Assignment not found" };
+  }
+
+  if (assignmentRow.ended_at) {
+    return { success: false, error: "Game already ended" };
+  }
+
+  const assignedPlayerIds = [
+    assignmentRow.player1_id,
+    assignmentRow.player2_id,
+    assignmentRow.player3_id,
+    assignmentRow.player4_id,
+    assignmentRow.player5_id,
+    assignmentRow.player6_id,
+    assignmentRow.player7_id,
+    assignmentRow.player8_id,
+  ].filter(Boolean) as string[];
+  const userOnCourt = assignedPlayerIds.some((pid) => pid === user.id);
+  if (!profile?.is_admin && !userOnCourt) {
+    return { success: false, error: "Unauthorized" };
   }
 
   let queueEntryIds: string[] = [];
