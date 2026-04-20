@@ -72,11 +72,9 @@ export function QueueList({
     )
     .sort((a, b) => a.position - b.position);
 
-  const pendingStayQueue = isAdmin
-    ? queue
-        .filter((entry) => entry.status === "pending_stay")
-        .sort((a, b) => a.position - b.position)
-    : [];
+  const pendingStayQueue = queue
+    .filter((entry) => entry.status === "pending_stay")
+    .sort((a, b) => a.position - b.position);
 
   function buildGrouped(entries: QueueEntry[]) {
     const grouped: (QueueEntry | QueueEntry[])[] = [];

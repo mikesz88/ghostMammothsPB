@@ -22,7 +22,7 @@ export function useRealtimeQueue(eventId: string) {
         `
         )
         .eq("event_id", eventId)
-        .in("status", ["waiting", "pending_solo"])
+        .in("status", ["waiting", "pending_solo", "pending_stay"])
         .order("position");
 
       if (error) {

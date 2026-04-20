@@ -301,16 +301,22 @@ export default function EventDetailPage(props: {
     }
   }, [id]);
 
-  // Get current user's queue position (waiting or pending solo)
+  // Get current user's queue position (main line, pending solo, or on deck)
   const currentUserEntry = queue.find(
     (e) =>
       e.userId === user?.id &&
-      (e.status === "waiting" || e.status === "pending_solo")
+      (e.status === "waiting" ||
+        e.status === "pending_solo" ||
+        e.status === "pending_stay")
   );
   const userPosition = currentUserEntry?.position || 0;
   const isPendingSolo = currentUserEntry?.status === "pending_solo";
+  const isPendingStay = currentUserEntry?.status === "pending_stay";
   const isUpNext =
-    !isPendingSolo && userPosition > 0 && userPosition <= 4;
+    !isPendingSolo &&
+    !isPendingStay &&
+    userPosition > 0 &&
+    userPosition <= 4;
 
   // Check if user is currently playing on a court
   const isCurrentlyPlaying = user
@@ -382,7 +388,7 @@ export default function EventDetailPage(props: {
 
   // Handle position change notifications (only when assignable in line)
   useEffect(() => {
-    if (isPendingSolo) return;
+    if (isPendingSolo || isPendingStay) return;
     if (userPosition > 0 && lastPosition > 0 && userPosition < lastPosition) {
       if (userPosition <= 4) {
         sendNotification("up-next", "Almost Your Turn!", {
@@ -399,10 +405,13 @@ export default function EventDetailPage(props: {
     if (userPosition > 0) {
       queueMicrotask(() => setLastPosition(userPosition));
     }
-  }, [userPosition, lastPosition, sendNotification, isPendingSolo]);
+  }, [userPosition, lastPosition, sendNotification, isPendingSolo, isPendingStay]);
 
   const waitingCount = queue.filter(
-    (e) => e.status === "waiting" || e.status === "pending_solo"
+    (e) =>
+      e.status === "waiting" ||
+      e.status === "pending_solo" ||
+      e.status === "pending_stay"
   ).length;
   const playingCount =
     assignments.filter((a) => !a.endedAt).length * (event?.teamSize || 2) * 2;
@@ -419,6 +428,7 @@ export default function EventDetailPage(props: {
         e.userId === user.id &&
         (e.status === "waiting" ||
           e.status === "pending_solo" ||
+          e.status === "pending_stay" ||
           e.status === "playing")
     );
 
@@ -603,6 +613,7 @@ export default function EventDetailPage(props: {
               <QueuePositionAlert
                 position={userPosition}
                 isUpNext={isUpNext}
+                isPendingStay={isPendingStay}
                 isPendingSolo={isPendingSolo}
               />
             </div>
@@ -698,9 +709,11 @@ export default function EventDetailPage(props: {
               ) : userPosition > 0 ? (
                 <Badge variant="default" className="text-sm">
                   <Bell className="w-3 h-3 mr-1" />
-                  {isPendingSolo
-                    ? `Waiting for more solos (#${userPosition})`
-                    : `You're #${userPosition}`}
+                  {isPendingStay
+                    ? "On deck for next game"
+                    : isPendingSolo
+                      ? `Waiting for more solos (#${userPosition})`
+                      : `You're #${userPosition}`}
                 </Badge>
               ) : (
                 <>
