@@ -2,7 +2,7 @@
 
 import type React from "react";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -50,12 +50,13 @@ export function JoinQueueDialog({
     { name: "", skillLevel: "intermediate" },
   ]);
 
-  useEffect(() => {
-    if (open && soloOnlyMode) {
+  const handleOpenChange = (next: boolean) => {
+    if (next && soloOnlyMode) {
       setGroupSize("1");
       setPlayers([{ name: "", skillLevel: "intermediate" }]);
     }
-  }, [open, soloOnlyMode]);
+    onOpenChange(next);
+  };
 
   const handleGroupSizeChange = (value: string) => {
     setGroupSize(value);
@@ -104,7 +105,7 @@ export function JoinQueueDialog({
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="bg-card border-border max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-foreground">Join Queue</DialogTitle>
