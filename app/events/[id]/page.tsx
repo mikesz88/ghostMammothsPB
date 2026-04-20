@@ -30,7 +30,12 @@ import { QueueManager } from "@/lib/queue-manager";
 import { useNotifications } from "@/lib/use-notifications";
 import { useRealtimeQueue } from "@/lib/hooks/use-realtime-queue";
 import { useAuth } from "@/lib/auth-context";
-import { joinQueue, leaveQueue, endGameAndReorderQueue } from "@/app/actions/queue";
+import {
+  joinQueue,
+  leaveQueue,
+  endGameAndReorderQueue,
+  adminRemoveFromQueue,
+} from "@/app/actions/queue";
 import { createClient } from "@/lib/supabase/client";
 import { canUserJoinEvent, formatPrice } from "@/lib/membership-helpers";
 import { Header } from "@/components/ui/header";
@@ -502,8 +507,34 @@ export default function EventDetailPage(props: {
     }
   };
 
-  const handleLeaveQueue = async (entryId: string) => {
+  const handleQueueRemove = async (entryId: string) => {
+    const entry = queue.find((e) => e.id === entryId);
+    if (!entry) return;
+
+    const isSelf = entry.userId === user?.id;
+
     try {
+      if (isAdmin && !isSelf) {
+        if (
+          !confirm(
+            "Are you sure you want to remove this player from the queue?",
+          )
+        ) {
+          return;
+        }
+        const { error } = await adminRemoveFromQueue(entryId);
+        if (error) {
+          console.error("Error removing player from queue:", error);
+          toast.error("Failed to remove player", {
+            description: error,
+          });
+        } else {
+          await refetchQueue();
+          toast.success("Player removed from queue");
+        }
+        return;
+      }
+
       const { error } = await leaveQueue(entryId);
       if (error) {
         console.error("Error leaving queue:", error);
@@ -511,7 +542,6 @@ export default function EventDetailPage(props: {
           description: "Please try again.",
         });
       } else {
-        // Manually refetch queue to ensure UI updates immediately
         await refetchQueue();
 
         sendNotification("queue-leave", "Left Queue", {
@@ -520,7 +550,7 @@ export default function EventDetailPage(props: {
         });
       }
     } catch (err) {
-      console.error("Error leaving queue:", err);
+      console.error("Error updating queue:", err);
       toast.error("An unexpected error occurred", {
         description: "Please try again.",
       });
@@ -770,8 +800,9 @@ export default function EventDetailPage(props: {
             ) : (
               <QueueList
                 queue={queue}
-                onRemove={handleLeaveQueue}
+                onRemove={handleQueueRemove}
                 currentUserId={user?.id || ""}
+                isAdmin={isAdmin}
               />
             )}
           </div>

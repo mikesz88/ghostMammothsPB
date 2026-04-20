@@ -58,6 +58,28 @@ function getAverageSkillLevel(
   return numberToSkillLevel[clampedAverage] || "intermediate";
 }
 
+/** Row id to pass to remove: admin removing others uses group leader row (server deletes whole group); self-serve uses this member's row. */
+function getRemoveTargetEntryId(
+  entries: QueueEntry[],
+  firstEntry: QueueEntry,
+  isAdmin: boolean,
+  isCurrentUser: boolean,
+  currentUserId: string | undefined,
+): string {
+  if (isAdmin && !isCurrentUser) {
+    return firstEntry.id;
+  }
+  return (
+    entries.find((e) => e.userId === currentUserId)?.id ?? firstEntry.id
+  );
+}
+
+function removeButtonTitle(isAdmin: boolean, isCurrentUser: boolean): string {
+  return isAdmin && !isCurrentUser
+    ? "Admin: Remove from queue"
+    : "Leave queue";
+}
+
 export function QueueList({
   queue,
   onRemove,
@@ -115,22 +137,95 @@ export function QueueList({
             const isGroup = Array.isArray(item);
             const entries = isGroup ? item : [item];
             const firstEntry = entries[0];
+            const isCurrentUser = entries.some(
+              (e) => e.userId === currentUserId,
+            );
+            const removeTargetId = getRemoveTargetEntryId(
+              entries,
+              firstEntry,
+              isAdmin,
+              isCurrentUser,
+              currentUserId,
+            );
+            const showRemove =
+              onRemove &&
+              (isCurrentUser || isAdmin);
             return (
               <Card
                 key={isGroup ? firstEntry.groupId : firstEntry.id}
-                className="border-amber-500/40 bg-amber-500/5"
+                className={`border-amber-500/40 bg-amber-500/5 ${
+                  isCurrentUser ? "ring-2 ring-primary" : ""
+                }`}
               >
                 <CardContent className="p-4">
-                  <div className="flex items-center gap-3 flex-wrap">
-                    <Badge variant="secondary" className="shrink-0">
-                      On deck
-                    </Badge>
-                    <span className="font-medium text-foreground">
-                      {firstEntry.player_names &&
-                      firstEntry.player_names.length > 0
-                        ? firstEntry.player_names.map((p) => p.name).join(", ")
-                        : firstEntry.user?.name}
-                    </span>
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                    <div className="flex items-center gap-3 sm:gap-4 flex-1 min-w-0">
+                      <div className="w-10 h-10 bg-amber-500/10 rounded-lg flex items-center justify-center shrink-0">
+                        <span className="text-lg font-bold text-amber-800 dark:text-amber-200">
+                          #{firstEntry.position}
+                        </span>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1 flex-wrap">
+                          <Badge variant="secondary" className="shrink-0">
+                            On deck
+                          </Badge>
+                          <p className="font-medium text-foreground">
+                            Group of {firstEntry.groupSize || entries.length}
+                          </p>
+                          <Badge variant="outline" className="text-xs shrink-0">
+                            {getAverageSkillLevel(
+                              firstEntry.player_names,
+                              firstEntry.user?.skillLevel,
+                            )}
+                          </Badge>
+                        </div>
+                        <div className="flex flex-wrap gap-2 text-sm text-muted-foreground">
+                          {firstEntry.player_names &&
+                          firstEntry.player_names.length > 0 ? (
+                            firstEntry.player_names.map((player, idx) => (
+                              <span key={idx}>{player.name}</span>
+                            ))
+                          ) : isGroup ? (
+                            entries.map((entry) => (
+                              <span key={entry.id}>{entry.user?.name}</span>
+                            ))
+                          ) : (
+                            <span>{firstEntry.user?.name}</span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <Clock className="w-4 h-4 shrink-0" />
+                        <span className="whitespace-nowrap">
+                          {(() => {
+                            const minutesAgo = Math.floor(
+                              (Date.now() - firstEntry.joinedAt.getTime()) /
+                                60000,
+                            );
+                            if (minutesAgo < 0) return "Just now";
+                            if (minutesAgo === 0) return "Just now";
+                            if (minutesAgo < 60) return `${minutesAgo}m ago`;
+                            const hoursAgo = Math.floor(minutesAgo / 60);
+                            return `${hoursAgo}h ago`;
+                          })()}
+                        </span>
+                      </div>
+                      {showRemove && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => onRemove?.(removeTargetId)}
+                          title={removeButtonTitle(isAdmin, isCurrentUser)}
+                          aria-label={removeButtonTitle(isAdmin, isCurrentUser)}
+                          className="shrink-0 [&_svg]:size-5"
+                        >
+                          <UserX color={"red"} strokeWidth={3} aria-hidden />
+                        </Button>
+                      )}
+                    </div>
                   </div>
                 </CardContent>
               </Card>
@@ -144,6 +239,15 @@ export function QueueList({
         const firstEntry = entries[0];
         const isCurrentUser = entries.some((e) => e.userId === currentUserId);
         const isPendingSolo = firstEntry.status === "pending_solo";
+        const removeTargetId = getRemoveTargetEntryId(
+          entries,
+          firstEntry,
+          isAdmin,
+          isCurrentUser,
+          currentUserId,
+        );
+        const showRemove =
+          onRemove && (isCurrentUser || isAdmin);
 
         return (
           <Card
@@ -214,17 +318,13 @@ export function QueueList({
                       })()}
                     </span>
                   </div>
-                  {((isCurrentUser && onRemove) || (isAdmin && onRemove)) && (
+                  {showRemove && (
                     <Button
                       variant="ghost"
                       size="icon"
-                      onClick={() => onRemove(firstEntry.id)}
-                      title={
-                        isAdmin ? "Admin: Remove from queue" : "Leave queue"
-                      }
-                      aria-label={
-                        isAdmin ? "Admin: Remove from queue" : "Leave queue"
-                      }
+                      onClick={() => onRemove?.(removeTargetId)}
+                      title={removeButtonTitle(isAdmin, isCurrentUser)}
+                      aria-label={removeButtonTitle(isAdmin, isCurrentUser)}
                       className="shrink-0 [&_svg]:size-5"
                     >
                       <UserX color={"red"} strokeWidth={3} aria-hidden />
