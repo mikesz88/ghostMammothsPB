@@ -1,8 +1,10 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import Link from "next/link";
 import { Check, Crown, Zap, Shield, Gift, Loader2 } from "lucide-react";
+import Link from "next/link";
+import { useState, useEffect } from "react";
+
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -11,11 +13,11 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Header } from "@/components/ui/header";
 import { useAuth } from "@/lib/auth-context";
 import { getUserMembership, formatPrice } from "@/lib/membership-helpers";
 import { createClient } from "@/lib/supabase/client";
+
 import type { UserMembershipInfo } from "@/lib/membership-helpers";
 
 interface MembershipTier {

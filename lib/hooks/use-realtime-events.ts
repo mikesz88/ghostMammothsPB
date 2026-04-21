@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
+
 import { createClient } from "@/lib/supabase/client";
+
 import type { Event } from "../types";
 
 export function useRealtimeEvents() {

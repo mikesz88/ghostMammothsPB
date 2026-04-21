@@ -1,7 +1,5 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
-import Link from "next/link";
 import {
   Mail,
   CheckCircle,
@@ -10,6 +8,18 @@ import {
   RefreshCw,
   ExternalLink,
 } from "lucide-react";
+import Link from "next/link";
+import { useState, useEffect, useCallback } from "react";
+import { toast } from "sonner";
+
+import {
+  getEmailStats,
+  resendQueueEmailFromLog,
+  type EmailLogRow,
+  type GetEmailStatsResult,
+} from "@/app/actions/notifications";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -17,16 +27,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Header } from "@/components/ui/header";
-import { Badge } from "@/components/ui/badge";
-import {
-  getEmailStats,
-  resendQueueEmailFromLog,
-  type EmailLogRow,
-  type GetEmailStatsResult,
-} from "@/app/actions/notifications";
-import { toast } from "sonner";
+
 
 type EmailStatsResult = Extract<GetEmailStatsResult, { total: number }>;
 

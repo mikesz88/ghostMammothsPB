@@ -1,6 +1,18 @@
 "use client";
 
+import { RefreshCw, Users, Trash2, Play } from "lucide-react";
 import { useState } from "react";
+import { toast } from "sonner";
+
+import {
+  resetTestEvent,
+  addDummyUsersToQueue,
+  clearTestEvent,
+  fillAllCourts,
+  updateEventRotationType,
+  updateEventTeamSize,
+  updateEventCourtCount,
+} from "@/app/actions/test-helpers";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -17,18 +29,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+
 import type { RotationType } from "@/lib/types";
-import {
-  resetTestEvent,
-  addDummyUsersToQueue,
-  clearTestEvent,
-  fillAllCourts,
-  updateEventRotationType,
-  updateEventTeamSize,
-  updateEventCourtCount,
-} from "@/app/actions/test-helpers";
-import { toast } from "sonner";
-import { RefreshCw, Users, Trash2, Play } from "lucide-react";
 
 interface TestControlsProps {
   eventId: string;

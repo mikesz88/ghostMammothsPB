@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
+
+import { stripe } from "@/lib/stripe/server";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/service-role";
-import { stripe } from "@/lib/stripe/server";
 
 export async function DELETE() {
   try {

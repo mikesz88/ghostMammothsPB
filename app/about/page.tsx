@@ -1,8 +1,9 @@
 "use client";
 
+import { Trophy, Users, Zap, Calendar, Shield, Heart } from "lucide-react";
 import Link from "next/link";
 import { useState, useEffect } from "react";
-import { Trophy, Users, Zap, Calendar, Shield, Heart } from "lucide-react";
+
 import { Button } from "@/components/ui/button";
 import {
   Card,

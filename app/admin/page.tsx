@@ -1,7 +1,5 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import Link from "next/link";
 import {
   Trophy,
   Plus,
@@ -14,7 +12,13 @@ import {
   Loader2,
   Mail,
 } from "lucide-react";
+import Link from "next/link";
+import { useState, useEffect } from "react";
 import { toast } from "sonner";
+
+import { CreateEventDialog } from "@/components/create-event-dialog";
+import { EditEventDialog } from "@/components/edit-event-dialog";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -23,16 +27,14 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { CreateEventDialog } from "@/components/create-event-dialog";
-import { EditEventDialog } from "@/components/edit-event-dialog";
 import { Header } from "@/components/ui/header";
-import { createClient } from "@/lib/supabase/client";
-import type { Event, TeamSize, RotationType, EventStatus } from "@/lib/types";
 import {
   is2Stay2OffRotation,
   is2Stay2OffValidTeamSize,
 } from "@/lib/rotation-policy";
+import { createClient } from "@/lib/supabase/client";
+
+import type { Event, TeamSize, RotationType, EventStatus } from "@/lib/types";
 import type { Database } from "@/supabase/supa-schema";
 
 type EventRow = Database["public"]["Tables"]["events"]["Row"];
