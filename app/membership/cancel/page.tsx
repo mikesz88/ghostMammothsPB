@@ -1,7 +1,8 @@
 "use client";
 
-import Link from "next/link";
 import { XCircle } from "lucide-react";
+import Link from "next/link";
+
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Header } from "@/components/ui/header";

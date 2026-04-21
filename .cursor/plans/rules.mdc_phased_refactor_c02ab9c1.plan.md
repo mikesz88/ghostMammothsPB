@@ -32,6 +32,9 @@ todos:
   - id: phase-9
     content: "Phase 9 (optional): Public/marketing shell + header decomposition"
     status: pending
+  - id: phase-0-lint-ci
+    content: "Optional hygiene: ESLint error burn-down, ignores for generated paths, CI/PR policy — see Lint appendix"
+    status: pending
 isProject: false
 ---
 
@@ -461,6 +464,43 @@ Prefer one phase or one subphase per PR.
 8. Phase 7 — Action Layer Split
 9. Phase 8 — Integration & Service Cleanup
 10. Phase 9 — Public/Marketing Shell Cleanup
+
+---
+
+## Lint, PR gate, and CI during migration
+
+Architectural phases shrink **max-lines**, **complexity**, and **client sprawl** over time. They do **not** automatically clear hundreds of ESLint findings in one step. Treat lint cleanup as **parallel hygiene** unless a phase explicitly tightens rules.
+
+### Errors vs warnings
+
+* ESLint **exits non-zero on errors**. Fix error-level rules (for example `unused-imports`, `@typescript-eslint/no-unused-vars`) before `npm run lint`, `npm run build`, or `npm run ci` can pass end-to-end.
+* **Warnings** do not fail the run unless you add `--max-warnings 0` (or equivalent). You can “endure” warning noise while fixing errors first.
+
+### What `npm run ci` does today
+
+* `ci` runs: `lint` → `build` → `test:a11y`.
+* `build` is defined as `npm run lint && next build`, so **lint runs twice** in a full `ci` (redundant but harmless). **Both** steps must succeed for `ci` to finish.
+
+### Verifying build and a11y without going through `npm run` lint wrappers
+
+If lint is still failing but you want a **local** signal on compile and Playwright a11y:
+
+* Run **`npx next build`** (invokes `next build` directly, skipping the `build` script’s lint preamble).
+* Then **`npm run test:a11y`**.
+
+CI should still aim for a clean `npm run lint` before merge; this is for **local** debugging only unless you add a dedicated script (for example `ci:no-lint`) and agree on when it is allowed.
+
+### PR gate (`npm run pr`)
+
+* [`script/pr-gate.mjs`](script/pr-gate.mjs) runs **`npm run lint`** and **`npm run typecheck`** (blocking), then **`npm run architecture:audit`** (reporting).
+* **`typecheck`** is **`tsc`** against [`tsconfig.json`](tsconfig.json). Generated `.next/dev` type stubs are not included so a plain `tsc` run stays stable.
+
+### Practical hygiene (optional micro-PRs)
+
+* **`eslint --fix`** on touched paths; auto-fix **import/order** where safe.
+* **Overrides** for generated or vendored paths (for example Supabase schema dumps) so editors do not fight machine output.
+* **`no-console`**: allow or strip in `script/` / one-off tooling via overrides if the team agrees.
+* **`--max-warnings`**: adopt only after a baseline burn-down so CI stays green.
 
 ---
 

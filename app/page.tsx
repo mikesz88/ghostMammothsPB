@@ -1,9 +1,11 @@
 "use client";
 
-import Link from "next/link";
-import { useState, useEffect, Suspense } from "react";
-import { useSearchParams } from "next/navigation";
 import { Users, Calendar, Trophy, Zap, AlertCircle } from "lucide-react";
+import Link from "next/link";
+import { useSearchParams } from "next/navigation";
+import { useState, useEffect, Suspense } from "react";
+
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -12,7 +14,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Header } from "@/components/ui/header";
 import { useAuth } from "@/lib/auth-context";
 import { createClient } from "@/lib/supabase/client";

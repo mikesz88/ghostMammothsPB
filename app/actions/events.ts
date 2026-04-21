@@ -1,12 +1,15 @@
 "use server";
 
-import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
-import type { RotationType, TeamSize } from "@/lib/types";
+
 import {
   is2Stay2OffRotation,
   is2Stay2OffValidTeamSize,
 } from "@/lib/rotation-policy";
+import { createClient } from "@/lib/supabase/server";
+
+import type { RotationType, TeamSize } from "@/lib/types";
+
 
 export async function getEvents() {
   const supabase = await createClient();

@@ -1,5 +1,6 @@
-import type { Metadata } from "next";
 import { AdminQueryProvider } from "./query-provider";
+
+import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "Admin | Ghost Mammoth PB",

@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/client";
+
 import type { MembershipStatus } from "@/lib/types-membership";
 
 type SupabaseBrowserClient = ReturnType<typeof createClient>;

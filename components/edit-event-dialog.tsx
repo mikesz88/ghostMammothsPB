@@ -1,7 +1,8 @@
 "use client";
 
-import type React from "react";
 import { useState, useEffect } from "react";
+
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -9,7 +10,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -19,11 +19,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import type { Event, RotationType } from "@/lib/types";
 import {
   is2Stay2OffRotation,
   is2Stay2OffValidTeamSize,
 } from "@/lib/rotation-policy";
+
+import type { Event, RotationType } from "@/lib/types";
+import type React from "react";
 
 interface EditEventDialogProps {
   open: boolean;

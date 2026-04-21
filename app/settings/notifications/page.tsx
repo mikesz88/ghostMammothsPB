@@ -1,16 +1,13 @@
 "use client";
 
-import { useState } from "react";
-import Link from "next/link";
 import {
-  Trophy,
-  ArrowLeft,
   Bell,
   Mail,
-  MessageSquare,
   Save,
 } from "lucide-react";
+import { useState } from "react";
 import { toast } from "sonner";
+
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -19,10 +16,9 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Header } from "@/components/ui/header";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { Input } from "@/components/ui/input";
-import { Header } from "@/components/ui/header";
 import { useNotifications } from "@/lib/use-notifications";
 
 export default function NotificationSettingsPage() {

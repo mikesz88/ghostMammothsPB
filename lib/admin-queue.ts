@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/client";
+
 import type {
   QueueEntry,
   GroupSize,

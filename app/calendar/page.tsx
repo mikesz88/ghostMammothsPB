@@ -1,4 +1,6 @@
 import { Calendar as CalendarIcon, ExternalLink } from "lucide-react";
+
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -6,7 +8,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Header } from "@/components/ui/header";
 
 export default function CalendarPage() {
