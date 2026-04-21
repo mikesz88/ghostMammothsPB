@@ -45,7 +45,7 @@ export function CreateEventDialog({
   const [courtCount, setCourtCount] = useState("4");
   const [teamSize, setTeamSize] = useState<TeamSize>(2);
   const [rotationType, setRotationType] =
-    useState<RotationType>("2-stay-4-off");
+    useState<RotationType>("rotate-all");
   const [formError, setFormError] = useState("");
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -76,7 +76,7 @@ export function CreateEventDialog({
       setTime("");
       setCourtCount("4");
       setTeamSize(2);
-      setRotationType("2-stay-4-off");
+      setRotationType("rotate-all");
     }
   };
 
@@ -207,12 +207,11 @@ export function CreateEventDialog({
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="2-stay-4-off">2 Stay, 4 Off</SelectItem>
+                  <SelectItem value="rotate-all">Rotate All</SelectItem>
+                  <SelectItem value="winners-stay">Winners Stay</SelectItem>
                   <SelectItem value="2-stay-2-off" disabled={teamSize !== 2}>
                     2 Stay, 2 Off (doubles, solo queue)
                   </SelectItem>
-                  <SelectItem value="winners-stay">Winners Stay</SelectItem>
-                  <SelectItem value="rotate-all">Rotate All</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -220,19 +219,18 @@ export function CreateEventDialog({
 
           <div className="bg-muted/50 p-4 rounded-lg">
             <p className="text-sm text-muted-foreground">
-              <strong className="text-foreground">Rotation Types:</strong>
+              <strong className="text-foreground">Rotation types:</strong>
               <br />
-              <strong>2 Stay, 4 Off:</strong> Winning team stays, losing team
-              goes to back of queue
+              <strong>Rotate all:</strong> After each game, everyone goes back
+              through the queue (fair rotation for the whole group).
               <br />
-              <strong>Winners Stay:</strong> All winners stay on court, losers
-              rotate
-              <br />
-              <strong>Rotate All:</strong> All players rotate after each game
+              <strong>Winners stay:</strong> Winners stay on the court for the
+              next game; losers rejoin the queue and get filled in when the host
+              assigns the next group.
               <br />
               <strong>2 Stay, 2 Off:</strong> Doubles only. Solo queue entries
-              only. Winners stay for the next game on opposite teams; two
-              players from the queue fill the open spots.
+              form pairs on court. Two winners stay for the next game (split to
+              opposite sides); two spots are filled from the queue.
             </p>
           </div>
 

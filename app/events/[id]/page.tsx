@@ -367,12 +367,13 @@ export default function EventDetailPage(props: {
                     "Wait for the next group to be assigned to the court.",
                 },
               );
-            } else if (
-              event.rotationType === "winners-stay" ||
-              event.rotationType === "2-stay-4-off"
-            ) {
+            } else if (event.rotationType === "winners-stay") {
               toast.success(
                 "Game ended — winners stay on this court; losers re-queued.",
+              );
+            } else if (event.rotationType === "2-stay-2-off") {
+              toast.success(
+                "Game ended — winners stay and will split to opposite teams; losers re-queued.",
               );
             } else {
               toast.success("Game ended.");

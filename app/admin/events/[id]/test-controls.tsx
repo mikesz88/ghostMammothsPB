@@ -307,9 +307,8 @@ export function TestControls({
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="winners-stay">Winners Stay</SelectItem>
               <SelectItem value="rotate-all">Rotate All</SelectItem>
-              <SelectItem value="2-stay-4-off">2 Stay 4 Off</SelectItem>
+              <SelectItem value="winners-stay">Winners Stay</SelectItem>
               <SelectItem value="2-stay-2-off" disabled={currentTeamSize !== 2}>
                 2 Stay 2 Off
               </SelectItem>

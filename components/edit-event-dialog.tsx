@@ -179,15 +179,14 @@ export function EditEventDialog({
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="2-stay-4-off">2 Stay, 4 Off</SelectItem>
+                  <SelectItem value="rotate-all">Rotate All</SelectItem>
+                  <SelectItem value="winners-stay">Winners Stay</SelectItem>
                   <SelectItem
                     value="2-stay-2-off"
                     disabled={!is2Stay2OffValidTeamSize(event.teamSize)}
                   >
                     2 Stay, 2 Off (doubles, solo queue)
                   </SelectItem>
-                  <SelectItem value="winners-stay">Winners Stay</SelectItem>
-                  <SelectItem value="rotate-all">Rotate All</SelectItem>
                 </SelectContent>
               </Select>
             </div>

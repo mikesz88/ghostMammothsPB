@@ -7,7 +7,6 @@ export type QueueStatus =
   | "completed"
   | "pending_stay";
 export type RotationType =
-  | "2-stay-4-off"
   | "2-stay-2-off"
   | "winners-stay"
   | "rotate-all";

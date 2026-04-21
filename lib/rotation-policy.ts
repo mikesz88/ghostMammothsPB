@@ -6,11 +6,7 @@ export function isRotateAllStyleRotation(rt: RotationType): boolean {
 
 /** Winners (or partial winners) stay on court; losers re-queue. */
 export function isWinnersStayStyleRotation(rt: RotationType): boolean {
-  return (
-    rt === "winners-stay" ||
-    rt === "2-stay-4-off" ||
-    rt === "2-stay-2-off"
-  );
+  return rt === "winners-stay" || rt === "2-stay-2-off";
 }
 
 export function is2Stay2OffRotation(rt: RotationType): boolean {
