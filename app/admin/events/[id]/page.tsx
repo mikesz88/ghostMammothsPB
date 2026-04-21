@@ -535,10 +535,7 @@ export default function AdminEventDetailPage(props: {
             description: "Use Assign Next to fill partner spots from the queue.",
           },
         );
-      } else if (
-        event.rotationType === "winners-stay" ||
-        event.rotationType === "2-stay-4-off"
-      ) {
+      } else if (event.rotationType === "winners-stay") {
         toast.success(
           "Game ended — winners stay on this court; losers re-queued.",
           {

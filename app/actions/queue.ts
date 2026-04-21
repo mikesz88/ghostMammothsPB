@@ -57,6 +57,52 @@ type GameEntryRow = {
 
 type DbClient = SupabaseClient<Database>;
 
+/** Drop removed queue entry ids from winners-on-deck rows (avoids ghost UUIDs after leave/admin remove). */
+async function removeQueueEntryIdsFromCourtPendingStayers(
+  supabase: DbClient,
+  eventId: string,
+  entryIdsToRemove: string[],
+) {
+  if (entryIdsToRemove.length === 0) return;
+  const removeSet = new Set(entryIdsToRemove);
+
+  const { data: rows, error } = await supabase
+    .from("court_pending_stayers")
+    .select("id, queue_entry_ids")
+    .eq("event_id", eventId);
+
+  if (error) {
+    console.error("Failed to load court_pending_stayers for prune:", error);
+    return;
+  }
+
+  for (const row of rows || []) {
+    const raw = row.queue_entry_ids;
+    if (!Array.isArray(raw)) continue;
+    const ids = raw as string[];
+    const filtered = ids.filter((id) => !removeSet.has(id));
+    if (filtered.length === ids.length) continue;
+
+    if (filtered.length === 0) {
+      const { error: delErr } = await supabase
+        .from("court_pending_stayers")
+        .delete()
+        .eq("id", row.id);
+      if (delErr) {
+        console.error("Failed to delete empty court_pending_stayers:", delErr);
+      }
+    } else {
+      const { error: upErr } = await supabase
+        .from("court_pending_stayers")
+        .update({ queue_entry_ids: filtered })
+        .eq("id", row.id);
+      if (upErr) {
+        console.error("Failed to update court_pending_stayers ids:", upErr);
+      }
+    }
+  }
+}
+
 /** Subsets of group indices whose sizes sum to `target` (same semantics as QueueManager). */
 function collectExactCombinationIndices(
   groupSizes: number[],
@@ -413,6 +459,10 @@ export async function leaveQueue(queueEntryId: string) {
     console.error("Error leaving queue:", error);
     return { error: error.message };
   }
+
+  await removeQueueEntryIdsFromCourtPendingStayers(supabase, entry.event_id, [
+    queueEntryId,
+  ]);
 
   // Reorder remaining queue positions
   await reorderQueue(entry.event_id);
@@ -910,18 +960,6 @@ export async function assignPlayersToNextCourt(eventId: string) {
   }
 
   const rotationType = event.rotation_type as RotationType;
-  if (
-    is2Stay2OffRotation(rotationType) &&
-    event.team_size === 2 &&
-    stayingMapped.length > 0 &&
-    stayingMapped.length !== 2
-  ) {
-    return {
-      success: false,
-      error:
-        "2 Stay 2 Off requires exactly two pending winners on this court before assigning the next game.",
-    };
-  }
 
   const stayingCount = countSlotsForEntries(stayingMapped);
   let playersNeeded = playersPerCourt - stayingCount;
@@ -1153,6 +1191,22 @@ export async function adminRemoveFromQueue(queueEntryId: string) {
     return { error: "Queue entry not found" };
   }
 
+  const eventId = entry.event_id;
+  let idsToPrune: string[] = [entry.id];
+  if (entry.group_id) {
+    const { data: groupRows, error: groupSelectError } = await supabase
+      .from("queue_entries")
+      .select("id")
+      .eq("group_id", entry.group_id);
+    if (groupSelectError) {
+      console.error("Failed to list group queue entries:", groupSelectError);
+      return { error: groupSelectError.message };
+    }
+    if (groupRows?.length) {
+      idsToPrune = groupRows.map((r) => r.id);
+    }
+  }
+
   if (entry.group_id) {
     const { error: groupError } = await supabase
       .from("queue_entries")
@@ -1174,6 +1228,8 @@ export async function adminRemoveFromQueue(queueEntryId: string) {
       return { error: error.message };
     }
   }
+
+  await removeQueueEntryIdsFromCourtPendingStayers(supabase, eventId, idsToPrune);
 
   await reorderQueue(entry.event_id);
   await reconcilePendingSoloForEvent(entry.event_id);

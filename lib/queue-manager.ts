@@ -235,13 +235,6 @@ export class QueueManager {
     const losers = winningTeam === "team1" ? team2 : team1;
 
     switch (rotationType) {
-      case "2-stay-4-off":
-        // Winners stay, losers go to back of queue
-        return {
-          playersToStay: winners,
-          playersToQueue: losers,
-        };
-
       case "winners-stay":
         // All winners stay, all losers go to queue
         return {
