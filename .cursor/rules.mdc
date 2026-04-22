@@ -31,6 +31,17 @@ If a request conflicts with these rules, follow the rules.
 
 ---
 
+# Lint and TypeScript policy files (agents and humans)
+
+* Do **not** relax ESLint Phase 1 caps, turn rules off, or weaken `tsconfig.json` (for example `strict`) in a drive-by change to silence warnings.
+* Raising thresholds (complexity, `max-lines`, `max-params`, `max-depth`), dropping rule severity, or disabling `strict` requires **explicit team approval** and should be its **own small PR** with a short rationale.
+* If the bar changes intentionally, update **`script/tooling-policy-guard.mjs`** in the **same PR** so the new policy is explicit and reviewable.
+* Prefer fixing code, extracting logic, or a **narrow** file-local override with a comment over weakening global config.
+
+See `docs/engineering/LINT_POLICY_LOCK.md`.
+
+---
+
 # Senior / Staff-Level Expectations
 
 * Write code that another experienced engineer can extend without guidance
