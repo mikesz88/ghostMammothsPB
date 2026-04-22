@@ -150,6 +150,13 @@ const eslintConfig = [
       ],
     },
   },
+
+  {
+    files: ["script/**/*.mjs"],
+    rules: {
+      "no-console": "off",
+    },
+  },
 ];
 
 export default eslintConfig;
