@@ -4,7 +4,7 @@ overview: "Refined phased migration: baseline inventory (Phase 0), RSC guardrail
 todos:
   - id: phase-0
     content: "Phase 0: Baseline inventory, tag files by refactor type, warn-level ESLint + architecture audit, no new page-level use client"
-    status: pending
+    status: completed
   - id: phase-1
     content: "Phase 1: Conventions + RSC guardrails, import order, target folders (events/admin/settings/auth/membership)"
     status: pending
@@ -475,6 +475,10 @@ Architectural phases shrink **max-lines**, **complexity**, and **client sprawl**
 
 * ESLint **exits non-zero on errors**. Fix error-level rules (for example `unused-imports`, `@typescript-eslint/no-unused-vars`) before `npm run lint`, `npm run build`, or `npm run ci` can pass end-to-end.
 * **Warnings** do not fail the run unless you add `--max-warnings 0` (or equivalent). You can “endure” warning noise while fixing errors first.
+
+### After Phase 0 — progressively stronger lint
+
+Phase 0 is intentionally **warning-first** so the map and refactors can proceed without blocking on every `max-lines` / `complexity` finding. **As each phase (or hygiene PR) lands**, the team should **promote selected rules from `warn` to `error`**, add **stricter rules** where the codebase is ready, and optionally adopt **`--max-warnings 0`** on the `lint` script once a baseline burn-down makes that realistic. Do this in **small steps** (one rule family or one folder at a time) so CI stays tractable.
 
 ### What `npm run ci` does today
 
