@@ -17,7 +17,8 @@
     "seed:users": "npx tsx scripts/seed-dummy-users.ts",
     "seed:event": "npx tsx scripts/seed-test-event.ts",
     "pr": "node script/pr-gate.mjs",
-    "architecture:audit": "node script/architecture-audit.mjs"
+    "architecture:audit": "node script/architecture-audit.mjs",
+    "prepare": "node -e \"if(process.env.CI||process.env.VERCEL)process.exit(0);require('child_process').execSync('husky',{stdio:'inherit'})\""
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
@@ -94,6 +95,7 @@
     "eslint-plugin-import": "^2.32.0",
     "eslint-plugin-jsx-a11y": "^6.10.2",
     "eslint-plugin-unused-imports": "^4.4.1",
+    "husky": "^9.1.7",
     "postcss": "^8.5",
     "tailwindcss": "^4.1.9",
     "tw-animate-css": "1.3.3",
