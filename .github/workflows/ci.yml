@@ -1,0 +1,91 @@
+# CI: lint, typecheck, ESLint aggregate JSON report (artifact), architecture audit,
+# Next build, Playwright a11y. Matches spirit of npm run ci + PR gate reporting.
+# `npm run build` still runs lint for local/prod workflows; this job uses `next build` once to avoid duplicate lint.
+# Playwright webServer runs `npx next dev` — it inherits job env.
+#
+# Minimum for the app + middleware to behave sanely in CI:
+#   NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY
+# (Often stored as GitHub Secrets or Variables; "public" still works via secrets for CI.)
+#
+# Optional but may be needed if routes hit service-role or Stripe during a11y:
+#   SUPABASE_SERVICE_ROLE_KEY
+#   STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET, NEXT_PUBLIC_STRIPE_* (whatever your code expects)
+#
+# Dependabot PRs: duplicate secrets under Settings → Code security → Dependabot → Secrets
+# if those runs need the same values.
+#
+# Fork PRs: secrets are unavailable; runs may fail until a maintainer verifies.
+
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    env:
+      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
+      STRIPE_WEBHOOK_SECRET: ${{ secrets.STRIPE_WEBHOOK_SECRET }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Require Supabase URL + anon key for CI
+        run: |
+          missing=
+          [ -z "${NEXT_PUBLIC_SUPABASE_URL:-}" ] && missing="$missing NEXT_PUBLIC_SUPABASE_URL"
+          [ -z "${NEXT_PUBLIC_SUPABASE_ANON_KEY:-}" ] && missing="$missing NEXT_PUBLIC_SUPABASE_ANON_KEY"
+          if [ -n "$missing" ]; then
+            echo "::error::Missing required secret(s):$missing"
+            echo "Add them under Settings → Secrets and variables → Actions."
+            echo "For Dependabot PRs, add the same under Dependabot secrets."
+            exit 1
+          fi
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: ESLint aggregate report
+        run: node script/eslint-report.mjs --json-out eslint-report.summary.json
+
+      - name: Upload ESLint report
+        uses: actions/upload-artifact@v4
+        with:
+          name: eslint-report
+          path: eslint-report.summary.json
+
+      - name: Architecture audit
+        run: npm run architecture:audit
+
+      - name: Next build
+        run: npx next build
+
+      - name: Playwright a11y
+        run: npm run test:a11y
+        env:
+          CI: true
