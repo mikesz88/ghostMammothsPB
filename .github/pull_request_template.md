@@ -7,6 +7,22 @@
 
 ---
 
+## Cleanup and debt (when applicable)
+
+* [ ] This PR is **behavior-preserving** OR the summary explains intentional behavior changes
+* [ ] If this touches a **hotspot** (`app/actions/queue.ts`, `app/actions/notifications.ts`, or a contested file), coordination is noted (see `docs/engineering/cleanup/TWO_DEV_OPERATING_AGREEMENT.md`)
+* [ ] No unnecessary new debt: avoided new `any`, lazy `"use client"` on pages, or layering logic on known-bad structure without improvement
+* [ ] Verification: `npm run pr` (or equivalent CI) and manual steps for impacted flows are listed below
+* [ ] This PR does **not** relax `eslint.config.mjs` or `tsconfig.json` unless that **is** the stated purpose (see `docs/engineering/LINT_POLICY_LOCK.md`)
+
+**Hotspot / lock note (if any):**
+
+```text
+<!-- e.g. Working on queue.ts — extract X into lib/ — ETA Friday -->
+```
+
+---
+
 ## Architecture & Placement
 
 * [ ] Logic is placed in the correct layer (UI / hook / service / DB)

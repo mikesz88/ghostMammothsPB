@@ -2,6 +2,10 @@
 
 You must follow `rules.mdc` as the target architecture for this codebase.
 
+For incremental refactors, hotspot coordination, and the shared cleanup roadmap, see `docs/engineering/cleanup/README.md`.
+
+For ESLint Phase 1 / `strict` policy (do not weaken in a drive-by), see `docs/engineering/LINT_POLICY_LOCK.md`.
+
 This repository may contain legacy or transitional code.
 Do not assume existing structure is ideal.
 Do not blindly copy poor patterns from nearby files.
