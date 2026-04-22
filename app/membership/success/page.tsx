@@ -1,15 +1,16 @@
 "use client";
 
-import { useEffect, useState, Suspense } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
-import Link from "next/link";
 import { Check, Crown, Zap, Shield, Gift, Loader2 } from "lucide-react";
+import Link from "next/link";
+import { useSearchParams, useRouter } from "next/navigation";
+import { useEffect, useState, Suspense } from "react";
 import { toast } from "sonner";
+
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Header } from "@/components/ui/header";
-import { createClient } from "@/lib/supabase/client";
 import { formatPrice } from "@/lib/membership-helpers";
+import { createClient } from "@/lib/supabase/client";
 
 interface MembershipTier {
   id: string;

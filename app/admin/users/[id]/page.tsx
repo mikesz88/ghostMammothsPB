@@ -1,10 +1,6 @@
 "use client";
 
-import { useState, useEffect, use } from "react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
 import {
-  ArrowLeft,
   Save,
   Shield,
   ShieldOff,
@@ -13,7 +9,18 @@ import {
   Calendar,
   Trophy,
 } from "lucide-react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useState, useEffect, use } from "react";
 import { toast } from "sonner";
+
+import {
+  getUserById,
+  updateUser,
+  toggleAdminStatus,
+  deleteUser,
+} from "@/app/actions/admin-users";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -22,6 +29,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Header } from "@/components/ui/header";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -31,14 +39,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
-import {
-  getUserById,
-  updateUser,
-  toggleAdminStatus,
-  deleteUser,
-} from "@/app/actions/admin-users";
-import { Header } from "@/components/ui/header";
 
 interface User {
   id: string;

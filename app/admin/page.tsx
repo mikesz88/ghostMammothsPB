@@ -1,7 +1,5 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import Link from "next/link";
 import {
   Trophy,
   Plus,
@@ -14,7 +12,13 @@ import {
   Loader2,
   Mail,
 } from "lucide-react";
+import Link from "next/link";
+import { useState, useEffect } from "react";
 import { toast } from "sonner";
+
+import { CreateEventDialog } from "@/components/create-event-dialog";
+import { EditEventDialog } from "@/components/edit-event-dialog";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -23,11 +27,13 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { CreateEventDialog } from "@/components/create-event-dialog";
-import { EditEventDialog } from "@/components/edit-event-dialog";
 import { Header } from "@/components/ui/header";
+import {
+  is2Stay2OffRotation,
+  is2Stay2OffValidTeamSize,
+} from "@/lib/rotation-policy";
 import { createClient } from "@/lib/supabase/client";
+
 import type { Event, TeamSize, RotationType, EventStatus } from "@/lib/types";
 import type { Database } from "@/supabase/supa-schema";
 
@@ -82,6 +88,14 @@ export default function AdminPage() {
     eventData: Omit<Event, "id" | "createdAt" | "updatedAt">
   ) => {
     try {
+      if (
+        is2Stay2OffRotation(eventData.rotationType) &&
+        !is2Stay2OffValidTeamSize(eventData.teamSize)
+      ) {
+        toast.error("2 Stay 2 Off requires doubles (team size 2).");
+        return;
+      }
+
       const supabase = createClient();
 
       // Extract date and time from the date object
@@ -130,6 +144,14 @@ export default function AdminPage() {
     if (!editingEvent) return;
 
     try {
+      if (
+        is2Stay2OffRotation(eventData.rotationType) &&
+        !is2Stay2OffValidTeamSize(eventData.teamSize)
+      ) {
+        toast.error("2 Stay 2 Off requires doubles (team size 2).");
+        return;
+      }
+
       const supabase = createClient();
 
       // Extract date and time from the date object
@@ -318,6 +340,9 @@ export default function AdminPage() {
             <p className="text-muted-foreground">
               Create and manage pickleball events
             </p>
+            <Button variant="link" className="h-auto p-0 mt-1 text-primary" asChild>
+              <Link href="/admin/faq">Host help & FAQ</Link>
+            </Button>
           </div>
           <Button
             onClick={() => setShowCreateDialog(true)}

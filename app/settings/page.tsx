@@ -1,8 +1,5 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
 import {
   User,
   Bell,
@@ -14,7 +11,13 @@ import {
   ChevronRight,
   Loader2,
 } from "lucide-react";
-import { Header } from "@/components/ui/header";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
+import { toast } from "sonner";
+
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -22,13 +25,13 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Header } from "@/components/ui/header";
 import { useAuth } from "@/lib/auth-context";
-import { createClient } from "@/lib/supabase/client";
 import { getUserMembership } from "@/lib/membership-helpers";
+import { createClient } from "@/lib/supabase/client";
+
 import type { UserMembershipInfo } from "@/lib/membership-helpers";
-import { toast } from "sonner";
+
 
 export default function SettingsPage() {
   const router = useRouter();

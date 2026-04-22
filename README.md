@@ -40,7 +40,7 @@ The project demonstrates how a modern SaaS platform can support **a real club** 
 This project explores several real-world engineering patterns:
 
 - **Membership and organization management** — Tiers, Stripe subscriptions, and membership-gated event access
-- **Event sessions and play queues** — Queue entries, court assignments, rotation types (e.g. 2-stay-4-off, winners-stay)
+- **Event sessions and play queues** — Queue entries, court assignments, rotation types (rotate all, winners stay, 2 Stay 2 Off)
 - **Subscription billing and payment flows** — Checkout, customer portal, webhooks, cancel/reactivate
 - **Role-based access** — Admin vs member; RLS and server-side checks
 - **Realtime updates** — Supabase Realtime for queue and court status

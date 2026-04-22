@@ -1,7 +1,5 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import Link from "next/link";
 import {
   Users,
   Search,
@@ -13,24 +11,24 @@ import {
   Loader2,
   UserPlus,
 } from "lucide-react";
+import Link from "next/link";
+import { useState, useEffect } from "react";
 import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
+
 import {
   getAllUsers,
   toggleAdminStatus,
   deleteUser,
 } from "@/app/actions/admin-users";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+} from "@/components/ui/card";
 import { Header } from "@/components/ui/header";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 interface User {
   id: string;

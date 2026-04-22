@@ -1,8 +1,11 @@
 import { createServerClient } from "@supabase/ssr";
-import type { EmailOtpType } from "@supabase/supabase-js";
-import { createServiceRoleClient } from "@/lib/supabase/service-role";
-import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
+import { NextResponse } from "next/server";
+
+import { createServiceRoleClient } from "@/lib/supabase/service-role";
+
+import type { EmailOtpType } from "@supabase/supabase-js";
+
 
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);

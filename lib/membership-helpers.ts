@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/client";
+
 import type { MembershipStatus } from "@/lib/types-membership";
 
 type SupabaseBrowserClient = ReturnType<typeof createClient>;
@@ -6,7 +7,7 @@ type SupabaseBrowserClient = ReturnType<typeof createClient>;
 /** Match `users.membership_status` to a row in `membership_tiers` by `name` or `display_name`. */
 async function fetchTierByMembershipStatusLabel(
   supabase: SupabaseBrowserClient,
-  label: string
+  label: string,
 ) {
   const { data: byName } = await supabase
     .from("membership_tiers")
@@ -41,7 +42,7 @@ export interface UserMembershipInfo {
  * Get user's current membership information
  */
 export async function getUserMembership(
-  userId: string
+  userId: string,
 ): Promise<UserMembershipInfo> {
   const supabase = createClient();
 
@@ -52,7 +53,7 @@ export async function getUserMembership(
         `
       *,
       tier:membership_tiers(*)
-    `
+    `,
       )
       .eq("user_id", userId)
       .maybeSingle(),
@@ -77,7 +78,7 @@ export async function getUserMembership(
       status: string;
       current_period_end: string | null;
       cancel_at_period_end: boolean | null;
-    }
+    },
   ): UserMembershipInfo => {
     const isActive =
       membershipRow.status === "active" || membershipRow.status === "trialing";
@@ -102,7 +103,7 @@ export async function getUserMembership(
     if (usersTableSaysPaid) {
       const tier = await fetchTierByMembershipStatusLabel(
         supabase,
-        statusLabel
+        statusLabel,
       );
 
       if (tier) {
@@ -157,7 +158,7 @@ export async function getUserMembership(
   if (linkedTierIsFree && usersTableSaysPaid) {
     const correctedTier = await fetchTierByMembershipStatusLabel(
       supabase,
-      statusLabel
+      statusLabel,
     );
 
     if (correctedTier && correctedTier.name !== "free") {
@@ -172,7 +173,7 @@ export async function getUserMembership(
           price: 0,
           billing_period: "monthly",
         },
-        membership
+        membership,
       ),
       isPaid: true,
     };
@@ -186,7 +187,7 @@ export async function getUserMembership(
  */
 export async function canUserJoinEvent(
   userId: string,
-  eventId: string
+  eventId: string,
 ): Promise<{
   canJoin: boolean;
   reason?: string;
@@ -325,7 +326,7 @@ export function formatPrice(amount: number, currency: string = "USD"): string {
  * Get membership status badge color
  */
 export function getMembershipBadgeVariant(
-  status: MembershipStatus
+  status: MembershipStatus,
 ): "default" | "secondary" | "destructive" | "outline" {
   switch (status) {
     case "active":

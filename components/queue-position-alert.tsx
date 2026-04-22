@@ -1,9 +1,12 @@
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Bell, Trophy, Users } from "lucide-react";
+
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 interface QueuePositionAlertProps {
   position: number;
   isUpNext: boolean;
+  /** Winners-stay: waiting for the next game assignment while still in rotation. */
+  isPendingStay?: boolean;
   /** Solo is in line but not yet in the assignable pool until another solo joins (or mix changes). */
   isPendingSolo?: boolean;
 }
@@ -11,8 +14,22 @@ interface QueuePositionAlertProps {
 export function QueuePositionAlert({
   position,
   isUpNext,
+  isPendingStay = false,
   isPendingSolo = false,
 }: QueuePositionAlertProps) {
+  if (isPendingStay) {
+    return (
+      <Alert className="border-amber-500/40 bg-amber-500/5">
+        <Trophy className="w-4 h-4 text-amber-700 dark:text-amber-400" />
+        <AlertTitle className="text-foreground">On deck for next game</AlertTitle>
+        <AlertDescription>
+          You&apos;re set for the next game in this winners-stay rotation. Stay
+          nearby — you&apos;ll be assigned when the court is ready.
+        </AlertDescription>
+      </Alert>
+    );
+  }
+
   if (isPendingSolo) {
     return (
       <Alert className="border-dashed border-sky-500/50 bg-sky-500/5">

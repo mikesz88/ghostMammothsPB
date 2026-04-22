@@ -1,5 +1,5 @@
-import { test, expect } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
+import { test, expect } from "@playwright/test";
 
 /**
  * Accessibility tests run WCAG 2.x Level A & AA, WCAG 2.2, and best-practice
