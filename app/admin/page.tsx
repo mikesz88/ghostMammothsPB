@@ -340,6 +340,9 @@ export default function AdminPage() {
             <p className="text-muted-foreground">
               Create and manage pickleball events
             </p>
+            <Button variant="link" className="h-auto p-0 mt-1 text-primary" asChild>
+              <Link href="/admin/faq">Host help & FAQ</Link>
+            </Button>
           </div>
           <Button
             onClick={() => setShowCreateDialog(true)}

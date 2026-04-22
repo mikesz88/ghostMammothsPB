@@ -7,6 +7,7 @@ const links = [
   { href: "/events", label: "Events" },
   { href: "/calendar", label: "Calendar" },
   { href: "/about", label: "About" },
+  { href: "/faq", label: "How queuing works (FAQ)" },
   { href: "/membership", label: "Membership" },
   { href: "/search", label: "Search" },
   { href: "/login", label: "Login" },

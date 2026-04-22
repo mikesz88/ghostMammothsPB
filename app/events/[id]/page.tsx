@@ -729,8 +729,13 @@ export default function EventDetailPage(props: {
 
           {/* Queue */}
           <div>
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-2xl font-bold text-foreground">Queue</h2>
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between mb-4">
+              <div className="space-y-2 min-w-0">
+                <h2 className="text-2xl font-bold text-foreground">Queue</h2>
+                <Button variant="outline" size="sm" className="w-fit shrink-0" asChild>
+                  <Link href="/faq#how-to-queue">How to queue up!</Link>
+                </Button>
+              </div>
               {isCurrentlyPlaying ? (
                 <Badge variant="default" className="text-sm">
                   <Trophy className="w-3 h-3 mr-1" />
