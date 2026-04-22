@@ -6,7 +6,10 @@ export type QueueStatus =
   | "playing"
   | "completed"
   | "pending_stay";
-export type RotationType = "2-stay-4-off" | "winners-stay" | "rotate-all";
+export type RotationType =
+  | "2-stay-2-off"
+  | "winners-stay"
+  | "rotate-all";
 export type GroupSize = 1 | 2 | 3 | 4;
 export type TeamSize = 1 | 2 | 3 | 4;
 

@@ -1,13 +1,12 @@
 "use client";
 
-import Link from "next/link";
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
-import Image from "next/image";
-import { Button } from "@/components/ui/button";
-import { useAuth } from "@/lib/auth-context";
-import { createClient } from "@/lib/supabase/client";
 import { User, LogOut, Settings, ArrowLeft, Shield } from "lucide-react";
+import Image from "next/image";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
+
+import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -16,6 +15,9 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useAuth } from "@/lib/auth-context";
+import { createClient } from "@/lib/supabase/client";
+
 import type { User as SupabaseUser } from "@supabase/supabase-js";
 
 function HeaderLogo() {

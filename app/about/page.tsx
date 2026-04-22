@@ -1,8 +1,9 @@
 "use client";
 
+import { Trophy, Users, Zap, Calendar, Shield, Heart } from "lucide-react";
 import Link from "next/link";
 import { useState, useEffect } from "react";
-import { Trophy, Users, Zap, Calendar, Shield, Heart } from "lucide-react";
+
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -150,8 +151,8 @@ export default function AboutPage() {
                     <CardDescription>
                       Get notified when it&apos;s your turn. After your game,
                       the system automatically handles rotation based on the
-                      event rules - whether it&apos;s winners stay, rotate all,
-                      or 2-stay-4-off.
+                      event rules — rotate all, winners stay, or 2 Stay 2 Off
+                      (doubles with a solo queue).
                     </CardDescription>
                   </div>
                 </div>

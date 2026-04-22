@@ -1,7 +1,9 @@
 "use server";
 
+import { formatInTimeZone, fromZonedTime } from "date-fns-tz";
 import { inspect } from "node:util";
-import { createClient } from "@/lib/supabase/server";
+
+import { isActionableDeliveryFailure } from "@/lib/email/email-delivery-log";
 import {
   sendQueueJoinEmail,
   sendPositionUpdateEmail,
@@ -9,9 +11,8 @@ import {
   sendCourtAssignmentEmail,
   type QueueEmailData,
 } from "@/lib/email/resend";
-import { formatInTimeZone, fromZonedTime } from "date-fns-tz";
 import { runWithConcurrency } from "@/lib/run-with-concurrency";
-import { isActionableDeliveryFailure } from "@/lib/email/email-delivery-log";
+import { createClient } from "@/lib/supabase/server";
 
 const CENTRAL_TZ = "America/Chicago";
 const QUEUE_EMAIL_CONCURRENCY = 3;

@@ -1,8 +1,15 @@
 "use server";
 
-import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
-import type { RotationType } from "@/lib/types";
+
+import {
+  is2Stay2OffRotation,
+  is2Stay2OffValidTeamSize,
+} from "@/lib/rotation-policy";
+import { createClient } from "@/lib/supabase/server";
+
+import type { RotationType, TeamSize } from "@/lib/types";
+
 
 const TEST_USER_IDS = [
   "00000000-0000-0000-0000-000000000001",
@@ -287,17 +294,52 @@ export async function updateEventRotationType(
 ) {
   const supabase = await createClient();
 
+  if (is2Stay2OffRotation(rotationType)) {
+    const { data: ev } = await supabase
+      .from("events")
+      .select("team_size")
+      .eq("id", eventId)
+      .single();
+    const ts = (ev?.team_size ?? 2) as TeamSize;
+    if (!is2Stay2OffValidTeamSize(ts)) {
+      return {
+        success: false,
+        error: "2 Stay 2 Off requires team size 2 (doubles).",
+      };
+    }
+  }
+
   const { error } = await supabase
     .from("events")
     .update({ rotation_type: rotationType })
     .eq("id", eventId);
 
   revalidatePath(`/admin/events/${eventId}`);
-  return { success: !error, error };
+  return {
+    success: !error,
+    error: error?.message ?? (error ? String(error) : undefined),
+  };
 }
 
 export async function updateEventTeamSize(eventId: string, teamSize: number) {
   const supabase = await createClient();
+
+  const { data: ev } = await supabase
+    .from("events")
+    .select("rotation_type")
+    .eq("id", eventId)
+    .single();
+
+  if (
+    ev?.rotation_type &&
+    is2Stay2OffRotation(ev.rotation_type as RotationType) &&
+    !is2Stay2OffValidTeamSize(teamSize as TeamSize)
+  ) {
+    return {
+      success: false,
+      error: "Change rotation away from 2 Stay 2 Off before using a non-doubles team size.",
+    };
+  }
 
   const { error } = await supabase
     .from("events")
@@ -305,7 +347,10 @@ export async function updateEventTeamSize(eventId: string, teamSize: number) {
     .eq("id", eventId);
 
   revalidatePath(`/admin/events/${eventId}`);
-  return { success: !error, error };
+  return {
+    success: !error,
+    error: error?.message ?? (error ? String(error) : undefined),
+  };
 }
 
 export async function updateEventCourtCount(

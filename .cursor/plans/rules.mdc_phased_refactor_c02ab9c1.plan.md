@@ -1,281 +1,516 @@
 ---
 name: rules.mdc phased refactor
-overview: "Align the codebase with [.cursor/rules.mdc](.cursor/rules.mdc) through phased refactors: RSC-first route pages (no whole-file `use client`), small client islands for interactivity, server data fetching with props, shrink route files, domain folders under `components/`, server-side data access, and split oversized `lib/` and `app/actions/` modules—without changing product behavior per slice. Prefer **one sub-phase per PR** (~2–3 commits: extract → wire → lint/smoke) for a live app."
+overview: "Refined phased migration: baseline inventory (Phase 0), RSC guardrails (Phase 1), route-by-route server-first composition (Phases 2–6), shared extraction (Phase 4), action/service splits (Phases 7–8), optional public shell (Phase 9). Aligns with [.cursor/rules.mdc](.cursor/rules.mdc); behavior-neutral unless a phase explicitly allows change."
 todos:
+  - id: phase-0
+    content: "Phase 0: Baseline inventory, tag files by refactor type, warn-level ESLint + architecture audit, no new page-level use client"
+    status: pending
   - id: phase-1
-    content: "Phase 1: Conventions + RSC guardrails (page.tsx server-first), optional max-lines ESLint, imports"
+    content: "Phase 1: Conventions + RSC guardrails, import order, target folders (events/admin/settings/auth/membership)"
     status: pending
-  - id: phase-2a
-    content: "Phase 2a: events/[id] — extract client islands only (page stays client); components/events/*"
+  - id: phase-2
+    content: "Phase 2: Member event detail app/events/[id] — server page, client islands, no Supabase in page.tsx"
     status: pending
-  - id: phase-2b
-    content: "Phase 2b: events/[id] — server page.tsx + initial server data; temporary large client child OK"
+  - id: phase-3
+    content: "Phase 3: Admin event console + test-controls — server shell, isolated controls, no broad queue.ts split"
     status: pending
-  - id: phase-2c
-    content: "Phase 2c: events/[id] — shrink client (Realtime leaf, server actions for reads)"
+  - id: phase-4
+    content: "Phase 4: Shared event/admin extraction — loaders, mappers, domain UI, stable types"
     status: pending
-  - id: phase-2d
-    content: "Phase 2d: events/[id] — cleanup duplicate fetches, imports, file size compliance"
+  - id: phase-5
+    content: "Phase 5: Admin dashboard + users + email-stats — server reads, small client widgets"
     status: pending
-  - id: phase-3a
-    content: "Phase 3a: admin/events/[id] — extract islands OR split test-controls (low-risk first)"
+  - id: phase-6
+    content: "Phase 6: Settings, membership, auth — server-first, form client children"
     status: pending
-  - id: phase-3b
-    content: "Phase 3b: admin/events/[id] — server shell + props; client panels queue/assignments"
+  - id: phase-7
+    content: "Phase 7: Action layer split — queue, notifications; re-exports; behavior unchanged"
     status: pending
-  - id: phase-3c
-    content: "Phase 3c: admin/events/[id] — server actions for reads, auth server-side, types tidy"
+  - id: phase-8
+    content: "Phase 8: Stripe webhook thin route, email/resend, queue-manager cleanup"
     status: pending
-  - id: phase-4a
-    content: "Phase 4a: admin dashboard — server stats/summary + data loading"
+  - id: phase-9
+    content: "Phase 9 (optional): Public/marketing shell + header decomposition"
     status: pending
-  - id: phase-4b
-    content: "Phase 4b: admin dashboard + users + email-stats — interactive client widgets per concern"
-    status: pending
-  - id: phase-5a
-    content: "Phase 5a: settings/membership/auth — extract presentational components"
-    status: pending
-  - id: phase-5b
-    content: "Phase 5b: settings/membership/auth — server fetch + props; client form shells only"
-    status: pending
-  - id: phase-6a
-    content: "Phase 6a: Split queue.ts — reads (getQueue + helpers); re-export from queue.ts"
-    status: pending
-  - id: phase-6b
-    content: "Phase 6b: Split queue.ts — reconcile/join/leave/reorder + adminRemove"
-    status: pending
-  - id: phase-6c
-    content: "Phase 6c: Split queue.ts — endGameAndReorderQueue (large; own PR)"
-    status: pending
-  - id: phase-6d
-    content: "Phase 6d: Split queue.ts — assignPlayersToNextCourt (large; own PR)"
-    status: pending
-  - id: phase-6e
-    content: "Phase 6e: Split notifications.ts (queue email vs admin/stats); thin stripe webhook route"
-    status: pending
-  - id: phase-7a
-    content: "Phase 7a: lib/email/resend — templates per slice or lib/email/templates/"
-    status: pending
-  - id: phase-7b
-    content: "Phase 7b (optional): lib/queue-manager.ts — split if still >200 lines after 2–3"
-    status: pending
-  - id: phase-8a
-    content: "Phase 8a (optional): Home/events/about server-first"
-    status: pending
-  - id: phase-8b
-    content: "Phase 8b (optional): header — server parent props + small client subcomponents"
+  - id: phase-0-lint-ci
+    content: "Optional hygiene: ESLint error burn-down, ignores for generated paths, CI/PR policy — see Lint appendix"
     status: pending
 isProject: false
 ---
 
-# Phased refactor plan (per `.cursor/rules.mdc`)
+# Phased Refactor Plan — Refined
 
-## Server vs Client strategy (rules § Server vs Client Components)
+## Global Migration Rules
 
-These rules apply to **every phase** that touches routes:
+These rules apply to every phase.
 
-- `**page.tsx` must be a Server Component by default** — no file-level `"use client"` on pages. Convert current all-client pages into a **thin server page** that fetches data (or calls server helpers) and renders **small Client Components** only where needed (state, effects, handlers, Realtime subscriptions).
-- **Prefer Server Components** for static structure, copy, and server-fetched props. **Client Components** only for interactivity; keep them **small and isolated** — not whole routes or large sections.
-- **Data:** fetch in Server Components / server actions / route handlers whenever possible; **pass results as props** to client children. Avoid `useEffect` + fetch in client pages except where unavoidable (e.g. strict live-only Realtime); then isolate that in a dedicated small client module or hook.
-- **Goal:** minimize client JS; improve SSR and SEO for public and event content.
+### Route migration rules
 
-**Exceptions to document per route:** Supabase Realtime subscriptions, Stripe.js, browser-only APIs — wrap in the smallest possible client boundary (e.g. `EventQueueLive.tsx` with `useRealtimeQueue`).
+* `page.tsx` must become a Server Component by default
+* No file-level `"use client"` in `page.tsx` unless explicitly documented as unavoidable
+* Initial data fetch belongs on the server
+* Client Components are allowed only for interactivity, browser-only APIs, or Realtime subscriptions
+* Client logic must be isolated into small leaf components
 
----
+### Scope control rules
 
-## PR / commit rhythm (live app)
+* Do not change product behavior unless the phase explicitly allows it
+* Do not rewrite shared algorithms while converting route structure
+* Do not split domain services and refactor route UI in the same PR unless the extraction is tiny and local
+* Do not normalize the whole repo while migrating one route
 
-- **One sub-phase per PR** when possible; avoid RSC conversion + full queue split + `queue.ts` surgery in the same PR.
-- **~2–3 commits per PR** (suggested): (1) add modules/components or move code, (2) wire imports/call sites, (3) lint + remove dead code — or squash after review.
-- **Do not** split [app/actions/queue.ts](app/actions/queue.ts) in the same PR as large admin event queue UI changes without coordination.
+### Legacy tolerance rules
 
----
+* Existing messy structure may remain outside the touched area
+* New logic must follow the target architecture
+* Touched code should be improved when reasonably adjacent
+* Do not make legacy files worse just because they are already messy
 
-## Gap summary (current vs rules)
+### Done definition for any route phase
 
+A route phase is only complete when:
 
-| Rule                                    | Current issue                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
-| --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Server vs Client (§66–89)**           | Many routes are **entire-file** `"use client"` ([app/events/[id]/page.tsx](app/events/[id]/page.tsx), [app/admin/events/[id]/page.tsx](app/admin/events/[id]/page.tsx), settings, membership, etc.) — conflicts with **page.tsx server-first**, **fetch on server**, and **small client islands**                                                                                                                                                                                                                                                                               |
-| Files > 200 lines → refactor            | Many violations; largest movers (approx., will drift): [app/admin/events/[id]/page.tsx](app/admin/events/[id]/page.tsx) (~750–990), [app/events/[id]/page.tsx](app/events/[id]/page.tsx) (~770+), [app/actions/queue.ts](app/actions/queue.ts) (~1100+), [app/admin/page.tsx](app/admin/page.tsx) (~560+), [app/actions/notifications.ts](app/actions/notifications.ts) (~500+), [app/membership/page.tsx](app/membership/page.tsx) (~475), [components/ui/header.tsx](components/ui/header.tsx) (~370+), [lib/email/resend.ts](lib/email/resend.ts), [lib/queue-manager.ts](lib/queue-manager.ts) |
-| Components < ~100 lines, single purpose | Large route components and [header.tsx](components/ui/header.tsx) mix many concerns                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
-| No DB / external calls from frontend UI | Client pages use `createClient()` + `.from(...)` directly — conflicts with **Data & API**; should be server fetch + props or server actions                                                                                                                                                                                                                                                                                                                                                                                                                                     |
-| Logic in hooks / services               | Some logic in [lib/hooks/](lib/hooks/) and [app/actions/](app/actions/); megapages still hold fetch + state + JSX                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
-| Avoid new folders without justification | New folders only where rules suggest domain grouping (`components/events/`, `components/admin/`)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
-
-
-**Out of scope for manual splitting:** generated or vendor-like files such as [supabase/supa-schema.ts](supabase/supa-schema.ts) (treat as generated unless you replace codegen).
-
----
-
-## Phase 1 — Conventions and guardrails (small PR)
-
-- **RSC policy:** enforce **server `page.tsx`** for new and touched routes; no adding file-level `"use client"` to `page.tsx` files.
-- **Document in team workflow** (not a new `.md` in repo unless you explicitly want it): **<200 lines per file**, **<100 lines per presentational component**, **server fetch → props**, **client only for interactivity**.
-- **Import grouping**: external → internal → types (rule § Imports).
-- **Optional ESLint**: `max-lines` warnings on `app/` and `components/`; consider `eslint-plugin-react-server` or Next.js rules that discourage `"use client"` in `**/page.tsx` if available—only if you want automation.
-
-No feature changes beyond agreeing conventions.
+* `page.tsx` is server-first
+* initial reads happen on the server
+* client-only logic is extracted into leaf components
+* no direct Supabase reads remain in the page file
+* data flow is clear: server page → props → client island → action/hook
+* the route still works end-to-end
 
 ---
 
-## Phase 2 — Event experience: member event detail ([app/events/[id]/page.tsx](app/events/[id]/page.tsx))
+## Phase 0 — Baseline Inventory & Safety Rails
 
-**End state:** `page.tsx` is a Server Component; initial event/court/assignment data on the server; **no Supabase in the page file**; interactive regions in [components/events/](components/events/); hooks only imported from client leaves.
+### Goal
 
-Split into **sub-phases (separate PRs)**:
+Create a stable starting point before touching architecture.
 
-### Phase 2a — Extract-only (lowest risk)
+### Tasks
 
-- Move **one or two** interactive regions into `components/events/*` (e.g. queue + join/leave, or QR/join dialogs).
-- **Keep** file-level `"use client"` on `page.tsx` for this PR — mechanical move only, behavior unchanged.
+* Inventory the top oversized files by route, component, action, and lib
+* Tag files by refactor type:
 
-### Phase 2b — Server shell
+  * server-page migration
+  * client-island extraction
+  * form extraction
+  * action split
+  * service split
+  * shared UI split
+* Add warn-level ESLint and architecture audit only
+* Define “no new page-level `use client`” rule for new or touched routes
 
-- Introduce async **server** `page.tsx` that loads event (and optionally assignments snapshot) via server actions / helpers.
-- **Allowed:** one **temporary** large client child that holds remaining state until 2c.
+### Deliverables
 
-### Phase 2c — Narrow client surface
+* prioritized file list
+* category label for each large file
+* agreed migration rules for route work
 
-- Isolate **Realtime** in the smallest leaf (e.g. `event-queue-live.tsx` using `useRealtimeQueue`).
-- Move remaining client `createClient()` reads toward **server data + props** or server actions where possible.
+### Exit criteria
 
-### Phase 2d — Cleanup
-
-- Remove duplicate fetches; import grouping; ensure new files respect **<200 / <100** targets where practical.
-
-**Hooks:** `useRealtimeQueue` stays in [lib/hooks/](lib/hooks/) — **only** imported inside client leaf components.
-
-**QueueManager:** actions or existing client boundaries, not in server `page.tsx` unless moved to an action.
-
----
-
-## Phase 3 — Admin event console ([app/admin/events/[id]/page.tsx](app/admin/events/[id]/page.tsx) + [test-controls.tsx](app/admin/events/[id]/test-controls.tsx))
-
-**End state:** Same RSC-first pattern as Phase 2; server loads event + queue snapshot + assignments; client panels small; admin auth server-side.
-
-### Phase 3a — First extractions
-
-- **Either** split [test-controls.tsx](app/admin/events/[id]/test-controls.tsx) into small client pieces **or** extract one major island (queue panel / assignments) — **one concern per PR** to start.
-
-### Phase 3b — Server `page.tsx` + composition
-
-- Server page loads data; pass **serializable props** into client sections (queue, courts, history, dialogs).
-
-### Phase 3c — Data layer + types
-
-- Replace client Supabase reads with **server actions**; shared DB row types → [lib/types.ts](lib/types.ts) or `lib/types-queue.ts`.
+* team has a clear refactor map
+* lint/audit warnings exist but do not block
+* no new route pages are added as full client pages
 
 ---
 
-## Phase 4 — Admin dashboard and roster ([app/admin/page.tsx](app/admin/page.tsx), [app/admin/users/page.tsx](app/admin/users/page.tsx), [app/admin/users/[id]/page.tsx](app/admin/users/[id]/page.tsx), [app/admin/email-stats/page.tsx](app/admin/email-stats/page.tsx))
+## Phase 1 — Conventions + RSC Guardrails
 
-### Phase 4a
+### Goal
 
-- **Dashboard:** server-rendered stats/summary; load data via server actions or loaders.
+Freeze bad patterns before route-by-route work begins.
 
-### Phase 4b
+### Tasks
 
-- **Interactive** pieces: search-as-you-type, row actions, toasts — **one concern per file**; apply the same pattern to [app/admin/users/](app/admin/users/) and [app/admin/email-stats/](app/admin/email-stats/).
-- If the diff is large, ship **users** and **email-stats** as **separate PRs** after the dashboard interactive slice.
-- Route reads through **server actions** ([app/actions/admin-users.ts](app/actions/admin-users.ts)); avoid client `createClient` in pages.
+* Enforce server-first `page.tsx` policy for all new/touched routes
+* Establish route pattern:
 
----
+  * server page
+  * server data loader/action
+  * leaf client components
+  * client hooks only inside client leaves
+* Standardize import order and warn-level file-size/complexity checks
+* Define folder targets for extracted UI:
 
-## Phase 5 — Settings and membership routes
+  * `components/events/`
+  * `components/admin/events/`
+  * `components/settings/`
+  * `components/auth/`
+  * `components/membership/`
 
-Targets: [app/settings/page.tsx](app/settings/page.tsx), [app/settings/membership/page.tsx](app/settings/membership/page.tsx), [app/settings/notifications/page.tsx](app/settings/notifications/page.tsx), [app/membership/page.tsx](app/membership/page.tsx), [app/membership/checkout/page.tsx](app/membership/checkout/page.tsx), [app/membership/success/page.tsx](app/membership/success/page.tsx), [app/login/page.tsx](app/login/page.tsx), [app/signup/page.tsx](app/signup/page.tsx), [app/reset-password/page.tsx](app/reset-password/page.tsx).
+### Deliverables
 
-### Phase 5a
+* migration conventions in active use
+* no new full-client route pages
+* agreed target folders for extracted components
 
-- **Extract** presentational pieces into `components/settings/`, `components/membership/`, `components/auth/` without changing data flow yet if needed for review size.
+### Exit criteria
 
-### Phase 5b
-
-- **Server `page.tsx`** where possible; pass session/membership as props; **client** form shells for inputs/submit; **no** `useEffect` + `createClient` on the page file for profile/membership reads.
-
----
-
-## Phase 6 — Server actions and domain services (split only; behavior unchanged)
-
-### Phase 6a — `queue.ts` reads
-
-- `getQueue` + small read helpers → e.g. `queue-read.ts`; **re-export** from [app/actions/queue.ts](app/actions/queue.ts) so imports can migrate gradually.
-
-### Phase 6b — `queue.ts` core mutations
-
-- `reconcilePendingSoloForEvent`, `joinQueue`, `leaveQueue`, `reorderQueue`, and `adminRemoveFromQueue` (or split admin remove into 6b-2 if PR too large).
-
-### Phase 6c — `endGameAndReorderQueue`
-
-- **Dedicated PR** — large function; heavy regression surface (admin end game).
-
-### Phase 6d — `assignPlayersToNextCourt`
-
-- **Dedicated PR** — large function; pair with 6c only if coordinated and tests are solid.
-
-### Phase 6e — Notifications + Stripe
-
-- [app/actions/notifications.ts](app/actions/notifications.ts): **PR 1** — queue email (`sendQueueNotification`, `flushQueueEmailNotifications`); **PR 2** — admin (`getEmailStats`, `resendQueueEmailFromLog`); shared helpers → `lib/email/notifications-helpers.ts` if needed.
-- [app/api/webhooks/stripe/route.ts](app/api/webhooks/stripe/route.ts): handlers → [lib/stripe/](lib/stripe/); route = thin dispatcher (often **one PR**; split by event type if it grows).
+* every new/touched route follows server-first convention
+* lint rules and audit script are active
+* no architectural ambiguity for future phases
 
 ---
 
-## Phase 7 — Email templates and queue algorithm ([lib/email/resend.ts](lib/email/resend.ts), [lib/queue-manager.ts](lib/queue-manager.ts))
+## Phase 2 — Member Event Detail Route
 
-### Phase 7a
+### Target
 
-- **Resend:** shared HTML shell; per-template files under `lib/email/templates/` or similar — **one template group per PR** when possible for easy verification.
+* `app/events/[id]/page.tsx`
 
-### Phase 7b (optional)
+### Goal
 
-- **QueueManager:** split algorithms only if still **>200 lines** after Phases 2–3.
+Convert the public/member event detail page to server-first composition.
 
----
+### Tasks
 
-## Phase 8 (optional) — Marketing / public pages and shell
+* Move initial event, court, assignment, and membership reads to the server
+* Keep `page.tsx` as server-only composition
+* Extract Realtime queue logic into a dedicated client leaf, for example:
 
-### Phase 8a
+  * `components/events/event-queue-live.tsx`
+* Extract dialogs and actions into small client components, for example:
 
-- [app/page.tsx](app/page.tsx), [app/events/page.tsx](app/events/page.tsx), [app/about/page.tsx](app/about/page.tsx): **server-first**; client only for filters/carousels if needed.
+  * `event-qr-dialog.tsx`
+  * `event-actions-card.tsx`
+  * `event-payment-cta.tsx`
+* Keep hooks like `useRealtimeQueue` inside client leaves only
+* Ensure no direct Supabase client reads remain in `page.tsx`
 
-### Phase 8b
+### Do not do in this phase
 
-- [components/ui/header.tsx](components/ui/header.tsx): **PR 1** — structure + server props; **PR 2** — mobile menu / dropdown client subcomponents.
+* do not redesign queue behavior
+* do not split queue algorithm internals
+* do not refactor unrelated event list pages
 
----
+### Exit criteria
 
-## Dependency order (recommended)
-
-```mermaid
-flowchart LR
-  P1[Phase1 Conventions]
-  P2[Phase2a-d Event detail]
-  P3[Phase3a-c Admin event]
-  P4[Phase4a-b Admin lists]
-  P5[Phase5a-b Settings auth]
-  P6[Phase6a-e Actions stripe]
-  P7[Phase7a-b Email QM]
-  P8[Phase8a-b Shell]
-  P1 --> P2
-  P2 --> P3
-  P3 --> P4
-  P4 --> P5
-  P5 --> P6
-  P6 --> P7
-  P7 --> P8
-```
-
-
-
-Phases 6–7 can partially overlap with 4–5 if different owners work in parallel, but **avoid** splitting `queue.ts` at the same time as large edits to admin event queue UI without coordination.
+* `page.tsx` has no `"use client"`
+* initial reads are server-side
+* client islands are isolated and named clearly
+* page file becomes a composition layer, not a mega component
+* event flow smoke test passes
 
 ---
 
-## PR readability (per rules § PR Readability)
+## Phase 3 — Admin Event Console
 
-Each PR should state: **what changed**, **where logic lives**, **data flow** (Server Component → props → client islands → server actions → Supabase), and **which boundaries are `"use client"`** and why.
+### Targets
 
-## Testing
+* `app/admin/events/[id]/page.tsx`
+* related `test-controls.tsx`
 
-After each PR: `npm run lint`, `npm run build`, and `npm run test:a11y` (or full `npm run ci`). Manually smoke-test event queue and admin event flows after Phase 2–3 slices; verify **no regression** in hydrated interactive areas (join queue, admin assign).
+### Goal
+
+Apply the same server-shell + client-island model to the most complex admin route.
+
+### Tasks
+
+* Move initial event, queue snapshot, and assignments read to the server
+* Keep auth checks server-side
+* Split interactive regions into focused client components:
+
+  * queue panel
+  * court controls
+  * assignment history
+  * dialogs
+  * test controls
+* Introduce shared serializable prop shaping if needed
+* Move page-level reads out of client code
+* Reduce the route file into server composition
+
+### Do not do in this phase
+
+* do not split `app/actions/queue.ts` broadly yet
+* do not change queue assignment logic
+* do not rewrite admin dashboard pages
+
+### Exit criteria
+
+* admin event page is server-first
+* page-level `use client` removed
+* interactive controls isolated
+* queue/admin behavior unchanged
+* admin event smoke test passes
+
+---
+
+## Phase 4 — Shared Event/Admin Extraction Pass
+
+### Goal
+
+Stabilize shared patterns before expanding to more routes.
+
+### Tasks
+
+* Extract shared server loaders/helpers used by both event and admin event routes
+* Extract shared prop mappers / serializers if duplicated
+* Extract repeated cards/panels/dialog structures into domain folders
+* Normalize shared event/admin types into stable locations
+
+### Deliverables
+
+* shared route helpers for event/admin domain
+* less duplicated server-fetch and mapping logic
+* cleaner base for later admin/settings migrations
+
+### Exit criteria
+
+* repeated event/admin patterns are centralized
+* route-level duplication is reduced
+* later phases can reuse stable patterns instead of copying
+
+---
+
+## Phase 5 — Admin Dashboard + User/Roster Routes
+
+### Targets
+
+* `app/admin/page.tsx`
+* `app/admin/users/page.tsx`
+* `app/admin/users/[id]/page.tsx`
+* `app/admin/email-stats/page.tsx`
+
+### Goal
+
+Convert admin data pages to server-rendered reads with small interactive widgets.
+
+### Tasks
+
+* Move initial reads server-side
+* Keep tables/stats server-rendered by default
+* Extract only interactive parts into client widgets:
+
+  * search-as-you-type
+  * row actions
+  * modals
+  * optimistic updates
+* Route Supabase reads through server actions/loaders
+* Avoid page-level client fetching
+
+### Do not do in this phase
+
+* do not deeply refactor queue/actions
+* do not mix membership/auth flow migration here
+
+### Exit criteria
+
+* admin pages render initial data on server
+* client logic is limited to real interactivity
+* page files are clearly structured and smaller
+
+---
+
+## Phase 6 — Settings, Membership, and Auth Routes
+
+### Targets
+
+* `app/settings/page.tsx`
+* `app/settings/membership/page.tsx`
+* `app/settings/notifications/page.tsx`
+* `app/membership/page.tsx`
+* `app/membership/checkout/page.tsx`
+* `app/membership/success/page.tsx`
+* `app/login/page.tsx`
+* `app/signup/page.tsx`
+* `app/reset-password/page.tsx`
+
+### Goal
+
+Move session/membership reads server-side while keeping forms as focused client children.
+
+### Tasks
+
+* Keep route pages server-first
+* Pass initial session, membership, and profile state in via props
+* Extract form shells and interactive controls to:
+
+  * `components/settings/`
+  * `components/membership/`
+  * `components/auth/`
+* Keep browser-only auth integrations inside small client boundaries
+* Avoid `useEffect + createClient()` in page files
+
+### Do not do in this phase
+
+* do not mix billing webhook rewrites here
+* do not redesign auth flows unless required by route migration
+
+### Exit criteria
+
+* auth/settings/membership pages are server-first where possible
+* forms are isolated client components
+* page files stop owning both fetch + state + JSX + provider logic
+
+---
+
+## Phase 7 — Action Layer Split
+
+### Targets
+
+* `app/actions/queue.ts`
+* `app/actions/notifications.ts`
+* related server-only action files
+
+### Goal
+
+Split large action files by responsibility after route boundaries are already stable.
+
+### Tasks
+
+* split queue reads vs mutations
+* split court assignment concerns
+* split notifications by domain
+* add temporary re-export entrypoints if needed to avoid churn
+* keep behavior unchanged
+
+### Do not do in this phase
+
+* do not change queue algorithm behavior
+* do not simultaneously refactor admin event UI unless the dependency is tiny
+
+### Exit criteria
+
+* action files are responsibility-based
+* route code imports clearer entrypoints
+* behavior is unchanged
+
+---
+
+## Phase 8 — Integration & Service Cleanup
+
+### Targets
+
+* `app/api/webhooks/stripe/route.ts`
+* `lib/email/resend.ts`
+* `lib/queue-manager.ts`
+
+### Goal
+
+Thin the route handlers and split oversized service/integration modules.
+
+### Tasks
+
+* move Stripe webhook handlers behind `lib/stripe/*`
+* keep webhook route thin and dispatch-only
+* split email templates / email composition from sending
+* split queue manager by algorithmic responsibility if still oversized
+
+### Exit criteria
+
+* webhook routes are thin
+* email/template logic is separated
+* queue-manager is easier to scan and test
+
+---
+
+## Phase 9 — Public/Marketing Shell Cleanup (Optional)
+
+### Targets
+
+* `app/page.tsx`
+* `app/events/page.tsx`
+* `app/about/page.tsx`
+* `components/ui/header.tsx`
+
+### Goal
+
+Apply server-first shell patterns to public pages and split oversized layout/UI pieces.
+
+### Tasks
+
+* keep public pages server-rendered by default
+* extract client-only filters/carousels if needed
+* split header into:
+
+  * server parent for user/role/session-driven structure
+  * small client pieces for mobile menu/dropdowns only
+
+### Exit criteria
+
+* public pages remain server-first
+* header is decomposed by responsibility
+* no oversized UI shell component remains
+
+---
+
+## PR Rules Per Phase
+
+Each PR must include:
+
+* what changed
+* what did not change
+* where logic now lives
+* data flow summary:
+
+  * server page
+  * props
+  * client islands
+  * server actions/loaders
+* explicit list of remaining follow-up debt that was intentionally left out
+
+Prefer one phase or one subphase per PR.
+
+---
+
+## Recommended Execution Order
+
+1. Phase 0 — Baseline Inventory & Safety Rails
+2. Phase 1 — Conventions + RSC Guardrails
+3. Phase 2 — Member Event Detail
+4. Phase 3 — Admin Event Console
+5. Phase 4 — Shared Event/Admin Extraction
+6. Phase 5 — Admin Dashboard + User/Roster
+7. Phase 6 — Settings, Membership, Auth
+8. Phase 7 — Action Layer Split
+9. Phase 8 — Integration & Service Cleanup
+10. Phase 9 — Public/Marketing Shell Cleanup
+
+---
+
+## Lint, PR gate, and CI during migration
+
+Architectural phases shrink **max-lines**, **complexity**, and **client sprawl** over time. They do **not** automatically clear hundreds of ESLint findings in one step. Treat lint cleanup as **parallel hygiene** unless a phase explicitly tightens rules.
+
+### Errors vs warnings
+
+* ESLint **exits non-zero on errors**. Fix error-level rules (for example `unused-imports`, `@typescript-eslint/no-unused-vars`) before `npm run lint`, `npm run build`, or `npm run ci` can pass end-to-end.
+* **Warnings** do not fail the run unless you add `--max-warnings 0` (or equivalent). You can “endure” warning noise while fixing errors first.
+
+### What `npm run ci` does today
+
+* `ci` runs: `lint` → `build` → `test:a11y`.
+* `build` is defined as `npm run lint && next build`, so **lint runs twice** in a full `ci` (redundant but harmless). **Both** steps must succeed for `ci` to finish.
+
+### Verifying build and a11y without going through `npm run` lint wrappers
+
+If lint is still failing but you want a **local** signal on compile and Playwright a11y:
+
+* Run **`npx next build`** (invokes `next build` directly, skipping the `build` script’s lint preamble).
+* Then **`npm run test:a11y`**.
+
+CI should still aim for a clean `npm run lint` before merge; this is for **local** debugging only unless you add a dedicated script (for example `ci:no-lint`) and agree on when it is allowed.
+
+### PR gate (`npm run pr`)
+
+* [`script/pr-gate.mjs`](script/pr-gate.mjs) runs **`npm run lint`** and **`npm run typecheck`** (blocking), then **`npm run architecture:audit`** (reporting).
+* **`typecheck`** is **`tsc`** against [`tsconfig.json`](tsconfig.json). Generated `.next/dev` type stubs are not included so a plain `tsc` run stays stable.
+
+### Practical hygiene (optional micro-PRs)
+
+* **`eslint --fix`** on touched paths; auto-fix **import/order** where safe.
+* **Overrides** for generated or vendored paths (for example Supabase schema dumps) so editors do not fight machine output.
+* **`no-console`**: allow or strip in `script/` / one-off tooling via overrides if the team agrees.
+* **`--max-warnings`**: adopt only after a baseline burn-down so CI stays green.
+
+---
+
+## High-Risk Do-Not-Mix Rules
+
+Do not combine these in one PR:
+
+* route architecture migration + queue algorithm rewrite
+* admin event route refactor + broad `queue.ts` split
+* membership/auth route migration + Stripe webhook restructuring
+* public shell cleanup + admin domain extraction
+
+Keep structural refactors isolated so regressions are easier to find.

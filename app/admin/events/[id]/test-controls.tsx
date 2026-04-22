@@ -1,6 +1,18 @@
 "use client";
 
+import { RefreshCw, Users, Trash2, Play } from "lucide-react";
 import { useState } from "react";
+import { toast } from "sonner";
+
+import {
+  resetTestEvent,
+  addDummyUsersToQueue,
+  clearTestEvent,
+  fillAllCourts,
+  updateEventRotationType,
+  updateEventTeamSize,
+  updateEventCourtCount,
+} from "@/app/actions/test-helpers";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -17,18 +29,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+
 import type { RotationType } from "@/lib/types";
-import {
-  resetTestEvent,
-  addDummyUsersToQueue,
-  clearTestEvent,
-  fillAllCourts,
-  updateEventRotationType,
-  updateEventTeamSize,
-  updateEventCourtCount,
-} from "@/app/actions/test-helpers";
-import { toast } from "sonner";
-import { RefreshCw, Users, Trash2, Play } from "lucide-react";
 
 interface TestControlsProps {
   eventId: string;
@@ -85,7 +87,11 @@ export function TestControls({
         // Reload page to reflect changes
         setTimeout(() => window.location.reload(), 500);
       } else {
-        toast.error("Failed to update rotation type");
+        setRotationType(currentRotationType);
+        toast.error("Failed to update rotation type", {
+          description:
+            typeof result.error === "string" ? result.error : undefined,
+        });
       }
     } catch (err) {
       console.error(err);
@@ -119,7 +125,11 @@ export function TestControls({
         // Reload page to reflect changes in court display
         setTimeout(() => window.location.reload(), 500);
       } else {
-        toast.error("Failed to update team size");
+        setTeamSize(currentTeamSize);
+        toast.error("Failed to update team size", {
+          description:
+            typeof result.error === "string" ? result.error : undefined,
+        });
       }
     } catch (err) {
       console.error(err);
@@ -297,9 +307,11 @@ export function TestControls({
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="winners-stay">Winners Stay</SelectItem>
               <SelectItem value="rotate-all">Rotate All</SelectItem>
-              <SelectItem value="2-stay-4-off">2 Stay 4 Off</SelectItem>
+              <SelectItem value="winners-stay">Winners Stay</SelectItem>
+              <SelectItem value="2-stay-2-off" disabled={currentTeamSize !== 2}>
+                2 Stay 2 Off
+              </SelectItem>
             </SelectContent>
           </Select>
         </div>

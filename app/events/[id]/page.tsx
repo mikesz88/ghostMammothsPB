@@ -1,39 +1,35 @@
 "use client";
 
-import { useState, useEffect, use } from "react";
-import Link from "next/link";
-import Image from "next/image";
 import {
   Trophy,
-  ArrowLeft,
   Users,
   Clock,
   MapPin,
   Calendar,
   Bell,
-  RefreshCw,
-  Settings,
   Loader2,
   QrCode,
   Copy,
 } from "lucide-react";
+import Image from "next/image";
+import Link from "next/link";
+import { useState, useEffect, use } from "react";
 import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { QueueList } from "@/components/queue-list";
+
+import {
+  joinQueue,
+  leaveQueue,
+  endGameAndReorderQueue,
+  adminRemoveFromQueue,
+} from "@/app/actions/queue";
 import { CourtStatus } from "@/components/court-status";
 import { JoinQueueDialog } from "@/components/join-queue-dialog";
-import { QueuePositionAlert } from "@/components/queue-position-alert";
 import { NotificationPrompt } from "@/components/notification-prompt";
-import { QueueManager } from "@/lib/queue-manager";
-import { useNotifications } from "@/lib/use-notifications";
-import { useRealtimeQueue } from "@/lib/hooks/use-realtime-queue";
-import { useAuth } from "@/lib/auth-context";
-import { joinQueue, leaveQueue } from "@/app/actions/queue";
-import { createClient } from "@/lib/supabase/client";
-import { canUserJoinEvent, formatPrice } from "@/lib/membership-helpers";
-import { Header } from "@/components/ui/header";
+import { QueueList } from "@/components/queue-list";
+import { QueuePositionAlert } from "@/components/queue-position-alert";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -42,7 +38,15 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import type { Event, QueueEntry, CourtAssignment } from "@/lib/types";
+import { Header } from "@/components/ui/header";
+import { useAuth } from "@/lib/auth-context";
+import { useRealtimeQueue } from "@/lib/hooks/use-realtime-queue";
+import { canUserJoinEvent, formatPrice } from "@/lib/membership-helpers";
+import { QueueManager } from "@/lib/queue-manager";
+import { createClient } from "@/lib/supabase/client";
+import { useNotifications } from "@/lib/use-notifications";
+
+import type { Event, CourtAssignment } from "@/lib/types";
 
 export default function EventDetailPage(props: {
   params: Promise<{ id: string }>;
@@ -301,16 +305,22 @@ export default function EventDetailPage(props: {
     }
   }, [id]);
 
-  // Get current user's queue position (waiting or pending solo)
+  // Get current user's queue position (main line, pending solo, or on deck)
   const currentUserEntry = queue.find(
     (e) =>
       e.userId === user?.id &&
-      (e.status === "waiting" || e.status === "pending_solo")
+      (e.status === "waiting" ||
+        e.status === "pending_solo" ||
+        e.status === "pending_stay")
   );
   const userPosition = currentUserEntry?.position || 0;
   const isPendingSolo = currentUserEntry?.status === "pending_solo";
+  const isPendingStay = currentUserEntry?.status === "pending_stay";
   const isUpNext =
-    !isPendingSolo && userPosition > 0 && userPosition <= 4;
+    !isPendingSolo &&
+    !isPendingStay &&
+    userPosition > 0 &&
+    userPosition <= 4;
 
   // Check if user is currently playing on a court
   const isCurrentlyPlaying = user
@@ -328,9 +338,62 @@ export default function EventDetailPage(props: {
       )
     : false;
 
+  const handleEndGame = async (
+    assignmentId: string,
+    winningTeam: "team1" | "team2",
+  ) => {
+    const winningTeamName = winningTeam === "team1" ? "Team 1" : "Team 2";
+    toast(`Mark this game as complete?`, {
+      description: `${winningTeamName} wins!`,
+      action: {
+        label: "End Game",
+        onClick: async () => {
+          try {
+            if (!event) return;
+            const result = await endGameAndReorderQueue(
+              id,
+              assignmentId,
+              winningTeam,
+            );
+            if (!result.success) {
+              toast.error(result.error || "Failed to end game");
+              return;
+            }
+            if (event.rotationType === "rotate-all") {
+              toast.success(
+                "Game ended — players re-queued (others first, then court order).",
+                {
+                  description:
+                    "Wait for the next group to be assigned to the court.",
+                },
+              );
+            } else if (event.rotationType === "winners-stay") {
+              toast.success(
+                "Game ended — winners stay on this court; losers re-queued.",
+              );
+            } else if (event.rotationType === "2-stay-2-off") {
+              toast.success(
+                "Game ended — winners stay and will split to opposite teams; losers re-queued.",
+              );
+            } else {
+              toast.success("Game ended.");
+            }
+          } catch (err) {
+            console.error("Error ending game:", err);
+            toast.error("Failed to end game");
+          }
+        },
+      },
+      cancel: {
+        label: "Cancel",
+        onClick: () => {},
+      },
+    });
+  };
+
   // Handle position change notifications (only when assignable in line)
   useEffect(() => {
-    if (isPendingSolo) return;
+    if (isPendingSolo || isPendingStay) return;
     if (userPosition > 0 && lastPosition > 0 && userPosition < lastPosition) {
       if (userPosition <= 4) {
         sendNotification("up-next", "Almost Your Turn!", {
@@ -347,10 +410,13 @@ export default function EventDetailPage(props: {
     if (userPosition > 0) {
       queueMicrotask(() => setLastPosition(userPosition));
     }
-  }, [userPosition, lastPosition, sendNotification, isPendingSolo]);
+  }, [userPosition, lastPosition, sendNotification, isPendingSolo, isPendingStay]);
 
   const waitingCount = queue.filter(
-    (e) => e.status === "waiting" || e.status === "pending_solo"
+    (e) =>
+      e.status === "waiting" ||
+      e.status === "pending_solo" ||
+      e.status === "pending_stay"
   ).length;
   const playingCount =
     assignments.filter((a) => !a.endedAt).length * (event?.teamSize || 2) * 2;
@@ -367,6 +433,7 @@ export default function EventDetailPage(props: {
         e.userId === user.id &&
         (e.status === "waiting" ||
           e.status === "pending_solo" ||
+          e.status === "pending_stay" ||
           e.status === "playing")
     );
 
@@ -440,8 +507,34 @@ export default function EventDetailPage(props: {
     }
   };
 
-  const handleLeaveQueue = async (entryId: string) => {
+  const handleQueueRemove = async (entryId: string) => {
+    const entry = queue.find((e) => e.id === entryId);
+    if (!entry) return;
+
+    const isSelf = entry.userId === user?.id;
+
     try {
+      if (isAdmin && !isSelf) {
+        if (
+          !confirm(
+            "Are you sure you want to remove this player from the queue?",
+          )
+        ) {
+          return;
+        }
+        const { error } = await adminRemoveFromQueue(entryId);
+        if (error) {
+          console.error("Error removing player from queue:", error);
+          toast.error("Failed to remove player", {
+            description: error,
+          });
+        } else {
+          await refetchQueue();
+          toast.success("Player removed from queue");
+        }
+        return;
+      }
+
       const { error } = await leaveQueue(entryId);
       if (error) {
         console.error("Error leaving queue:", error);
@@ -449,7 +542,6 @@ export default function EventDetailPage(props: {
           description: "Please try again.",
         });
       } else {
-        // Manually refetch queue to ensure UI updates immediately
         await refetchQueue();
 
         sendNotification("queue-leave", "Left Queue", {
@@ -458,7 +550,7 @@ export default function EventDetailPage(props: {
         });
       }
     } catch (err) {
-      console.error("Error leaving queue:", err);
+      console.error("Error updating queue:", err);
       toast.error("An unexpected error occurred", {
         description: "Please try again.",
       });
@@ -551,6 +643,7 @@ export default function EventDetailPage(props: {
               <QueuePositionAlert
                 position={userPosition}
                 isUpNext={isUpNext}
+                isPendingStay={isPendingStay}
                 isPendingSolo={isPendingSolo}
               />
             </div>
@@ -628,13 +721,21 @@ export default function EventDetailPage(props: {
               courtCount={event.courtCount}
               assignments={assignments}
               teamSize={event.teamSize}
+              currentUserId={user?.id}
+              isAdmin={isAdmin}
+              onCompleteGame={handleEndGame}
             />
           </div>
 
           {/* Queue */}
           <div>
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-2xl font-bold text-foreground">Queue</h2>
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between mb-4">
+              <div className="space-y-2 min-w-0">
+                <h2 className="text-2xl font-bold text-foreground">Queue</h2>
+                <Button variant="outline" size="sm" className="w-fit shrink-0" asChild>
+                  <Link href="/faq#how-to-queue">How to queue up!</Link>
+                </Button>
+              </div>
               {isCurrentlyPlaying ? (
                 <Badge variant="default" className="text-sm">
                   <Trophy className="w-3 h-3 mr-1" />
@@ -643,9 +744,11 @@ export default function EventDetailPage(props: {
               ) : userPosition > 0 ? (
                 <Badge variant="default" className="text-sm">
                   <Bell className="w-3 h-3 mr-1" />
-                  {isPendingSolo
-                    ? `Waiting for more solos (#${userPosition})`
-                    : `You're #${userPosition}`}
+                  {isPendingStay
+                    ? "On deck for next game"
+                    : isPendingSolo
+                      ? `Waiting for more solos (#${userPosition})`
+                      : `You're #${userPosition}`}
                 </Badge>
               ) : (
                 <>
@@ -702,8 +805,9 @@ export default function EventDetailPage(props: {
             ) : (
               <QueueList
                 queue={queue}
-                onRemove={handleLeaveQueue}
+                onRemove={handleQueueRemove}
                 currentUserId={user?.id || ""}
+                isAdmin={isAdmin}
               />
             )}
           </div>
@@ -715,6 +819,7 @@ export default function EventDetailPage(props: {
         onOpenChange={setShowJoinDialog}
         onJoin={handleJoinQueue}
         eventTeamSize={event.teamSize}
+        rotationType={event.rotationType}
       />
 
       <Dialog open={showQrDialog} onOpenChange={setShowQrDialog}>

@@ -1,10 +1,30 @@
 "use client";
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Trophy } from "lucide-react";
+
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Trophy } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+
+
 import type { CourtAssignment } from "@/lib/types";
+
+function assignmentIncludesUser(
+  assignment: CourtAssignment,
+  userId: string,
+): boolean {
+  const ids = [
+    assignment.player1Id,
+    assignment.player2Id,
+    assignment.player3Id,
+    assignment.player4Id,
+    assignment.player5Id,
+    assignment.player6Id,
+    assignment.player7Id,
+    assignment.player8Id,
+  ].filter(Boolean);
+  return ids.includes(userId);
+}
 
 interface CourtStatusProps {
   courtCount: number;
@@ -14,6 +34,8 @@ interface CourtStatusProps {
     winningTeam: "team1" | "team2"
   ) => void;
   isAdmin?: boolean;
+  /** Logged-in user; if their id is on the assignment they can report the winner (same as server check). */
+  currentUserId?: string | null;
   teamSize?: number;
 }
 
@@ -22,6 +44,7 @@ export function CourtStatus({
   assignments,
   onCompleteGame,
   isAdmin,
+  currentUserId,
   teamSize = 2,
 }: CourtStatusProps) {
   const courts = Array.from({ length: courtCount }, (_, i) => i + 1);
@@ -146,7 +169,10 @@ export function CourtStatus({
                   </div>
                 </div>
 
-                {isAdmin && onCompleteGame && (
+                {onCompleteGame &&
+                  (isAdmin ||
+                    (!!currentUserId &&
+                      assignmentIncludesUser(assignment, currentUserId))) && (
                   <div className="grid grid-cols-2 gap-2 pt-2">
                     <Button
                       variant="outline"

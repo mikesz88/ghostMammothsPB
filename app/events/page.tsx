@@ -1,7 +1,5 @@
 "use client";
 
-import Link from "next/link";
-import { useState, useEffect } from "react";
 import {
   Calendar,
   MapPin,
@@ -10,6 +8,10 @@ import {
   ArrowRight,
   Loader2,
 } from "lucide-react";
+import Link from "next/link";
+import { useState, useEffect } from "react";
+
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -18,10 +20,9 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Header } from "@/components/ui/header";
-import { useRealtimeEvents } from "@/lib/hooks/use-realtime-events";
 import { useAuth } from "@/lib/auth-context";
+import { useRealtimeEvents } from "@/lib/hooks/use-realtime-events";
 import { createClient } from "@/lib/supabase/client";
 
 export default function EventsPage() {

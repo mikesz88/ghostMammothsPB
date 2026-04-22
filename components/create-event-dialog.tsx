@@ -1,7 +1,8 @@
 "use client";
 
-import type React from "react";
 import { useState } from "react";
+
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -9,7 +10,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -19,7 +19,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  is2Stay2OffRotation,
+  is2Stay2OffValidTeamSize,
+} from "@/lib/rotation-policy";
+
 import type { Event, RotationType, TeamSize } from "@/lib/types";
+import type React from "react";
 
 interface CreateEventDialogProps {
   open: boolean;
@@ -39,11 +45,20 @@ export function CreateEventDialog({
   const [courtCount, setCourtCount] = useState("4");
   const [teamSize, setTeamSize] = useState<TeamSize>(2);
   const [rotationType, setRotationType] =
-    useState<RotationType>("2-stay-4-off");
+    useState<RotationType>("rotate-all");
+  const [formError, setFormError] = useState("");
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    setFormError("");
     if (name.trim() && location.trim() && date && time) {
+      if (
+        is2Stay2OffRotation(rotationType) &&
+        !is2Stay2OffValidTeamSize(teamSize)
+      ) {
+        setFormError("2 Stay 2 Off requires doubles (team size 2).");
+        return;
+      }
       const eventDate = new Date(`${date}T${time}`);
       onCreate({
         name,
@@ -61,7 +76,7 @@ export function CreateEventDialog({
       setTime("");
       setCourtCount("4");
       setTeamSize(2);
-      setRotationType("2-stay-4-off");
+      setRotationType("rotate-all");
     }
   };
 
@@ -80,6 +95,11 @@ export function CreateEventDialog({
           onSubmit={handleSubmit}
           className="flex-1 min-h-0 overflow-y-auto space-y-4 pr-1 -mr-1"
         >
+          {formError ? (
+            <p className="text-sm text-destructive" role="alert">
+              {formError}
+            </p>
+          ) : null}
           <div className="grid md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="name">Event Name</Label>
@@ -187,9 +207,11 @@ export function CreateEventDialog({
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="2-stay-4-off">2 Stay, 4 Off</SelectItem>
-                  <SelectItem value="winners-stay">Winners Stay</SelectItem>
                   <SelectItem value="rotate-all">Rotate All</SelectItem>
+                  <SelectItem value="winners-stay">Winners Stay</SelectItem>
+                  <SelectItem value="2-stay-2-off" disabled={teamSize !== 2}>
+                    2 Stay, 2 Off (doubles, solo queue)
+                  </SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -197,15 +219,18 @@ export function CreateEventDialog({
 
           <div className="bg-muted/50 p-4 rounded-lg">
             <p className="text-sm text-muted-foreground">
-              <strong className="text-foreground">Rotation Types:</strong>
+              <strong className="text-foreground">Rotation types:</strong>
               <br />
-              <strong>2 Stay, 4 Off:</strong> Winning team stays, losing team
-              goes to back of queue
+              <strong>Rotate all:</strong> After each game, everyone goes back
+              through the queue (fair rotation for the whole group).
               <br />
-              <strong>Winners Stay:</strong> All winners stay on court, losers
-              rotate
+              <strong>Winners stay:</strong> Winners stay on the court for the
+              next game; losers rejoin the queue and get filled in when the host
+              assigns the next group.
               <br />
-              <strong>Rotate All:</strong> All players rotate after each game
+              <strong>2 Stay, 2 Off:</strong> Doubles only. Solo queue entries
+              form pairs on court. Two winners stay for the next game (split to
+              opposite sides); two spots are filled from the queue.
             </p>
           </div>
 

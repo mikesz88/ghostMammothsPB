@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+
 import { createClient } from "@/lib/supabase/client";
+
 import type { QueueEntry } from "../types";
 
 export function useRealtimeQueue(eventId: string) {
@@ -22,7 +24,7 @@ export function useRealtimeQueue(eventId: string) {
         `
         )
         .eq("event_id", eventId)
-        .in("status", ["waiting", "pending_solo"])
+        .in("status", ["waiting", "pending_solo", "pending_stay"])
         .order("position");
 
       if (error) {
