@@ -3,10 +3,7 @@ import {
   serializeEventDetailAssignment,
 } from "@/lib/events/event-detail-serialize";
 import { fetchEventRowById } from "@/lib/events/fetch-event-row-by-id";
-import {
-  COURT_ASSIGNMENTS_NESTED_SELECT,
-  mapCourtAssignmentRows,
-} from "@/lib/events/map-court-assignments";
+import { fetchOpenCourtAssignmentsForEventDetail } from "@/lib/events/fetch-open-court-assignments-for-event-detail";
 import { mapEventRowToEvent } from "@/lib/events/map-event-row";
 import { canUserJoinEvent } from "@/lib/membership-helpers";
 import { createClient } from "@/lib/supabase/server";
@@ -15,21 +12,6 @@ import type {
   EventDetailAccess,
   EventDetailPagePayload,
 } from "@/lib/events/event-detail-server";
-import type { CourtAssignment } from "@/lib/types";
-
-async function fetchOpenCourtAssignmentsForEvent(
-  supabase: Awaited<ReturnType<typeof createClient>>,
-  eventId: string,
-): Promise<CourtAssignment[]> {
-  const { data: rawAssignments, error: assignError } = await supabase
-    .from("court_assignments")
-    .select(COURT_ASSIGNMENTS_NESTED_SELECT)
-    .eq("event_id", eventId)
-    .is("ended_at", null);
-  return assignError
-    ? []
-    : mapCourtAssignmentRows((rawAssignments ?? []) as Record<string, unknown>[]);
-}
 
 async function guestAccess(): Promise<{
   initialIsAdmin: boolean;
@@ -81,7 +63,10 @@ async function loadEventDetailCore(
   const event = mapEventRowToEvent(
     rawEvent as Parameters<typeof mapEventRowToEvent>[0],
   );
-  const assignments = await fetchOpenCourtAssignmentsForEvent(supabase, eventId);
+  const assignments = await fetchOpenCourtAssignmentsForEventDetail(
+    supabase,
+    eventId,
+  );
   return { event, assignments };
 }
 
