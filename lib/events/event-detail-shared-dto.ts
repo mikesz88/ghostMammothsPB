@@ -1,7 +1,7 @@
 /**
  * Shared JSON-safe DTOs for member (`app/events/[id]`) and admin (`app/admin/events/[id]`)
  * event-detail payloads. Phase 4 PR 1: overlapping shapes; PR 4: shared serializers in
- * `event-detail-serialize-shared.ts`.
+ * `event-detail-serialize-shared.ts`; PR 5: shared hydrators in `event-detail-hydrate-shared.ts`.
  *
  * Intentional differences (do not “merge” without a dedicated PR):
  * - **Member** `EventDetailSerializedEvent` adds optional `time` and `numCourts` for display/legacy.
