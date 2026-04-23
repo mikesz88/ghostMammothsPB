@@ -16,7 +16,7 @@ todos:
     status: completed
   - id: phase-4
     content: "Phase 4: Shared event/admin extraction — loaders, mappers, domain UI, stable types"
-    status: pending
+    status: completed
   - id: phase-5
     content: "Phase 5: Admin dashboard + users + email-stats — server reads, small client widgets"
     status: pending
@@ -251,6 +251,10 @@ Apply the same server-shell + client-island model to the most complex admin rout
 ---
 
 ## Phase 4 — Shared Event/Admin Extraction Pass
+
+### Status
+
+**Completed (April 2026).** Shared loaders, serializers, hydrators, DTOs, and canonical court player slots for member + admin event detail. Inventory: [`docs/engineering/phase-4-shared-event-admin-extraction.md`](../../docs/engineering/phase-4-shared-event-admin-extraction.md).
 
 ### Goal
 

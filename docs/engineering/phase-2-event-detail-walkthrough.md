@@ -6,7 +6,7 @@
 
 * `app/events/[id]/page.tsx` — async Server Component: `loadEventDetailPageData`, `notFound()`, passes serialized props to the client island.
 * `components/events/*` — `event-detail-client.tsx` (Realtime, queue, dialogs), `event-detail-hero.tsx`, `event-detail-stats-row.tsx`, `event-queue-header-row.tsx`, `event-detail-qr-dialog.tsx`.
-* `lib/events/*` — `event-detail-server.ts`, `hydrate-event-detail.ts`, `map-event-row.ts`, `map-court-assignments.ts`, and small helpers.
+* `lib/events/*` — `event-detail-server.ts`, `hydrate-event-detail.ts`, `map-event-row.ts`, `map-court-assignments.ts`, and small helpers. **Phase 4** added shared fetch/serialize/hydrate modules and DTOs — see [`phase-4-shared-event-admin-extraction.md`](phase-4-shared-event-admin-extraction.md).
 * `lib/hooks/*` — court assignments Realtime, access sync, queue handlers, queue derived state, etc.
 * `lib/membership/*` + `lib/membership-helpers.ts` — `getUserMembership` split into `lib/membership/` for lint/size; barrel re-exports unchanged for imports.
 

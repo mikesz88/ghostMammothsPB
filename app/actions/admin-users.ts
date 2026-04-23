@@ -1,5 +1,6 @@
 "use server";
 
+import { fetchAdminUsersList } from "@/lib/admin/fetch-admin-users-list";
 import { createClient } from "@/lib/supabase/server";
 
 export async function getAllUsers(searchQuery?: string) {
@@ -20,22 +21,10 @@ export async function getAllUsers(searchQuery?: string) {
     return { data: null, error: "Unauthorized - Admin access required" };
   }
 
-  let query = supabase
-    .from("users")
-    .select("*")
-    .order("created_at", { ascending: false });
-
-  if (searchQuery) {
-    query = query.or(
-      `name.ilike.%${searchQuery}%,email.ilike.%${searchQuery}%`
-    );
-  }
-
-  const { data, error } = await query;
+  const { data, error } = await fetchAdminUsersList(supabase, searchQuery);
 
   if (error) {
-    console.error("Error fetching users:", error);
-    return { data: null, error: error.message };
+    return { data: null, error };
   }
 
   return { data, error: null };
