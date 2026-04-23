@@ -1,26 +1,13 @@
+import type {
+  EventDetailSharedSerializedCourtPlayers,
+  EventDetailSharedSerializedEventCore,
+  EventDetailSharedSerializedUser,
+} from "@/lib/events/event-detail-shared-dto";
 import type { CourtAssignment, Event, QueueEntry, User } from "@/lib/types";
 
-export type AdminSerializedEvent = {
-  id: string;
-  name: string;
-  location: string;
-  date: string;
-  courtCount: number;
-  teamSize: Event["teamSize"];
-  rotationType: Event["rotationType"];
-  status: Event["status"];
-  createdAt: string;
-  updatedAt?: string;
-};
+export type AdminSerializedEvent = EventDetailSharedSerializedEventCore;
 
-export type AdminSerializedUser = {
-  id: string;
-  email: string;
-  name: string;
-  skillLevel: string;
-  isAdmin: boolean;
-  createdAt: string;
-};
+export type AdminSerializedUser = EventDetailSharedSerializedUser;
 
 export type AdminSerializedCourtAssignment = Omit<
   CourtAssignment,
@@ -37,15 +24,7 @@ export type AdminSerializedCourtAssignment = Omit<
 > & {
   startedAt: string;
   endedAt?: string;
-  player1?: AdminSerializedUser;
-  player2?: AdminSerializedUser;
-  player3?: AdminSerializedUser;
-  player4?: AdminSerializedUser;
-  player5?: AdminSerializedUser;
-  player6?: AdminSerializedUser;
-  player7?: AdminSerializedUser;
-  player8?: AdminSerializedUser;
-};
+} & EventDetailSharedSerializedCourtPlayers;
 
 export type AdminSerializedQueueEntry = Omit<QueueEntry, "joinedAt" | "user"> & {
   joinedAt: string;

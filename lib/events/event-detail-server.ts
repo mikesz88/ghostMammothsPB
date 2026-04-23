@@ -1,29 +1,16 @@
-import type { EventStatus, RotationType, TeamSize } from "@/lib/types";
+import type {
+  EventDetailSharedSerializedCourtPlayers,
+  EventDetailSharedSerializedEventCore,
+  EventDetailSharedSerializedUser,
+} from "@/lib/events/event-detail-shared-dto";
 
-/** JSON-safe event for Client Component props. */
-export type EventDetailSerializedEvent = {
-  id: string;
-  name: string;
-  location: string;
-  date: string;
+/** JSON-safe event for Client Component props (member route). */
+export type EventDetailSerializedEvent = EventDetailSharedSerializedEventCore & {
   time?: string;
   numCourts?: string;
-  courtCount: number;
-  teamSize: TeamSize;
-  rotationType: RotationType;
-  status: EventStatus;
-  createdAt: string;
-  updatedAt?: string;
 };
 
-export type EventDetailSerializedUser = {
-  id: string;
-  email: string;
-  name: string;
-  skillLevel: string;
-  isAdmin: boolean;
-  createdAt: string;
-};
+export type EventDetailSerializedUser = EventDetailSharedSerializedUser;
 
 export type EventDetailSerializedAssignment = {
   id: string;
@@ -40,15 +27,7 @@ export type EventDetailSerializedAssignment = {
   player_names?: string[];
   startedAt: string;
   endedAt?: string;
-  player1?: EventDetailSerializedUser;
-  player2?: EventDetailSerializedUser;
-  player3?: EventDetailSerializedUser;
-  player4?: EventDetailSerializedUser;
-  player5?: EventDetailSerializedUser;
-  player6?: EventDetailSerializedUser;
-  player7?: EventDetailSerializedUser;
-  player8?: EventDetailSerializedUser;
-};
+} & EventDetailSharedSerializedCourtPlayers;
 
 export type EventDetailAccess = {
   canJoin: boolean;
@@ -63,5 +42,11 @@ export type EventDetailPagePayload = {
   initialAccess: EventDetailAccess;
   initialIsAdmin: boolean;
 };
+
+export type {
+  EventDetailSharedSerializedCourtPlayers,
+  EventDetailSharedSerializedEventCore,
+  EventDetailSharedSerializedUser,
+} from "@/lib/events/event-detail-shared-dto";
 
 export { loadEventDetailPageData } from "@/lib/events/event-detail-load";
