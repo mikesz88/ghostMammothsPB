@@ -1,6 +1,6 @@
 # Phase 0 — refactor inventory (hybrid)
 
-**Phase 1 is active** — for **new or touched** routes and client UI, follow [`phase-1-rsc-conventions.md`](phase-1-rsc-conventions.md) and domain folders under `components/`. **Phase 2** (member `app/events/[id]`) is **complete**; see [`phase-2-event-detail-walkthrough.md`](phase-2-event-detail-walkthrough.md).
+**Phase 1 is active** — for **new or touched** routes and client UI, follow [`phase-1-rsc-conventions.md`](phase-1-rsc-conventions.md) and domain folders under `components/`. **Phase 2** (member `app/events/[id]`) is **complete**; see [`phase-2-event-detail-walkthrough.md`](phase-2-event-detail-walkthrough.md). **Phase 3** (admin `app/admin/events/[id]`) is **complete**; see [`phase-3-admin-event-walkthrough.md`](phase-3-admin-event-walkthrough.md).
 
 This doc is **team-owned**. The repo also contains a **machine-generated snapshot** you refresh when the map drifts.
 
@@ -40,15 +40,15 @@ Use the refined plan phase numbers (e.g. **2** = member event detail, **3** = ad
 
 ## Team backlog
 
-Seeded from [`refactor-inventory.snapshot.md`](refactor-inventory.snapshot.md) (refresh with `npm run inventory:phase0`). Snapshot generated 2026-04-23; reconcile line counts here when the map drifts.
+Seeded from [`refactor-inventory.snapshot.md`](refactor-inventory.snapshot.md) (refresh with `npm run inventory:phase0`). Reconcile line counts here when the map drifts.
 
-**Priority gist:** **P0** = Phase **3** admin event route + test-controls + queue spine (`queue.ts` / `queue-manager`) for explicit Phase 7–8 work. (**Phase 2** member event detail is done.) **P1** = notifications, event queue UI, admin dashboard/users/email, membership/settings/auth, Stripe/email integration. **P2** = marketing/public shell, shared header/dialogs, small client pages.
+**Priority gist:** **P0** = queue spine (`queue.ts` / `queue-manager`) for explicit Phase 7–8 work. (**Phases 2–3** event detail + admin event console are done.) **P1** = Phase 4 shared event/admin extraction when touching both routes, notifications, event queue UI, admin dashboard/users/email, membership/settings/auth, Stripe/email integration. **P2** = marketing/public shell, shared header/dialogs, small client pages.
 
 | Path | Lines | Bucket | Auto flags | Primary tag | Priority | Target phase | Notes |
 | --- | ---: | --- | --- | --- | --- | --- | --- |
 | app/events/[id]/page.tsx | ~26 | route-page | server component | server-page migration | — | **Done** | Phase 2 complete: server `loadEventDetailPageData`; client island `components/events/event-detail-client.tsx` (~205 lines). |
-| app/admin/events/[id]/page.tsx | 765 | route-page | very large; `"use client"` page | server-page migration | P0 | 3 | Admin event console; keep test-controls isolated. |
-| app/admin/events/[id]/test-controls.tsx | 418 | app-local | very large | client-island extraction | P0 | 3 | Coordinates with admin event `[id]`; no broad `queue.ts` split same PR. |
+| app/admin/events/[id]/page.tsx | ~20 | route-page | server component | server-page migration | — | **Done** | Phase 3: server `loadAdminEventDetailPageData`; client `components/admin/events/admin-event-detail-client.tsx`. |
+| components/admin/events/test-controls.tsx | ~235 | component | large | client-island extraction | — | **Done** | Phase 3: test-only; logic in `lib/hooks/use-test-controls.ts`. |
 | app/actions/queue.ts | 1243 | action | very large | action split | P0 | 7 | Hotspot — thin actions → services; coordinate per two-dev agreement. |
 | lib/queue-manager.ts | 348 | lib | very large | service split | P0 | 7–8 | Algorithm/domain; align with Phase 7–8, not casual edits. |
 | app/actions/notifications.ts | 503 | action | very large | action split | P1 | 7 | Email/send paths; pair with `lib/email/resend` in Phase 8. |

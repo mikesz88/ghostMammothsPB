@@ -70,6 +70,16 @@ export const ADMIN_COURT_ASSIGNMENTS_SELECT = `
   player8:users!court_assignments_player8_id_fkey(id, name, email, skill_level)
 `;
 
+function parseStringArrayField(raw: unknown): string[] {
+  if (!raw) return [];
+  try {
+    const parsed = raw as unknown as string[];
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
 function mapPlayer(
   row: {
     id: string;
@@ -89,57 +99,43 @@ function mapPlayer(
   };
 }
 
+function mapOneAdminCourtAssignment(
+  assignment: AdminCourtAssignmentWithPlayers,
+): CourtAssignment {
+  const playerNamesArray = parseStringArrayField(assignment.player_names);
+  const queueEntryIdsArray = parseStringArrayField(assignment.queue_entry_ids);
+
+  return {
+    id: assignment.id,
+    eventId: assignment.event_id || "",
+    courtNumber: assignment.court_number,
+    player1Id: assignment.player1_id || undefined,
+    player2Id: assignment.player2_id || undefined,
+    player3Id: assignment.player3_id || undefined,
+    player4Id: assignment.player4_id || undefined,
+    player5Id: assignment.player5_id || undefined,
+    player6Id: assignment.player6_id || undefined,
+    player7Id: assignment.player7_id || undefined,
+    player8Id: assignment.player8_id || undefined,
+    player_names: playerNamesArray,
+    queueEntryIds: queueEntryIdsArray,
+    startedAt: new Date(assignment.started_at || ""),
+    endedAt: assignment.ended_at
+      ? new Date(assignment.ended_at)
+      : undefined,
+    player1: mapPlayer(assignment.player1),
+    player2: mapPlayer(assignment.player2),
+    player3: mapPlayer(assignment.player3),
+    player4: mapPlayer(assignment.player4),
+    player5: mapPlayer(assignment.player5),
+    player6: mapPlayer(assignment.player6),
+    player7: mapPlayer(assignment.player7),
+    player8: mapPlayer(assignment.player8),
+  };
+}
+
 export function mapAdminCourtAssignmentRows(
   data: AdminCourtAssignmentWithPlayers[],
 ): CourtAssignment[] {
-  return data.map((assignment) => {
-    let playerNamesArray: string[] = [];
-    let queueEntryIdsArray: string[] = [];
-
-    if (assignment.player_names) {
-      try {
-        const parsed = assignment.player_names as unknown as string[];
-        playerNamesArray = Array.isArray(parsed) ? parsed : [];
-      } catch {
-        playerNamesArray = [];
-      }
-    }
-
-    if (assignment.queue_entry_ids) {
-      try {
-        const parsed = assignment.queue_entry_ids as unknown as string[];
-        queueEntryIdsArray = Array.isArray(parsed) ? parsed : [];
-      } catch {
-        queueEntryIdsArray = [];
-      }
-    }
-
-    return {
-      id: assignment.id,
-      eventId: assignment.event_id || "",
-      courtNumber: assignment.court_number,
-      player1Id: assignment.player1_id || undefined,
-      player2Id: assignment.player2_id || undefined,
-      player3Id: assignment.player3_id || undefined,
-      player4Id: assignment.player4_id || undefined,
-      player5Id: assignment.player5_id || undefined,
-      player6Id: assignment.player6_id || undefined,
-      player7Id: assignment.player7_id || undefined,
-      player8Id: assignment.player8_id || undefined,
-      player_names: playerNamesArray,
-      queueEntryIds: queueEntryIdsArray,
-      startedAt: new Date(assignment.started_at || ""),
-      endedAt: assignment.ended_at
-        ? new Date(assignment.ended_at)
-        : undefined,
-      player1: mapPlayer(assignment.player1),
-      player2: mapPlayer(assignment.player2),
-      player3: mapPlayer(assignment.player3),
-      player4: mapPlayer(assignment.player4),
-      player5: mapPlayer(assignment.player5),
-      player6: mapPlayer(assignment.player6),
-      player7: mapPlayer(assignment.player7),
-      player8: mapPlayer(assignment.player8),
-    };
-  });
+  return data.map(mapOneAdminCourtAssignment);
 }

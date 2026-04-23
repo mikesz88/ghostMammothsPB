@@ -1,6 +1,6 @@
 # Refactor inventory — automated snapshot
 
-Generated: `2026-04-23T01:05:52.884Z` (run `npm run inventory:phase0` to refresh).
+Generated: `2026-04-23T01:57:42.449Z` (run `npm run inventory:phase0` to refresh).
 
 Rows include files with **≥200 lines** or **route `page.tsx`/`page.ts` with `"use client"`** (any size).
 
@@ -20,7 +20,6 @@ Rows include files with **≥200 lines** or **route `page.tsx`/`page.ts` with `"
 | Path | Lines | Bucket | Auto flags | Primary tag (team) | Priority (team) | Target phase (team) | Notes (team) |
 | --- | ---: | --- | --- | --- | --- | --- | --- |
 | app/actions/queue.ts | 1243 | action | very large (300+) |  |  |  |  |
-| app/admin/events/[id]/page.tsx | 765 | route-page | very large (300+); "use client" page |  |  |  |  |
 | app/admin/page.tsx | 589 | route-page | very large (300+); "use client" page |  |  |  |  |
 | app/actions/notifications.ts | 503 | action | very large (300+) |  |  |  |  |
 | app/membership/page.tsx | 478 | route-page | very large (300+); "use client" page |  |  |  |  |
@@ -28,7 +27,6 @@ Rows include files with **≥200 lines** or **route `page.tsx`/`page.ts` with `"
 | app/settings/page.tsx | 450 | route-page | very large (300+); "use client" page |  |  |  |  |
 | app/admin/users/[id]/page.tsx | 443 | route-page | very large (300+); "use client" page |  |  |  |  |
 | app/admin/users/page.tsx | 428 | route-page | very large (300+); "use client" page |  |  |  |  |
-| app/admin/events/[id]/test-controls.tsx | 418 | app-local | very large (300+) |  |  |  |  |
 | app/actions/test-helpers.ts | 405 | action | very large (300+) |  |  |  |  |
 | app/settings/membership/page.tsx | 400 | route-page | very large (300+); "use client" page |  |  |  |  |
 | components/ui/header.tsx | 374 | component | very large (300+); persistence-like patterns in component |  |  |  |  |
@@ -42,8 +40,10 @@ Rows include files with **≥200 lines** or **route `page.tsx`/`page.ts` with `"
 | components/join-queue-dialog.tsx | 263 | component | large (200+); persistence-like patterns in component |  |  |  |  |
 | app/login/page.tsx | 258 | route-page | large (200+); "use client" page |  |  |  |  |
 | components/create-event-dialog.tsx | 255 | component | large (200+); persistence-like patterns in component |  |  |  |  |
+| components/admin/events/test-controls.tsx | 235 | component | large (200+); persistence-like patterns in component |  |  |  |  |
 | lib/auth-context.tsx | 235 | lib | large (200+) |  |  |  |  |
 | app/membership/success/page.tsx | 226 | route-page | large (200+); "use client" page |  |  |  |  |
+| lib/hooks/use-test-controls.ts | 221 | lib | large (200+) |  |  |  |  |
 | components/edit-event-dialog.tsx | 213 | component | large (200+); persistence-like patterns in component |  |  |  |  |
 | app/about/page.tsx | 210 | route-page | large (200+); "use client" page |  |  |  |  |
 | app/reset-password/page.tsx | 209 | route-page | large (200+); "use client" page |  |  |  |  |

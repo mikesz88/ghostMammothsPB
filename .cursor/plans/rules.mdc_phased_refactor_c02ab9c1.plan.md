@@ -13,7 +13,7 @@ todos:
     status: completed
   - id: phase-3
     content: "Phase 3: Admin event console + test-controls — server shell, isolated controls, no broad queue.ts split"
-    status: pending
+    status: completed
   - id: phase-4
     content: "Phase 4: Shared event/admin extraction — loaders, mappers, domain UI, stable types"
     status: pending
@@ -207,6 +207,8 @@ Convert the public/member event detail page to server-first composition.
 ---
 
 ## Phase 3 — Admin Event Console
+
+**Status: complete (April 2026).** See [`docs/engineering/phase-3-admin-event-walkthrough.md`](../../docs/engineering/phase-3-admin-event-walkthrough.md).
 
 ### Targets
 

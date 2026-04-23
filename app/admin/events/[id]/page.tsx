@@ -9,11 +9,11 @@ export default async function AdminEventDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const data = await loadAdminEventDetailPageData(id);
+  const pagePayload = await loadAdminEventDetailPageData(id);
 
-  if (!data) {
+  if (!pagePayload) {
     notFound();
   }
 
-  return <AdminEventDetailClient {...data} />;
+  return <AdminEventDetailClient {...pagePayload} />;
 }
