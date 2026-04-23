@@ -1,5 +1,6 @@
 Before finalizing this change:
 
+0. If this PR **touches a route or adds client UI**, does it follow [`phase-1-rsc-conventions.md`](phase-1-rsc-conventions.md) (server `page.tsx`, leaf components under the right `components/{events,admin/events,settings,auth,membership}/`)?
 1. Is logic in the correct layer?
 2. Is business logic separated from UI?
 3. Is data flow clear and traceable?

@@ -1,5 +1,7 @@
 # Phase 0 — refactor inventory (hybrid)
 
+**Phase 1 is active** — for **new or touched** routes and client UI, follow [`phase-1-rsc-conventions.md`](phase-1-rsc-conventions.md) and domain folders under `components/`.
+
 This doc is **team-owned**. The repo also contains a **machine-generated snapshot** you refresh when the map drifts.
 
 ## Workflow

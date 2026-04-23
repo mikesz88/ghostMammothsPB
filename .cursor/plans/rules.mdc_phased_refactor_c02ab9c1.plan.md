@@ -7,7 +7,7 @@ todos:
     status: completed
   - id: phase-1
     content: "Phase 1: Conventions + RSC guardrails, import order, target folders (events/admin/settings/auth/membership)"
-    status: pending
+    status: completed
   - id: phase-2
     content: "Phase 2: Member event detail app/events/[id] — server page, client islands, no Supabase in page.tsx"
     status: pending
@@ -148,6 +148,12 @@ Freeze bad patterns before route-by-route work begins.
 * every new/touched route follows server-first convention
 * lint rules and audit script are active
 * no architectural ambiguity for future phases
+
+### Implementation (repo)
+
+* Conventions doc: [`docs/engineering/phase-1-rsc-conventions.md`](../../docs/engineering/phase-1-rsc-conventions.md)
+* Domain folders (scaffold): `components/events/`, `components/admin/events/`, `components/settings/`, `components/auth/`, `components/membership/`
+* `.cursor/rules.mdc` — Phase 1 domain targets under **Next.js Structure → Routes**
 
 ---
 

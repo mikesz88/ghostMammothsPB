@@ -242,6 +242,17 @@ External System → Webhook → Database → Application reads DB
 * Route files must remain thin
 * Do not bury business logic in route handlers, pages, or layouts
 
+### Phase 1 — domain component targets (active)
+
+* **New or touched** interactive UI belongs under domain folders (not only `components/` root):
+  * `components/events/` — member/public event experience (plan Phase 2+)
+  * `components/admin/events/` — admin event console (plan Phase 3+)
+  * `components/settings/` — settings (plan Phase 6)
+  * `components/auth/` — auth flows (plan Phase 6)
+  * `components/membership/` — membership/checkout (plan Phase 6)
+* Full route pattern and guardrails: `docs/engineering/phase-1-rsc-conventions.md`
+* **Do not** bulk-move legacy components in Phase 1; migrate in the phase PR that owns that route.
+
 ### Components
 
 * `components/` or `src/components/`
