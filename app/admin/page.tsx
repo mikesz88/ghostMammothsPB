@@ -16,6 +16,10 @@ import Link from "next/link";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 
+import {
+  deleteAdminDashboardEvent,
+  endAdminDashboardEvent,
+} from "@/app/actions/events";
 import { CreateEventDialog } from "@/components/create-event-dialog";
 import { EditEventDialog } from "@/components/edit-event-dialog";
 import { Badge } from "@/components/ui/badge";
@@ -200,54 +204,17 @@ export default function AdminPage() {
         label: "End Event",
         onClick: async () => {
           try {
-            const supabase = createClient();
+            const result = await endAdminDashboardEvent(eventId);
 
-            // Delete all queue entries for this event
-            const { error: queueError } = await supabase
-              .from("queue_entries")
-              .delete()
-              .eq("event_id", eventId);
-
-            if (queueError) {
-              console.error("Error clearing queue:", queueError);
-              toast.error("Failed to clear queue", {
-                description: queueError.message,
-              });
-              return;
-            }
-
-            // Delete all court assignments for this event
-            const { error: assignmentsError } = await supabase
-              .from("court_assignments")
-              .delete()
-              .eq("event_id", eventId);
-
-            if (assignmentsError) {
-              console.error("Error clearing assignments:", assignmentsError);
-              toast.error("Failed to clear assignments", {
-                description: assignmentsError.message,
-              });
-              return;
-            }
-
-            // Update event status to ended
-            const { error } = await supabase
-              .from("events")
-              .update({ status: "ended" })
-              .eq("id", eventId);
-
-            if (error) {
-              console.error("Error ending event:", error);
+            if (!result.success) {
+              console.error("Error ending event:", result.error);
               toast.error("Failed to end event", {
-                description: error.message,
+                description: result.error,
               });
               return;
             }
 
-            console.log(
-              "Event ended successfully - queue and assignments cleared"
-            );
-            await fetchEvents(); // Refresh the list
+            await fetchEvents();
             toast.success("Event ended successfully!", {
               description: "All queue entries and assignments cleared.",
             });
@@ -274,25 +241,17 @@ export default function AdminPage() {
         label: "Delete",
         onClick: async () => {
           try {
-            const supabase = createClient();
+            const result = await deleteAdminDashboardEvent(eventId);
 
-            console.log("Deleting event:", eventId);
-
-            const { error } = await supabase
-              .from("events")
-              .delete()
-              .eq("id", eventId);
-
-            if (error) {
-              console.error("Error deleting event:", error);
+            if (!result.success) {
+              console.error("Error deleting event:", result.error);
               toast.error("Failed to delete event", {
-                description: error.message,
+                description: result.error,
               });
               return;
             }
 
-            console.log("Event deleted successfully");
-            await fetchEvents(); // Refresh the list
+            await fetchEvents();
             toast.success("Event deleted successfully!");
           } catch (err) {
             console.error("Unexpected error deleting event:", err);

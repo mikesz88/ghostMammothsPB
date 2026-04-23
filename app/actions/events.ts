@@ -7,9 +7,169 @@ import {
   is2Stay2OffValidTeamSize,
 } from "@/lib/rotation-policy";
 import { createClient } from "@/lib/supabase/server";
+import { createServiceRoleClient } from "@/lib/supabase/service-role";
 
 import type { RotationType, TeamSize } from "@/lib/types";
+import type { Database } from "@/supabase/supa-schema";
+import type { SupabaseClient } from "@supabase/supabase-js";
 
+type ServiceDb = SupabaseClient<Database>;
+
+async function requireAdminServiceDb(): Promise<
+  | { db: ServiceDb; error: null }
+  | { db: null; error: string }
+> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { db: null, error: "Not authenticated" };
+  }
+
+  const { data: profile } = await supabase
+    .from("users")
+    .select("is_admin")
+    .eq("id", user.id)
+    .single();
+
+  if (!profile?.is_admin) {
+    return { db: null, error: "Unauthorized - Admin access required" };
+  }
+
+  const db = createServiceRoleClient();
+  if (!db) {
+    console.error("requireAdminServiceDb: SUPABASE_SERVICE_ROLE_KEY missing");
+    return { db: null, error: "Server configuration error" };
+  }
+
+  return { db, error: null };
+}
+
+/** Clear live state and mark event ended (admin dashboard). Uses service role after is_admin check — browser RLS often blocks `events` updates. */
+export async function endAdminDashboardEvent(eventId: string) {
+  const gate = await requireAdminServiceDb();
+  if (gate.error || !gate.db) {
+    return {
+      success: false as const,
+      error: gate.error ?? "Server configuration error",
+    };
+  }
+  const { db } = gate;
+
+  const { error: queueError } = await db
+    .from("queue_entries")
+    .delete()
+    .eq("event_id", eventId);
+
+  if (queueError) {
+    console.error("endAdminDashboardEvent queue_entries:", queueError);
+    return { success: false as const, error: queueError.message };
+  }
+
+  const { error: pendingError } = await db
+    .from("court_pending_stayers")
+    .delete()
+    .eq("event_id", eventId);
+
+  if (pendingError) {
+    console.error("endAdminDashboardEvent court_pending_stayers:", pendingError);
+    return { success: false as const, error: pendingError.message };
+  }
+
+  const { error: assignmentsError } = await db
+    .from("court_assignments")
+    .delete()
+    .eq("event_id", eventId);
+
+  if (assignmentsError) {
+    console.error("endAdminDashboardEvent court_assignments:", assignmentsError);
+    return { success: false as const, error: assignmentsError.message };
+  }
+
+  const { error: eventError } = await db
+    .from("events")
+    .update({ status: "ended" })
+    .eq("id", eventId);
+
+  if (eventError) {
+    console.error("endAdminDashboardEvent events:", eventError);
+    return { success: false as const, error: eventError.message };
+  }
+
+  revalidatePath("/admin");
+  revalidatePath(`/admin/events/${eventId}`);
+  revalidatePath(`/events/${eventId}`);
+  revalidatePath("/events");
+
+  return { success: true as const, error: null as null };
+}
+
+/** Hard-delete event and dependent rows (admin dashboard). */
+export async function deleteAdminDashboardEvent(eventId: string) {
+  const gate = await requireAdminServiceDb();
+  if (gate.error || !gate.db) {
+    return {
+      success: false as const,
+      error: gate.error ?? "Server configuration error",
+    };
+  }
+  const { db } = gate;
+
+  const { error: queueError } = await db
+    .from("queue_entries")
+    .delete()
+    .eq("event_id", eventId);
+
+  if (queueError) {
+    return { success: false as const, error: queueError.message };
+  }
+
+  const { error: pendingError } = await db
+    .from("court_pending_stayers")
+    .delete()
+    .eq("event_id", eventId);
+
+  if (pendingError) {
+    return { success: false as const, error: pendingError.message };
+  }
+
+  const { error: assignmentsError } = await db
+    .from("court_assignments")
+    .delete()
+    .eq("event_id", eventId);
+
+  if (assignmentsError) {
+    return { success: false as const, error: assignmentsError.message };
+  }
+
+  const { error: regError } = await db
+    .from("event_registrations")
+    .delete()
+    .eq("event_id", eventId);
+
+  if (regError) {
+    return { success: false as const, error: regError.message };
+  }
+
+  const { error: deleteError } = await db
+    .from("events")
+    .delete()
+    .eq("id", eventId);
+
+  if (deleteError) {
+    console.error("deleteAdminDashboardEvent events:", deleteError);
+    return { success: false as const, error: deleteError.message };
+  }
+
+  revalidatePath("/admin");
+  revalidatePath(`/admin/events/${eventId}`);
+  revalidatePath(`/events/${eventId}`);
+  revalidatePath("/events");
+
+  return { success: true as const, error: null as null };
+}
 
 export async function getEvents() {
   const supabase = await createClient();
