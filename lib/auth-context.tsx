@@ -4,22 +4,34 @@ import { createContext, useContext, useEffect, useState } from "react";
 
 import { createClient } from "@/lib/supabase/client";
 
-import type { User, Session } from "@supabase/supabase-js";
+import type { AuthError, Session, User } from "@supabase/supabase-js";
+
+/** Auth helpers may return Supabase `AuthError` or app-thrown `Error` (e.g. missing config). */
+type AuthFlowError = AuthError | Error | null;
 
 interface AuthContextType {
   user: User | null;
   session: Session | null;
   loading: boolean;
-  signIn: (email: string, password: string) => Promise<{ error: any }>;
+  signIn: (
+    email: string,
+    password: string,
+  ) => Promise<{ error: AuthFlowError }>;
   signUp: (
     email: string,
     password: string,
-    userData: { name: string; skillLevel: string; phone?: string }
-  ) => Promise<{ error: any }>;
+    userData: { name: string; skillLevel: string; phone?: string },
+  ) => Promise<{ error: AuthFlowError }>;
   signOut: () => Promise<void>;
-  resendVerificationEmail: (email: string) => Promise<{ error: any }>;
-  resetPasswordForEmail: (email: string) => Promise<{ error: any }>;
-  updatePassword: (newPassword: string) => Promise<{ error: any }>;
+  resendVerificationEmail: (
+    email: string,
+  ) => Promise<{ error: AuthError | null }>;
+  resetPasswordForEmail: (
+    email: string,
+  ) => Promise<{ error: AuthFlowError }>;
+  updatePassword: (
+    newPassword: string,
+  ) => Promise<{ error: AuthError | null }>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);

@@ -962,7 +962,7 @@ export async function assignPlayersToNextCourt(eventId: string) {
   const rotationType = event.rotation_type as RotationType;
 
   const stayingCount = countSlotsForEntries(stayingMapped);
-  let playersNeeded = playersPerCourt - stayingCount;
+  const playersNeeded = playersPerCourt - stayingCount;
 
   if (playersNeeded < 0) {
     return {

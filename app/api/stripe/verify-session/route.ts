@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { stripe } from "@/lib/stripe/server";
+import { asSubscriptionWithBillingPeriods } from "@/lib/stripe/subscription-billing";
 import { createClient } from "@/lib/supabase/server";
 
 export async function GET(request: NextRequest) {
@@ -71,7 +72,7 @@ export async function GET(request: NextRequest) {
 
     // Get subscription details for period dates
     let currentPeriodStart, currentPeriodEnd;
-    let subscriptionId = session.subscription as string | null;
+    const subscriptionId = session.subscription as string | null;
     const customerId = session.customer as string;
 
     console.log("Session data:", {
@@ -84,14 +85,14 @@ export async function GET(request: NextRequest) {
     if (session.subscription) {
       try {
         const { stripe } = await import("@/lib/stripe/server");
-        const subscription = await stripe.subscriptions.retrieve(
-          subscriptionId!
+        const subscription = asSubscriptionWithBillingPeriods(
+          await stripe.subscriptions.retrieve(subscriptionId!),
         );
         currentPeriodStart = new Date(
-          (subscription as any).current_period_start * 1000
+          subscription.current_period_start * 1000,
         ).toISOString();
         currentPeriodEnd = new Date(
-          (subscription as any).current_period_end * 1000
+          subscription.current_period_end * 1000,
         ).toISOString();
         console.log("✅ Subscription details retrieved:", {
           id: subscription.id,

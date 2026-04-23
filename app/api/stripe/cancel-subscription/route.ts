@@ -17,7 +17,7 @@ export async function POST() {
     }
 
     // Get user's subscription ID
-    let { data: membership } = await supabase
+    const { data: membership } = await supabase
       .from("user_memberships")
       .select("stripe_subscription_id, stripe_customer_id")
       .eq("user_id", user.id)

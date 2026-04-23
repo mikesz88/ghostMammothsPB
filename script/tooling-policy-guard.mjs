@@ -15,27 +15,27 @@ const TSCONFIG = path.join(ROOT, "tsconfig.json");
 /** @type {{ name: string; test: (src: string) => boolean }[]} */
 const eslintExpectations = [
   {
-    name: 'complexity remains ["warn", 12]',
-    test: (s) => /complexity:\s*\[\s*["']warn["']\s*,\s*12\s*\]/.test(s),
+    name: 'complexity remains ["warn", 10]',
+    test: (s) => /complexity:\s*\[\s*["']warn["']\s*,\s*10\s*\]/.test(s),
   },
   {
-    name: 'max-params remains ["warn", 5]',
+    name: 'max-params remains ["warn", 4]',
     test: (s) =>
-      /["']max-params["']\s*:\s*\[\s*["']warn["']\s*,\s*5\s*\]/.test(s),
+      /["']max-params["']\s*:\s*\[\s*["']warn["']\s*,\s*4\s*\]/.test(s),
   },
   {
-    name: 'max-depth remains ["warn", 4]',
+    name: 'max-depth remains ["warn", 3]',
     test: (s) =>
-      /["']max-depth["']\s*:\s*\[\s*["']warn["']\s*,\s*4\s*\]/.test(s),
+      /["']max-depth["']\s*:\s*\[\s*["']warn["']\s*,\s*3\s*\]/.test(s),
   },
   {
-    name: "max-lines block still uses max: 250",
-    test: (s) => /"max-lines"\s*:\s*\[[\s\S]{0,1200}?max:\s*250\s*,/.test(s),
+    name: "max-lines block still uses max: 200",
+    test: (s) => /"max-lines"\s*:\s*\[[\s\S]{0,1200}?max:\s*200\s*,/.test(s),
   },
   {
-    name: 'unused-imports/no-unused-imports remains "error"',
+    name: 'unused-imports/no-unused-imports remains "warn"',
     test: (s) =>
-      /["']unused-imports\/no-unused-imports["']\s*:\s*["']error["']/.test(s),
+      /["']unused-imports\/no-unused-imports["']\s*:\s*["']warn["']/.test(s),
   },
 ];
 

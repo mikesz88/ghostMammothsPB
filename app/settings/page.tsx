@@ -31,13 +31,15 @@ import { getUserMembership } from "@/lib/membership-helpers";
 import { createClient } from "@/lib/supabase/client";
 
 import type { UserMembershipInfo } from "@/lib/membership-helpers";
+import type { Database } from "@/supabase/supa-schema";
 
+type UsersRow = Database["public"]["Tables"]["users"]["Row"];
 
 export default function SettingsPage() {
   const router = useRouter();
   const { user, signOut } = useAuth();
   const [membership, setMembership] = useState<UserMembershipInfo | null>(null);
-  const [userDetails, setUserDetails] = useState<any>(null);
+  const [userDetails, setUserDetails] = useState<UsersRow | null>(null);
   const [loading, setLoading] = useState(true);
   const [deleteLoading, setDeleteLoading] = useState(false);
 

@@ -39,7 +39,7 @@ export interface MembershipTier {
     priorityQueue?: boolean;
     exclusiveEvents?: boolean;
     merchandiseDiscount?: number;
-    [key: string]: any;
+    [key: string]: unknown;
   };
   isActive: boolean;
   sortOrder: number;
@@ -75,7 +75,7 @@ export interface Payment {
   stripeChargeId?: string;
   status: PaymentStatus;
   description?: string;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
   refundedAmount?: number;
   refundedAt?: Date;
   createdAt: Date;
