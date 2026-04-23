@@ -22,7 +22,7 @@ todos:
     status: completed
   - id: phase-6
     content: "Phase 6: Settings, membership, auth — server-first, form client children"
-    status: pending
+    status: completed
   - id: phase-7
     content: "Phase 7: Action layer split — queue, notifications; re-exports; behavior unchanged"
     status: pending
@@ -323,6 +323,10 @@ Convert admin data pages to server-rendered reads with small interactive widgets
 ---
 
 ## Phase 6 — Settings, Membership, and Auth Routes
+
+### Status
+
+**Completed (April 2026).** Settings hub, membership sub-settings, notification prefs, membership marketing/checkout/success (plus cancel), and auth routes (`login`, `signup`, `forgot-password`, `reset-password`) use server-first `page.tsx` files, loaders under `lib/settings/` and `lib/membership/`, client islands under `components/settings/`, `components/membership/`, and `components/auth/`, and focused auth helpers under `lib/auth/` with a thin `lib/auth-context.tsx` provider. Walkthrough: [`docs/engineering/phase-6-settings-membership-auth-walkthrough.md`](../../docs/engineering/phase-6-settings-membership-auth-walkthrough.md).
 
 ### Targets
 

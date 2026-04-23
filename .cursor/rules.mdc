@@ -247,9 +247,9 @@ External System → Webhook → Database → Application reads DB
 * **New or touched** interactive UI belongs under domain folders (not only `components/` root):
   * `components/events/` — member/public event experience (plan Phase 2+)
   * `components/admin/events/` — admin event console (plan Phase 3+)
-  * `components/settings/` — settings (plan Phase 6)
-  * `components/auth/` — auth flows (plan Phase 6)
-  * `components/membership/` — membership/checkout (plan Phase 6)
+  * `components/settings/` — settings (Phase 6 delivered; keep new settings UI here)
+  * `components/auth/` — auth flows (Phase 6 delivered; keep new auth UI here)
+  * `components/membership/` — membership/checkout (Phase 6 delivered; keep new membership UI here)
 * Full route pattern and guardrails: `docs/engineering/phase-1-rsc-conventions.md`
 * **Do not** bulk-move legacy components in Phase 1; migrate in the phase PR that owns that route.
 

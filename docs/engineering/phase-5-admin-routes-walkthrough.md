@@ -29,4 +29,6 @@ Schema typing: `email_logs` is represented in [`supabase/supa-schema.ts`](../../
 
 ## Next phase pointer
 
-**Phase 6** — settings, membership, auth: server-first routes per plan.
+**Phase 6** (settings, membership, auth) is **complete** — see [`phase-6-settings-membership-auth-walkthrough.md`](phase-6-settings-membership-auth-walkthrough.md).
+
+**Phase 7** — action layer split (`queue.ts`, `notifications.ts`) per plan.

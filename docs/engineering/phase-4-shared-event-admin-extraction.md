@@ -31,4 +31,4 @@ Phased plan: [`.cursor/plans/rules.mdc_phased_refactor_c02ab9c1.plan.md`](../../
 
 **Phase 5** (admin dashboard, users list, user detail, email-stats) is **complete** — see [`phase-5-admin-routes-walkthrough.md`](phase-5-admin-routes-walkthrough.md).
 
-**Phase 6** — settings, membership, auth: server-first routes per plan.
+**Phase 6** (settings, membership, auth) is **complete** — see [`phase-6-settings-membership-auth-walkthrough.md`](phase-6-settings-membership-auth-walkthrough.md).

@@ -1,6 +1,6 @@
 # Phase 0 — refactor inventory (hybrid)
 
-**Phase 1 is active** — for **new or touched** routes and client UI, follow [`phase-1-rsc-conventions.md`](phase-1-rsc-conventions.md) and domain folders under `components/`. **Phase 2** (member `app/events/[id]`) is **complete**; see [`phase-2-event-detail-walkthrough.md`](phase-2-event-detail-walkthrough.md). **Phase 3** (admin `app/admin/events/[id]`) is **complete**; see [`phase-3-admin-event-walkthrough.md`](phase-3-admin-event-walkthrough.md). **Phase 4** (shared event/admin extraction for those routes) is **complete**; see [`phase-4-shared-event-admin-extraction.md`](phase-4-shared-event-admin-extraction.md). **Phase 5** (admin dashboard, users list, user detail, email-stats) is **complete**; see [`phase-5-admin-routes-walkthrough.md`](phase-5-admin-routes-walkthrough.md).
+**Phase 1 is active** — for **new or touched** routes and client UI, follow [`phase-1-rsc-conventions.md`](phase-1-rsc-conventions.md) and domain folders under `components/`. **Phase 2** (member `app/events/[id]`) is **complete**; see [`phase-2-event-detail-walkthrough.md`](phase-2-event-detail-walkthrough.md). **Phase 3** (admin `app/admin/events/[id]`) is **complete**; see [`phase-3-admin-event-walkthrough.md`](phase-3-admin-event-walkthrough.md). **Phase 4** (shared event/admin extraction for those routes) is **complete**; see [`phase-4-shared-event-admin-extraction.md`](phase-4-shared-event-admin-extraction.md). **Phase 5** (admin dashboard, users list, user detail, email-stats) is **complete**; see [`phase-5-admin-routes-walkthrough.md`](phase-5-admin-routes-walkthrough.md). **Phase 6** (settings, membership, auth) is **complete**; see [`phase-6-settings-membership-auth-walkthrough.md`](phase-6-settings-membership-auth-walkthrough.md).
 
 This doc is **team-owned**. The repo also contains a **machine-generated snapshot** you refresh when the map drifts.
 
@@ -42,7 +42,7 @@ Use the refined plan phase numbers (e.g. **2** = member event detail, **3** = ad
 
 Seeded from [`refactor-inventory.snapshot.md`](refactor-inventory.snapshot.md) (refresh with `npm run inventory:phase0`). Reconcile line counts here when the map drifts.
 
-**Priority gist:** **P0** = queue spine (`queue.ts` / `queue-manager`) for explicit Phase 7–8 work. (**Phases 2–4** member event detail, admin event console, and shared lib extraction are done.) **P1** = notifications, event queue UI, admin dashboard/users/email (Phase 5), membership/settings/auth (Phase 6), Stripe/email integration (Phase 8). **P2** = marketing/public shell, shared header/dialogs, small client pages.
+**Priority gist:** **P0** = queue spine (`queue.ts` / `queue-manager`) for explicit Phase 7–8 work. (**Phases 2–6** through settings/membership/auth are done.) **P1** = notifications, event queue UI, Stripe/email integration (Phase 8). **P2** = marketing/public shell (Phase 9), shared header/dialogs, small client pages.
 
 | Path | Lines | Bucket | Auto flags | Primary tag | Priority | Target phase | Notes |
 | --- | ---: | --- | --- | --- | --- | --- | --- |
@@ -62,19 +62,19 @@ Seeded from [`refactor-inventory.snapshot.md`](refactor-inventory.snapshot.md) (
 | app/admin/users/[id]/page.tsx | ~17 | route-page | server component | server-page migration | — | **Done** | Phase 5: `loadAdminUserDetailPageData`, `notFound()` → `AdminUserDetailPageClient`. |
 | app/admin/email-stats/page.tsx | ~24 | route-page | server component | server-page migration | — | **Done** | Phase 5: `parseEmailStatsTimeRange`, `loadAdminEmailStatsPageData` → `EmailStatsPageClient`; `lib/admin/*` stats helpers. |
 | app/actions/test-helpers.ts | 405 | action | very large | action split | P1 | 3 | Test-only actions; keep behind admin/test flows; can trail Phase 3. |
-| app/membership/page.tsx | 478 | route-page | very large; `"use client"` page | server-page migration | P1 | 6 | Membership landing. |
-| app/membership/checkout/page.tsx | 352 | route-page | very large; `"use client"` page | server-page migration | P1 | 6 | Stripe checkout surface. |
-| app/membership/success/page.tsx | 226 | route-page | large; `"use client"` page | server-page migration | P1 | 6 | Post-checkout. |
-| app/membership/cancel/page.tsx | 44 | route-page | `"use client"` page | server-page migration | P2 | 6 | Small; batch with Phase 6 membership. |
-| app/settings/page.tsx | 450 | route-page | very large; `"use client"` page | server-page migration | P1 | 6 | Settings hub. |
-| app/settings/membership/page.tsx | 400 | route-page | very large; `"use client"` page | form extraction | P1 | 6 | Membership sub-settings. |
-| app/settings/notifications/page.tsx | 319 | route-page | very large; `"use client"` page | form extraction | P1 | 6 | Notification prefs. |
-| app/login/page.tsx | 258 | route-page | large; `"use client"` page | form extraction | P1 | 6 | Auth forms — client children pattern. |
-| app/signup/page.tsx | 309 | route-page | very large; `"use client"` page | form extraction | P1 | 6 | |
-| app/forgot-password/page.tsx | 110 | route-page | `"use client"` page | form extraction | P2 | 6 | |
-| app/reset-password/page.tsx | 209 | route-page | large; `"use client"` page | form extraction | P2 | 6 | |
-| lib/membership-helpers.ts | ~162 | lib | — | service split | P1 | 6 | Barrel: `canUserJoinEvent`, display helpers, re-exports. Core membership row logic: `lib/membership/get-user-membership.ts` (+ helpers). |
-| lib/auth-context.tsx | 235 | lib | large | service split | P1 | 6 | Client auth provider — scope vs server session pattern. |
+| app/membership/page.tsx | ~7 | route-page | server component | server-page migration | — | **Done** | Phase 6: `loadMembershipMarketingPageData` → `MembershipMarketingPageClient`. |
+| app/membership/checkout/page.tsx | ~21 | route-page | server component | server-page migration | — | **Done** | Phase 6: `loadMembershipCheckoutPageData` → `MembershipCheckoutPageClient`. |
+| app/membership/success/page.tsx | ~21 | route-page | server component | server-page migration | — | **Done** | Phase 6: `loadMembershipSuccessPageData` → `MembershipSuccessPageClient`. |
+| app/membership/cancel/page.tsx | ~9 | route-page | server component | server-page migration | — | **Done** | Phase 6: server shell + `MembershipCancelMainCard`. |
+| app/settings/page.tsx | ~13 | route-page | server component | server-page migration | — | **Done** | Phase 6: `loadSettingsHubPageData` → `SettingsHubPageClient`. |
+| app/settings/membership/page.tsx | ~7 | route-page | server component | form extraction | — | **Done** | Phase 6: `loadSettingsMembershipPageData` → `SettingsMembershipPageClient`. |
+| app/settings/notifications/page.tsx | ~7 | route-page | server component | form extraction | — | **Done** | Phase 6: `loadSettingsNotificationsPageData` → `SettingsNotificationsPageClient`. |
+| app/login/page.tsx | ~15 | route-page | server component | form extraction | — | **Done** | Phase 6: `AuthPageShell` + `LoginPageClient`; `lib/auth` submit + post-login nav. |
+| app/signup/page.tsx | ~15 | route-page | server component | form extraction | — | **Done** | Phase 6: `SignupPageClient` + `lib/auth` sign-up flow helpers. |
+| app/forgot-password/page.tsx | ~9 | route-page | server component | form extraction | — | **Done** | Phase 6: `AuthPageShell` + `ForgotPasswordPageClient`. |
+| app/reset-password/page.tsx | ~10 | route-page | server component | form extraction | — | **Done** | Phase 6: `ResetPasswordPageClient`. |
+| lib/membership-helpers.ts | ~162 | lib | — | service split | P1 | — | Barrel: `canUserJoinEvent`, display helpers, re-exports. Core membership row logic: `lib/membership/get-user-membership.ts` (+ helpers). |
+| lib/auth-context.tsx | ~26 | lib | — | service split | — | **Done** | Phase 6: thin provider; logic in `lib/auth/*` (`useAuthSessionState`, sign-in/up factories, password actions). |
 | app/api/webhooks/stripe/route.ts | 364 | api-route | very large | action split | P1 | 8 | Thin route → `lib/stripe` per plan. |
 | lib/email/resend.ts | 360 | lib | very large | service split | P1 | 8 | Templates vs send split. |
 | components/ui/header.tsx | 374 | component | very large; persistence-like patterns | shared UI split | P2 | 9 | Public shell; server parent + small client pieces. |
