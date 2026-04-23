@@ -1,22 +1,14 @@
+import {
+  COURT_ASSIGNMENT_PLAYER_SLOTS,
+  type CourtAssignmentPlayerSlot,
+} from "@/lib/events/court-assignment-player-slots";
+
 import type {
   EventDetailSharedSerializedCourtPlayers,
   EventDetailSharedSerializedEventCore,
   EventDetailSharedSerializedUser,
 } from "@/lib/events/event-detail-shared-dto";
 import type { CourtAssignment, Event, User } from "@/lib/types";
-
-const DETAIL_PLAYER_SLOTS = [
-  "player1",
-  "player2",
-  "player3",
-  "player4",
-  "player5",
-  "player6",
-  "player7",
-  "player8",
-] as const;
-
-type DetailPlayerSlot = (typeof DETAIL_PLAYER_SLOTS)[number];
 
 /** Wire user snapshot → domain `User` (member + admin hydrate paths). */
 export function hydrateEventDetailSharedUser(
@@ -53,13 +45,13 @@ export function hydrateEventDetailSharedEventCore(
 /** Nested serialized players → domain player slots on `CourtAssignment`. */
 export function hydrateEventDetailSharedCourtPlayers(
   a: EventDetailSharedSerializedCourtPlayers,
-): Pick<CourtAssignment, DetailPlayerSlot> {
+): Pick<CourtAssignment, CourtAssignmentPlayerSlot> {
   return Object.fromEntries(
-    DETAIL_PLAYER_SLOTS.map((key) => {
+    COURT_ASSIGNMENT_PLAYER_SLOTS.map((key) => {
       const cell = a[key];
       return [key, cell ? hydrateEventDetailSharedUser(cell) : undefined];
     }),
-  ) as Pick<CourtAssignment, DetailPlayerSlot>;
+  ) as Pick<CourtAssignment, CourtAssignmentPlayerSlot>;
 }
 
 /** Assignment row scalars on the wire (ISO `startedAt` / optional `endedAt`). */

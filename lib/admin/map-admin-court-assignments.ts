@@ -1,3 +1,7 @@
+import {
+  COURT_ASSIGNMENT_PLAYER_SLOTS,
+  type CourtAssignmentPlayerSlot,
+} from "@/lib/events/court-assignment-player-slots";
 import { mapPlayer } from "@/lib/events/map-court-assignments-shared";
 
 import type { CourtAssignment } from "@/lib/types";
@@ -95,26 +99,13 @@ function adminCourtPlayerIdFields(row: AdminCourtAssignmentWithPlayers) {
   };
 }
 
-const ADMIN_PLAYER_SLOTS = [
-  "player1",
-  "player2",
-  "player3",
-  "player4",
-  "player5",
-  "player6",
-  "player7",
-  "player8",
-] as const;
-
-type AdminPlayerSlot = (typeof ADMIN_PLAYER_SLOTS)[number];
-
 function mapAdminCourtPlayerCells(row: AdminCourtAssignmentWithPlayers) {
   return Object.fromEntries(
-    ADMIN_PLAYER_SLOTS.map((key) => {
-      const cell = row[key as AdminPlayerSlot];
+    COURT_ASSIGNMENT_PLAYER_SLOTS.map((key) => {
+      const cell = row[key as CourtAssignmentPlayerSlot];
       return [key, cell ? mapPlayer(cell) : undefined];
     }),
-  ) as Pick<CourtAssignment, AdminPlayerSlot>;
+  ) as Pick<CourtAssignment, CourtAssignmentPlayerSlot>;
 }
 
 function buildAdminAssignmentScalars(

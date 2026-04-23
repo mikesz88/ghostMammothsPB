@@ -1,3 +1,7 @@
+import {
+  COURT_ASSIGNMENT_PLAYER_SLOTS,
+  type CourtAssignmentPlayerSlot,
+} from "@/lib/events/court-assignment-player-slots";
 import { mapPlayer } from "@/lib/events/map-court-assignments-shared";
 
 import type { CourtAssignment, User } from "@/lib/types";
@@ -13,23 +17,13 @@ function mapOptionalPlayer(raw: unknown): User | undefined {
   return raw ? mapPlayer(raw as PlayerRow) : undefined;
 }
 
-const PLAYER_KEYS = [
-  "player1",
-  "player2",
-  "player3",
-  "player4",
-  "player5",
-  "player6",
-  "player7",
-  "player8",
-] as const;
-
-type CourtPlayerKeys = (typeof PLAYER_KEYS)[number];
-
 export function mapCourtAssignmentPlayers(
   assignment: Record<string, unknown>,
-): Pick<CourtAssignment, CourtPlayerKeys> {
+): Pick<CourtAssignment, CourtAssignmentPlayerSlot> {
   return Object.fromEntries(
-    PLAYER_KEYS.map((key) => [key, mapOptionalPlayer(assignment[key])]),
-  ) as Pick<CourtAssignment, CourtPlayerKeys>;
+    COURT_ASSIGNMENT_PLAYER_SLOTS.map((key) => [
+      key,
+      mapOptionalPlayer(assignment[key]),
+    ]),
+  ) as Pick<CourtAssignment, CourtAssignmentPlayerSlot>;
 }

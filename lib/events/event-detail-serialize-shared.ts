@@ -1,3 +1,8 @@
+import {
+  COURT_ASSIGNMENT_PLAYER_SLOTS,
+  type CourtAssignmentPlayerSlot,
+} from "@/lib/events/court-assignment-player-slots";
+
 import type {
   EventDetailSharedSerializedCourtPlayers,
   EventDetailSharedSerializedEventCore,
@@ -37,26 +42,13 @@ export function serializeEventDetailSharedEventCore(
   };
 }
 
-const DETAIL_PLAYER_SLOTS = [
-  "player1",
-  "player2",
-  "player3",
-  "player4",
-  "player5",
-  "player6",
-  "player7",
-  "player8",
-] as const;
-
-type DetailPlayerSlot = (typeof DETAIL_PLAYER_SLOTS)[number];
-
 /** Shared nested players for a court assignment row. */
 export function serializeEventDetailSharedCourtPlayers(
   a: CourtAssignment,
 ): EventDetailSharedSerializedCourtPlayers {
   return Object.fromEntries(
-    DETAIL_PLAYER_SLOTS.map((key) => {
-      const u = a[key as DetailPlayerSlot];
+    COURT_ASSIGNMENT_PLAYER_SLOTS.map((key) => {
+      const u = a[key as CourtAssignmentPlayerSlot];
       return [key, u ? serializeEventDetailSharedUser(u) : undefined];
     }),
   ) as EventDetailSharedSerializedCourtPlayers;
