@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 
+import { sendQueuePositionBumpNotification } from "@/lib/hooks/queue-position-notify-logic";
+
 import type { NotificationType } from "@/lib/use-notifications";
 
 type NotifyPosition = (
@@ -21,17 +23,7 @@ export function useQueuePositionNotify(
   useEffect(() => {
     if (isPendingSolo || isPendingStay) return;
     if (userPosition > 0 && lastPosition > 0 && userPosition < lastPosition) {
-      if (userPosition <= 4) {
-        sendNotification("up-next", "Almost Your Turn!", {
-          body: `You're now #${userPosition} in the queue. Get ready to play!`,
-          tag: "queue-position",
-        });
-      } else {
-        sendNotification("position-change", "Queue Position Updated", {
-          body: `You moved up to position #${userPosition}`,
-          tag: "queue-position",
-        });
-      }
+      sendQueuePositionBumpNotification(userPosition, sendNotification);
     }
     if (userPosition > 0) {
       queueMicrotask(() => setLastPosition(userPosition));

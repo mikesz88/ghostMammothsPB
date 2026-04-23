@@ -132,10 +132,23 @@ export function serializeAdminEvent(e: Event): AdminSerializedEvent {
   };
 }
 
-export function serializeAdminCourtAssignments(
-  rows: CourtAssignment[],
-): AdminSerializedCourtAssignment[] {
-  return rows.map((a) => ({
+function serializedAdminPlayers(a: CourtAssignment) {
+  return {
+    player1: a.player1 ? serializeUser(a.player1) : undefined,
+    player2: a.player2 ? serializeUser(a.player2) : undefined,
+    player3: a.player3 ? serializeUser(a.player3) : undefined,
+    player4: a.player4 ? serializeUser(a.player4) : undefined,
+    player5: a.player5 ? serializeUser(a.player5) : undefined,
+    player6: a.player6 ? serializeUser(a.player6) : undefined,
+    player7: a.player7 ? serializeUser(a.player7) : undefined,
+    player8: a.player8 ? serializeUser(a.player8) : undefined,
+  };
+}
+
+function serializeAdminCourtAssignmentRow(
+  a: CourtAssignment,
+): AdminSerializedCourtAssignment {
+  return {
     id: a.id,
     eventId: a.eventId,
     courtNumber: a.courtNumber,
@@ -151,15 +164,14 @@ export function serializeAdminCourtAssignments(
     queueEntryIds: a.queueEntryIds,
     startedAt: a.startedAt.toISOString(),
     endedAt: a.endedAt?.toISOString(),
-    player1: a.player1 ? serializeUser(a.player1) : undefined,
-    player2: a.player2 ? serializeUser(a.player2) : undefined,
-    player3: a.player3 ? serializeUser(a.player3) : undefined,
-    player4: a.player4 ? serializeUser(a.player4) : undefined,
-    player5: a.player5 ? serializeUser(a.player5) : undefined,
-    player6: a.player6 ? serializeUser(a.player6) : undefined,
-    player7: a.player7 ? serializeUser(a.player7) : undefined,
-    player8: a.player8 ? serializeUser(a.player8) : undefined,
-  }));
+    ...serializedAdminPlayers(a),
+  };
+}
+
+export function serializeAdminCourtAssignments(
+  rows: CourtAssignment[],
+): AdminSerializedCourtAssignment[] {
+  return rows.map(serializeAdminCourtAssignmentRow);
 }
 
 export function serializeAdminQueueEntries(

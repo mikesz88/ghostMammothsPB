@@ -3,10 +3,8 @@
 import { useEffect, useState } from "react";
 
 import { hydrateSerializedAssignments } from "@/lib/events/hydrate-event-detail";
-import {
-  COURT_ASSIGNMENTS_NESTED_SELECT,
-  mapCourtAssignmentRows,
-} from "@/lib/events/map-court-assignments";
+import { fetchActiveCourtAssignmentsClient } from "@/lib/hooks/court-assignments-client-fetch";
+import { subscribeCourtAssignmentsChanges } from "@/lib/hooks/court-assignments-realtime-channel";
 import { createClient } from "@/lib/supabase/client";
 
 import type { EventDetailSerializedAssignment } from "@/lib/events/event-detail-server";
@@ -21,46 +19,13 @@ export function useCourtAssignmentsRealtime(
   );
 
   useEffect(() => {
-    const fetchAssignments = async () => {
-      const supabase = createClient();
-      const { data, error } = await supabase
-        .from("court_assignments")
-        .select(COURT_ASSIGNMENTS_NESTED_SELECT)
-        .eq("event_id", eventId)
-        .is("ended_at", null);
-
-      if (error) {
-        console.error("Error fetching assignments:", error);
-        return;
-      }
-      if (data) {
-        setAssignments(
-          mapCourtAssignmentRows(data as Record<string, unknown>[]),
-        );
-        return;
-      }
-      setAssignments([]);
-    };
-
-    fetchAssignments();
-
     const supabase = createClient();
-    const channel = supabase
-      .channel(`public-assignments-${eventId}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "court_assignments",
-          filter: `event_id=eq.${eventId}`,
-        },
-        () => {
-          fetchAssignments();
-        },
-      )
-      .subscribe();
-
+    const load = async () => {
+      const rows = await fetchActiveCourtAssignmentsClient(supabase, eventId);
+      setAssignments(rows);
+    };
+    void load();
+    const channel = subscribeCourtAssignmentsChanges(supabase, eventId, load);
     return () => {
       supabase.removeChannel(channel);
     };

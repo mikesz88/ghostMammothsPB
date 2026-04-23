@@ -5,8 +5,27 @@ import type {
   TeamSize,
 } from "@/lib/types";
 
-/** Same event date/fields mapping as the former client `admin/events/[id]/page.tsx`. */
-export function mapAdminEventRowToEvent(data: {
+function eventDateFromRow(date: string, time?: string | null) {
+  const eventDate = new Date(date);
+  if (time) {
+    const timeParts = time.split(":");
+    eventDate.setHours(parseInt(timeParts[0], 10), parseInt(timeParts[1], 10));
+  }
+  return eventDate;
+}
+
+function adminRowCourtCount(data: {
+  court_count: number | string | null;
+  num_courts?: string | null;
+}) {
+  return (
+    parseInt(String(data.court_count), 10) ||
+    parseInt(String(data.num_courts), 10) ||
+    0
+  );
+}
+
+type AdminEventRow = {
   id: string;
   name: string;
   location: string;
@@ -19,30 +38,23 @@ export function mapAdminEventRowToEvent(data: {
   status: string;
   created_at: string;
   updated_at?: string | null;
-}): Event {
-  const eventDate = new Date(data.date);
-  if (data.time) {
-    const timeParts = data.time.split(":");
-    eventDate.setHours(
-      parseInt(timeParts[0], 10),
-      parseInt(timeParts[1], 10),
-    );
-  }
+};
 
+/** Same event date/fields mapping as the former client `admin/events/[id]/page.tsx`. */
+export function mapAdminEventRowToEvent(data: AdminEventRow): Event {
+  const { id, name, location, date, time, rotation_type, status, created_at, updated_at } =
+    data;
   return {
-    id: data.id,
-    name: data.name,
-    location: data.location,
-    date: eventDate,
-    courtCount:
-      parseInt(String(data.court_count), 10) ||
-      parseInt(String(data.num_courts), 10) ||
-      0,
+    id,
+    name,
+    location,
+    date: eventDateFromRow(date, time),
+    courtCount: adminRowCourtCount(data),
     teamSize: (data.team_size || 2) as TeamSize,
-    rotationType: data.rotation_type as RotationType,
-    status: data.status as EventStatus,
-    createdAt: new Date(data.created_at),
-    updatedAt: data.updated_at ? new Date(data.updated_at) : undefined,
+    rotationType: rotation_type as RotationType,
+    status: status as EventStatus,
+    createdAt: new Date(created_at),
+    updatedAt: updated_at ? new Date(updated_at) : undefined,
   };
 }
 

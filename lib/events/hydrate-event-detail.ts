@@ -33,10 +33,23 @@ export function hydrateSerializedEvent(s: EventDetailSerializedEvent): Event {
   };
 }
 
-export function hydrateSerializedAssignments(
-  rows: EventDetailSerializedAssignment[],
-): CourtAssignment[] {
-  return rows.map((a) => ({
+function hydratedPlayers(a: EventDetailSerializedAssignment) {
+  return {
+    player1: a.player1 ? hydrateUser(a.player1) : undefined,
+    player2: a.player2 ? hydrateUser(a.player2) : undefined,
+    player3: a.player3 ? hydrateUser(a.player3) : undefined,
+    player4: a.player4 ? hydrateUser(a.player4) : undefined,
+    player5: a.player5 ? hydrateUser(a.player5) : undefined,
+    player6: a.player6 ? hydrateUser(a.player6) : undefined,
+    player7: a.player7 ? hydrateUser(a.player7) : undefined,
+    player8: a.player8 ? hydrateUser(a.player8) : undefined,
+  };
+}
+
+function hydrateSerializedAssignmentRow(
+  a: EventDetailSerializedAssignment,
+): CourtAssignment {
+  return {
     id: a.id,
     eventId: a.eventId,
     courtNumber: a.courtNumber,
@@ -51,13 +64,12 @@ export function hydrateSerializedAssignments(
     player_names: a.player_names,
     startedAt: new Date(a.startedAt),
     endedAt: a.endedAt ? new Date(a.endedAt) : undefined,
-    player1: a.player1 ? hydrateUser(a.player1) : undefined,
-    player2: a.player2 ? hydrateUser(a.player2) : undefined,
-    player3: a.player3 ? hydrateUser(a.player3) : undefined,
-    player4: a.player4 ? hydrateUser(a.player4) : undefined,
-    player5: a.player5 ? hydrateUser(a.player5) : undefined,
-    player6: a.player6 ? hydrateUser(a.player6) : undefined,
-    player7: a.player7 ? hydrateUser(a.player7) : undefined,
-    player8: a.player8 ? hydrateUser(a.player8) : undefined,
-  }));
+    ...hydratedPlayers(a),
+  };
+}
+
+export function hydrateSerializedAssignments(
+  rows: EventDetailSerializedAssignment[],
+): CourtAssignment[] {
+  return rows.map(hydrateSerializedAssignmentRow);
 }

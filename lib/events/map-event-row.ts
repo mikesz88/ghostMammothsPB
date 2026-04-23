@@ -1,7 +1,6 @@
 import type { Event } from "@/lib/types";
 
-/** Map a Supabase `events` row to domain `Event` (same shape as former client `page.tsx`). */
-export function mapEventRowToEvent(data: {
+type EventRowInput = {
   id: string;
   name: string;
   location: string;
@@ -14,21 +13,34 @@ export function mapEventRowToEvent(data: {
   status: string;
   created_at: string;
   updated_at?: string | null;
-}): Event {
+};
+
+function eventDateFromRow(data: Pick<EventRowInput, "date" | "time">): Date {
+  return data.date && data.time
+    ? new Date(`${data.date}T${data.time}`)
+    : new Date(data.date);
+}
+
+function courtCountFromRow(
+  data: Pick<EventRowInput, "court_count" | "num_courts">,
+): number {
+  return (
+    parseInt(String(data.court_count), 10) ||
+    parseInt(String(data.num_courts), 10) ||
+    0
+  );
+}
+
+/** Map a Supabase `events` row to domain `Event` (same shape as former client `page.tsx`). */
+export function mapEventRowToEvent(data: EventRowInput): Event {
   return {
     id: data.id,
     name: data.name,
     location: data.location,
-    date:
-      data.date && data.time
-        ? new Date(`${data.date}T${data.time}`)
-        : new Date(data.date),
+    date: eventDateFromRow(data),
     time: data.time ?? undefined,
     numCourts: data.num_courts ?? undefined,
-    courtCount:
-      parseInt(String(data.court_count), 10) ||
-      parseInt(String(data.num_courts), 10) ||
-      0,
+    courtCount: courtCountFromRow(data),
     teamSize: (data.team_size || 2) as Event["teamSize"],
     rotationType: data.rotation_type as Event["rotationType"],
     status: data.status as Event["status"],

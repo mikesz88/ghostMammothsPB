@@ -1,4 +1,6 @@
-import type { CourtAssignment, SkillLevel } from "@/lib/types";
+import { mapPlayer } from "@/lib/events/map-court-assignments-shared";
+
+import type { CourtAssignment } from "@/lib/types";
 import type { Database } from "@/supabase/supa-schema";
 
 type CourtAssignmentRow =
@@ -80,57 +82,64 @@ function parseStringArrayField(raw: unknown): string[] {
   }
 }
 
-function mapPlayer(
-  row: {
-    id: string;
-    name: string;
-    email: string;
-    skill_level: string;
-  } | null,
-): CourtAssignment["player1"] {
-  if (!row) return undefined;
+function adminCourtPlayerIdFields(row: AdminCourtAssignmentWithPlayers) {
   return {
-    id: row.id,
-    name: row.name,
-    email: row.email,
-    skillLevel: row.skill_level as SkillLevel,
-    isAdmin: false,
-    createdAt: new Date(),
+    player1Id: row.player1_id || undefined,
+    player2Id: row.player2_id || undefined,
+    player3Id: row.player3_id || undefined,
+    player4Id: row.player4_id || undefined,
+    player5Id: row.player5_id || undefined,
+    player6Id: row.player6_id || undefined,
+    player7Id: row.player7_id || undefined,
+    player8Id: row.player8_id || undefined,
+  };
+}
+
+const ADMIN_PLAYER_SLOTS = [
+  "player1",
+  "player2",
+  "player3",
+  "player4",
+  "player5",
+  "player6",
+  "player7",
+  "player8",
+] as const;
+
+type AdminPlayerSlot = (typeof ADMIN_PLAYER_SLOTS)[number];
+
+function mapAdminCourtPlayerCells(row: AdminCourtAssignmentWithPlayers) {
+  return Object.fromEntries(
+    ADMIN_PLAYER_SLOTS.map((key) => {
+      const cell = row[key as AdminPlayerSlot];
+      return [key, cell ? mapPlayer(cell) : undefined];
+    }),
+  ) as Pick<CourtAssignment, AdminPlayerSlot>;
+}
+
+function buildAdminAssignmentScalars(
+  assignment: AdminCourtAssignmentWithPlayers,
+) {
+  const names = parseStringArrayField(assignment.player_names);
+  const qIds = parseStringArrayField(assignment.queue_entry_ids);
+  return {
+    id: assignment.id,
+    eventId: assignment.event_id || "",
+    courtNumber: assignment.court_number,
+    ...adminCourtPlayerIdFields(assignment),
+    player_names: names,
+    queueEntryIds: qIds,
+    startedAt: new Date(assignment.started_at || ""),
+    endedAt: assignment.ended_at ? new Date(assignment.ended_at) : undefined,
   };
 }
 
 function mapOneAdminCourtAssignment(
   assignment: AdminCourtAssignmentWithPlayers,
 ): CourtAssignment {
-  const playerNamesArray = parseStringArrayField(assignment.player_names);
-  const queueEntryIdsArray = parseStringArrayField(assignment.queue_entry_ids);
-
   return {
-    id: assignment.id,
-    eventId: assignment.event_id || "",
-    courtNumber: assignment.court_number,
-    player1Id: assignment.player1_id || undefined,
-    player2Id: assignment.player2_id || undefined,
-    player3Id: assignment.player3_id || undefined,
-    player4Id: assignment.player4_id || undefined,
-    player5Id: assignment.player5_id || undefined,
-    player6Id: assignment.player6_id || undefined,
-    player7Id: assignment.player7_id || undefined,
-    player8Id: assignment.player8_id || undefined,
-    player_names: playerNamesArray,
-    queueEntryIds: queueEntryIdsArray,
-    startedAt: new Date(assignment.started_at || ""),
-    endedAt: assignment.ended_at
-      ? new Date(assignment.ended_at)
-      : undefined,
-    player1: mapPlayer(assignment.player1),
-    player2: mapPlayer(assignment.player2),
-    player3: mapPlayer(assignment.player3),
-    player4: mapPlayer(assignment.player4),
-    player5: mapPlayer(assignment.player5),
-    player6: mapPlayer(assignment.player6),
-    player7: mapPlayer(assignment.player7),
-    player8: mapPlayer(assignment.player8),
+    ...buildAdminAssignmentScalars(assignment),
+    ...mapAdminCourtPlayerCells(assignment),
   };
 }
 
