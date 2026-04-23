@@ -10,7 +10,7 @@ todos:
     status: completed
   - id: phase-2
     content: "Phase 2: Member event detail app/events/[id] — server page, client islands, no Supabase in page.tsx"
-    status: pending
+    status: completed
   - id: phase-3
     content: "Phase 3: Admin event console + test-controls — server shell, isolated controls, no broad queue.ts split"
     status: pending
@@ -159,6 +159,10 @@ Freeze bad patterns before route-by-route work begins.
 
 ## Phase 2 — Member Event Detail Route
 
+### Status
+
+**Completed (April 2026).** Server composition in `app/events/[id]/page.tsx`, client island under `components/events/`, loaders in `lib/events/`. Walkthrough: [`docs/engineering/phase-2-event-detail-walkthrough.md`](../../docs/engineering/phase-2-event-detail-walkthrough.md). Membership reads for this route use `canUserJoinEvent` / `getUserMembership` with an optional server Supabase client; `getUserMembership` lives under `lib/membership/`.
+
 ### Target
 
 * `app/events/[id]/page.tsx`
@@ -195,6 +199,10 @@ Convert the public/member event detail page to server-first composition.
 * client islands are isolated and named clearly
 * page file becomes a composition layer, not a mega component
 * event flow smoke test passes
+
+### Implementation guide (repo)
+
+* Line-by-line walkthrough and suggested slices: [`docs/engineering/phase-2-event-detail-walkthrough.md`](../../docs/engineering/phase-2-event-detail-walkthrough.md)
 
 ---
 

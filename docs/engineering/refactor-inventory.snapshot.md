@@ -1,6 +1,6 @@
 # Refactor inventory — automated snapshot
 
-Generated: `2026-04-22T23:31:56.309Z` (run `npm run inventory:phase0` to refresh).
+Generated: `2026-04-23T01:05:52.884Z` (run `npm run inventory:phase0` to refresh).
 
 Rows include files with **≥200 lines** or **route `page.tsx`/`page.ts` with `"use client"`** (any size).
 
@@ -20,7 +20,6 @@ Rows include files with **≥200 lines** or **route `page.tsx`/`page.ts` with `"
 | Path | Lines | Bucket | Auto flags | Primary tag (team) | Priority (team) | Target phase (team) | Notes (team) |
 | --- | ---: | --- | --- | --- | --- | --- | --- |
 | app/actions/queue.ts | 1243 | action | very large (300+) |  |  |  |  |
-| app/events/[id]/page.tsx | 877 | route-page | very large (300+); "use client" page |  |  |  |  |
 | app/admin/events/[id]/page.tsx | 765 | route-page | very large (300+); "use client" page |  |  |  |  |
 | app/admin/page.tsx | 589 | route-page | very large (300+); "use client" page |  |  |  |  |
 | app/actions/notifications.ts | 503 | action | very large (300+) |  |  |  |  |
@@ -38,7 +37,6 @@ Rows include files with **≥200 lines** or **route `page.tsx`/`page.ts` with `"
 | app/membership/checkout/page.tsx | 352 | route-page | very large (300+); "use client" page |  |  |  |  |
 | lib/queue-manager.ts | 348 | lib | very large (300+) |  |  |  |  |
 | components/queue-list.tsx | 344 | component | very large (300+) |  |  |  |  |
-| lib/membership-helpers.ts | 344 | lib | very large (300+) |  |  |  |  |
 | app/settings/notifications/page.tsx | 319 | route-page | very large (300+); "use client" page |  |  |  |  |
 | app/signup/page.tsx | 309 | route-page | very large (300+); "use client" page |  |  |  |  |
 | components/join-queue-dialog.tsx | 263 | component | large (200+); persistence-like patterns in component |  |  |  |  |
@@ -50,8 +48,10 @@ Rows include files with **≥200 lines** or **route `page.tsx`/`page.ts` with `"
 | app/about/page.tsx | 210 | route-page | large (200+); "use client" page |  |  |  |  |
 | app/reset-password/page.tsx | 209 | route-page | large (200+); "use client" page |  |  |  |  |
 | components/court-status.tsx | 205 | component | large (200+) |  |  |  |  |
+| components/events/event-detail-client.tsx | 205 | component | large (200+) |  |  |  |  |
 | app/page.tsx | 204 | route-page | large (200+); "use client" page |  |  |  |  |
 | components/ui/dropdown-menu.tsx | 202 | component | large (200+); persistence-like patterns in component |  |  |  |  |
+| lib/events/event-detail-server.ts | 200 | lib | large (200+) |  |  |  |  |
 | app/events/page.tsx | 182 | route-page | "use client" page |  |  |  |  |
 | app/forgot-password/page.tsx | 110 | route-page | "use client" page |  |  |  |  |
 | app/search/page.tsx | 57 | route-page | "use client" page |  |  |  |  |

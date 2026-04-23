@@ -1,6 +1,6 @@
 # Phase 1 — RSC conventions & component targets
 
-**Status:** Active. Phase 0 (inventory) is complete; route-by-route migration starts in **Phase 2** (`app/events/[id]`) and later phases. Phase 1 **does not** require rewriting existing pages—only **conventions** and **where new code goes**.
+**Status:** Active. Phase 0 (inventory) is complete; **Phase 2** (`app/events/[id]`) member event detail is **done**; route-by-route migration continues with **Phase 3** (admin event console) and later phases. Phase 1 **does not** require rewriting existing pages—only **conventions** and **where new code goes**.
 
 ## Route pattern (new or touched `app/**/page.tsx`)
 

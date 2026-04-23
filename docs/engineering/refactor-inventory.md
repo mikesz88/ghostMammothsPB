@@ -1,6 +1,6 @@
 # Phase 0 — refactor inventory (hybrid)
 
-**Phase 1 is active** — for **new or touched** routes and client UI, follow [`phase-1-rsc-conventions.md`](phase-1-rsc-conventions.md) and domain folders under `components/`.
+**Phase 1 is active** — for **new or touched** routes and client UI, follow [`phase-1-rsc-conventions.md`](phase-1-rsc-conventions.md) and domain folders under `components/`. **Phase 2** (member `app/events/[id]`) is **complete**; see [`phase-2-event-detail-walkthrough.md`](phase-2-event-detail-walkthrough.md).
 
 This doc is **team-owned**. The repo also contains a **machine-generated snapshot** you refresh when the map drifts.
 
@@ -40,21 +40,23 @@ Use the refined plan phase numbers (e.g. **2** = member event detail, **3** = ad
 
 ## Team backlog
 
-Seeded from [`refactor-inventory.snapshot.md`](refactor-inventory.snapshot.md) (2026-04-22). Re-run `npm run inventory:phase0` when files move a lot, then reconcile line counts here.
+Seeded from [`refactor-inventory.snapshot.md`](refactor-inventory.snapshot.md) (refresh with `npm run inventory:phase0`). Snapshot generated 2026-04-23; reconcile line counts here when the map drifts.
 
-**Priority gist:** **P0** = Phase 2–3 routes + admin test-controls + queue spine (`queue.ts` / `queue-manager`) for explicit Phase 7–8 work. **P1** = notifications, event queue UI, admin dashboard/users/email, membership/settings/auth, Stripe/email integration. **P2** = marketing/public shell, shared header/dialogs, small client pages.
+**Priority gist:** **P0** = Phase **3** admin event route + test-controls + queue spine (`queue.ts` / `queue-manager`) for explicit Phase 7–8 work. (**Phase 2** member event detail is done.) **P1** = notifications, event queue UI, admin dashboard/users/email, membership/settings/auth, Stripe/email integration. **P2** = marketing/public shell, shared header/dialogs, small client pages.
 
 | Path | Lines | Bucket | Auto flags | Primary tag | Priority | Target phase | Notes |
 | --- | ---: | --- | --- | --- | --- | --- | --- |
-| app/events/[id]/page.tsx | 877 | route-page | very large; `"use client"` page | server-page migration | P0 | 2 | Member event detail — server data + queue Realtime leaf per plan. |
+| app/events/[id]/page.tsx | ~26 | route-page | server component | server-page migration | — | **Done** | Phase 2 complete: server `loadEventDetailPageData`; client island `components/events/event-detail-client.tsx` (~205 lines). |
 | app/admin/events/[id]/page.tsx | 765 | route-page | very large; `"use client"` page | server-page migration | P0 | 3 | Admin event console; keep test-controls isolated. |
 | app/admin/events/[id]/test-controls.tsx | 418 | app-local | very large | client-island extraction | P0 | 3 | Coordinates with admin event `[id]`; no broad `queue.ts` split same PR. |
 | app/actions/queue.ts | 1243 | action | very large | action split | P0 | 7 | Hotspot — thin actions → services; coordinate per two-dev agreement. |
 | lib/queue-manager.ts | 348 | lib | very large | service split | P0 | 7–8 | Algorithm/domain; align with Phase 7–8, not casual edits. |
 | app/actions/notifications.ts | 503 | action | very large | action split | P1 | 7 | Email/send paths; pair with `lib/email/resend` in Phase 8. |
-| components/queue-list.tsx | 344 | component | very large | client-island extraction | P1 | 2–4 | Event queue UI; extract with `events/[id]` / shared event components. |
-| components/join-queue-dialog.tsx | 263 | component | large; persistence-like patterns | client-island extraction | P1 | 2–4 | Queue UX; keep actions on server boundary. |
-| components/court-status.tsx | 205 | component | large | client-island extraction | P1 | 2 | Court / live state; likely stays client-heavy but smaller leaves. |
+| components/events/event-detail-client.tsx | ~205 | component | large | client-island extraction | P1 | 4 | Phase 2 island; split further only if touched (handlers/hooks already extracted). |
+| lib/events/event-detail-server.ts | ~200 | lib | large | service split | P1 | 4 | Phase 2 server loader; trim or share mappers when admin/event loaders consolidate. |
+| components/queue-list.tsx | 344 | component | very large | client-island extraction | P1 | 4 | Event queue UI; shared event components. |
+| components/join-queue-dialog.tsx | 263 | component | large; persistence-like patterns | client-island extraction | P1 | 4 | Queue UX; keep actions on server boundary. |
+| components/court-status.tsx | 205 | component | large | client-island extraction | P1 | 4 | Court / live state; likely stays client-heavy but smaller leaves. |
 | app/admin/page.tsx | 589 | route-page | very large; `"use client"` page | server-page migration | P1 | 5 | Admin dashboard shell. |
 | app/admin/users/page.tsx | 428 | route-page | very large; `"use client"` page | server-page migration | P1 | 5 | Admin users list. |
 | app/admin/users/[id]/page.tsx | 443 | route-page | very large; `"use client"` page | server-page migration | P1 | 5 | Admin user detail. |
@@ -71,7 +73,7 @@ Seeded from [`refactor-inventory.snapshot.md`](refactor-inventory.snapshot.md) (
 | app/signup/page.tsx | 309 | route-page | very large; `"use client"` page | form extraction | P1 | 6 | |
 | app/forgot-password/page.tsx | 110 | route-page | `"use client"` page | form extraction | P2 | 6 | |
 | app/reset-password/page.tsx | 209 | route-page | large; `"use client"` page | form extraction | P2 | 6 | |
-| lib/membership-helpers.ts | 344 | lib | very large | service split | P1 | 6 | Data rules for membership; thin pages. |
+| lib/membership-helpers.ts | ~162 | lib | — | service split | P1 | 6 | Barrel: `canUserJoinEvent`, display helpers, re-exports. Core membership row logic: `lib/membership/get-user-membership.ts` (+ helpers). |
 | lib/auth-context.tsx | 235 | lib | large | service split | P1 | 6 | Client auth provider — scope vs server session pattern. |
 | app/api/webhooks/stripe/route.ts | 364 | api-route | very large | action split | P1 | 8 | Thin route → `lib/stripe` per plan. |
 | lib/email/resend.ts | 360 | lib | very large | service split | P1 | 8 | Templates vs send split. |
