@@ -1,6 +1,6 @@
 # Phase 0 — refactor inventory (hybrid)
 
-**Phase 1 is active** — for **new or touched** routes and client UI, follow [`phase-1-rsc-conventions.md`](phase-1-rsc-conventions.md) and domain folders under `components/`. **Phase 2** (member `app/events/[id]`) is **complete**; see [`phase-2-event-detail-walkthrough.md`](phase-2-event-detail-walkthrough.md). **Phase 3** (admin `app/admin/events/[id]`) is **complete**; see [`phase-3-admin-event-walkthrough.md`](phase-3-admin-event-walkthrough.md). **Phase 4** (shared event/admin extraction for those routes) is **complete**; see [`phase-4-shared-event-admin-extraction.md`](phase-4-shared-event-admin-extraction.md).
+**Phase 1 is active** — for **new or touched** routes and client UI, follow [`phase-1-rsc-conventions.md`](phase-1-rsc-conventions.md) and domain folders under `components/`. **Phase 2** (member `app/events/[id]`) is **complete**; see [`phase-2-event-detail-walkthrough.md`](phase-2-event-detail-walkthrough.md). **Phase 3** (admin `app/admin/events/[id]`) is **complete**; see [`phase-3-admin-event-walkthrough.md`](phase-3-admin-event-walkthrough.md). **Phase 4** (shared event/admin extraction for those routes) is **complete**; see [`phase-4-shared-event-admin-extraction.md`](phase-4-shared-event-admin-extraction.md). **Phase 5** (admin dashboard, users list, user detail, email-stats) is **complete**; see [`phase-5-admin-routes-walkthrough.md`](phase-5-admin-routes-walkthrough.md).
 
 This doc is **team-owned**. The repo also contains a **machine-generated snapshot** you refresh when the map drifts.
 
@@ -57,10 +57,10 @@ Seeded from [`refactor-inventory.snapshot.md`](refactor-inventory.snapshot.md) (
 | components/queue-list.tsx | 344 | component | very large | client-island extraction | P1 | 4 | Event queue UI; shared event components. |
 | components/join-queue-dialog.tsx | 263 | component | large; persistence-like patterns | client-island extraction | P1 | 4 | Queue UX; keep actions on server boundary. |
 | components/court-status.tsx | 205 | component | large | client-island extraction | P1 | 4 | Court / live state; likely stays client-heavy but smaller leaves. |
-| app/admin/page.tsx | 589 | route-page | very large; `"use client"` page | server-page migration | P1 | 5 | Admin dashboard shell. |
-| app/admin/users/page.tsx | 428 | route-page | very large; `"use client"` page | server-page migration | P1 | 5 | Admin users list. |
-| app/admin/users/[id]/page.tsx | 443 | route-page | very large; `"use client"` page | server-page migration | P1 | 5 | Admin user detail. |
-| app/admin/email-stats/page.tsx | 452 | route-page | very large; `"use client"` page | server-page migration | P1 | 5 | Email stats / reporting UI. |
+| app/admin/page.tsx | ~7 | route-page | server component | server-page migration | — | **Done** | Phase 5: `loadAdminDashboardPageData` → `AdminDashboardPageClient`. |
+| app/admin/users/page.tsx | ~7 | route-page | server component | server-page migration | — | **Done** | Phase 5: `loadAdminUsersPageData` → `AdminUsersPageClient`. |
+| app/admin/users/[id]/page.tsx | ~17 | route-page | server component | server-page migration | — | **Done** | Phase 5: `loadAdminUserDetailPageData`, `notFound()` → `AdminUserDetailPageClient`. |
+| app/admin/email-stats/page.tsx | ~24 | route-page | server component | server-page migration | — | **Done** | Phase 5: `parseEmailStatsTimeRange`, `loadAdminEmailStatsPageData` → `EmailStatsPageClient`; `lib/admin/*` stats helpers. |
 | app/actions/test-helpers.ts | 405 | action | very large | action split | P1 | 3 | Test-only actions; keep behind admin/test flows; can trail Phase 3. |
 | app/membership/page.tsx | 478 | route-page | very large; `"use client"` page | server-page migration | P1 | 6 | Membership landing. |
 | app/membership/checkout/page.tsx | 352 | route-page | very large; `"use client"` page | server-page migration | P1 | 6 | Stripe checkout surface. |

@@ -19,7 +19,7 @@ todos:
     status: completed
   - id: phase-5
     content: "Phase 5: Admin dashboard + users + email-stats — server reads, small client widgets"
-    status: pending
+    status: completed
   - id: phase-6
     content: "Phase 6: Settings, membership, auth — server-first, form client children"
     status: pending
@@ -282,6 +282,8 @@ Stabilize shared patterns before expanding to more routes.
 ---
 
 ## Phase 5 — Admin Dashboard + User/Roster Routes
+
+**Status: complete (April 2026).** All four targets use server-first `page.tsx` files, `loadAdmin*PageData` helpers under `lib/admin/`, and client islands under `components/admin/`. Supporting notes: [`docs/engineering/phase-5-admin-routes-walkthrough.md`](../../docs/engineering/phase-5-admin-routes-walkthrough.md).
 
 ### Targets
 

@@ -90,7 +90,6 @@ const eslintConfig = defineConfig([
       "max-lines": [
         "warn",
         {
-          // max: 250,
           max: 200,
           skipBlankLines: true,
           skipComments: true,
@@ -231,15 +230,16 @@ const eslintConfig = defineConfig([
 
   /*
 
-* Prisma seed script: allow console and a longer file for setup/bootstrap work.
+* Supabase schema script: allow console and a longer file for setup/bootstrap work.
 * Keep this override narrow so it does not relax standards elsewhere.
   */
   {
-    files: ["prisma/seed.ts"],
+    files: ["supabase/supa-schema.ts"],
     rules: {
       "no-console": "off",
       "max-lines": "off",
       complexity: "off",
+      "max-lines-per-function": "off",
     },
   },
 

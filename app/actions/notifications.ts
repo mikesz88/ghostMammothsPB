@@ -3,7 +3,7 @@
 import { formatInTimeZone, fromZonedTime } from "date-fns-tz";
 import { inspect } from "node:util";
 
-import { isActionableDeliveryFailure } from "@/lib/email/email-delivery-log";
+import { fetchEmailStats } from "@/lib/admin/fetch-email-stats";
 import {
   sendQueueJoinEmail,
   sendPositionUpdateEmail,
@@ -14,6 +14,11 @@ import {
 import { runWithConcurrency } from "@/lib/run-with-concurrency";
 import { createClient } from "@/lib/supabase/server";
 
+import type {
+  EmailStatsTimeRange,
+  GetEmailStatsResult,
+} from "@/lib/admin/email-stats-types";
+
 const CENTRAL_TZ = "America/Chicago";
 const QUEUE_EMAIL_CONCURRENCY = 3;
 
@@ -23,32 +28,7 @@ export type NotificationType =
   | "up-next"
   | "court-assignment";
 
-export type EmailLogRow = {
-  id: string;
-  user_id: string | null;
-  event_id: string | null;
-  notification_type: string;
-  sent_at: string;
-  success: boolean;
-  error_message: string | null;
-  resend_message_id: string | null;
-  user: { id: string; name: string; email: string } | null;
-  event: { id: string; name: string } | null;
-};
-
-export type GetEmailStatsResult =
-  | { error: string }
-  | {
-      total: number;
-      successful: number;
-      /** Rows where Resend/transport failed after retries — excludes missing email / invalid data. */
-      failed: number;
-      /** Failed logs that are validation/data issues, not delivery attempts. */
-      failedOther: number;
-      byType: Record<string, number>;
-      logs: EmailLogRow[];
-      failedDeliveryLogs: EmailLogRow[];
-    };
+export type { EmailLogRow, GetEmailStatsResult } from "@/lib/admin/email-stats-types";
 
 /** Serialize Resend / fetch errors without producing `[object Object]` (circular refs, odd SDK shapes). */
 function formatSendError(error: unknown): string {
@@ -101,20 +81,6 @@ function formatSendError(error: unknown): string {
     return prefix ? `${prefix} ${detail}` : detail;
   }
   return String(error);
-}
-
-/** Replace useless legacy DB values from older `String(error)` on plain objects. */
-function normalizeStoredErrorMessage(stored: string | null): string | null {
-  if (stored == null) return null;
-  const t = stored.trim();
-  if (
-    t === "[object Object]" ||
-    t === "Error: [object Object]" ||
-    t.endsWith("[object Object]")
-  ) {
-    return "Legacy log: error details were not saved. New sends record readable errors; match this row to Resend by time and recipient, or use Resend.";
-  }
-  return stored;
 }
 
 async function requireAdmin(
@@ -269,105 +235,12 @@ function calculateEstimatedWait(
 }
 
 export async function getEmailStats(
-  timeRange: "today" | "week" | "month" | "all" = "week",
+  timeRange: EmailStatsTimeRange = "week",
 ): Promise<GetEmailStatsResult> {
   const supabase = await createClient();
-
   const { error: authError } = await requireAdmin(supabase);
   if (authError) return { error: authError };
-
-  let dateFilter = new Date();
-  switch (timeRange) {
-    case "today":
-      dateFilter.setHours(0, 0, 0, 0);
-      break;
-    case "week":
-      dateFilter.setDate(dateFilter.getDate() - 7);
-      break;
-    case "month":
-      dateFilter.setMonth(dateFilter.getMonth() - 1);
-      break;
-    case "all":
-      dateFilter = new Date(0); // Beginning of time
-      break;
-  }
-
-  const { data: logs, error } = await supabase
-    .from("email_logs")
-    .select(
-      `
-      id,
-      user_id,
-      event_id,
-      notification_type,
-      sent_at,
-      success,
-      error_message,
-      resend_message_id,
-      user:users!email_logs_user_id_fkey ( id, name, email ),
-      event:events!email_logs_event_id_fkey ( id, name )
-    `,
-    )
-    .gte("sent_at", dateFilter.toISOString())
-    .order("sent_at", { ascending: false });
-
-  if (error) {
-    return { error: error.message };
-  }
-
-  const normalizedLogs: EmailLogRow[] = (logs || []).map((row) => {
-    const r = row as {
-      id: string;
-      user_id: string | null;
-      event_id: string | null;
-      notification_type: string;
-      sent_at: string;
-      success: boolean;
-      error_message: string | null;
-      resend_message_id?: string | null;
-      user:
-        | { id: string; name: string; email: string }
-        | { id: string; name: string; email: string }[]
-        | null;
-      event: { id: string; name: string } | { id: string; name: string }[] | null;
-    };
-    const u = r.user;
-    const e = r.event;
-    return {
-      id: r.id,
-      user_id: r.user_id,
-      event_id: r.event_id,
-      notification_type: r.notification_type,
-      sent_at: r.sent_at,
-      success: r.success,
-      error_message: normalizeStoredErrorMessage(r.error_message),
-      resend_message_id: r.resend_message_id ?? null,
-      user: Array.isArray(u) ? u[0] ?? null : u ?? null,
-      event: Array.isArray(e) ? e[0] ?? null : e ?? null,
-    };
-  });
-
-  const total = normalizedLogs.length;
-  const successful = normalizedLogs.filter((log) => log.success).length;
-  const failedDeliveryLogs = normalizedLogs.filter(isActionableDeliveryFailure);
-  const failed = failedDeliveryLogs.length;
-  const failedOther = normalizedLogs.filter((log) => !log.success).length - failed;
-
-  const byType =
-    normalizedLogs.reduce((acc: Record<string, number>, log) => {
-      acc[log.notification_type] = (acc[log.notification_type] || 0) + 1;
-      return acc;
-    }, {}) || {};
-
-  return {
-    total,
-    successful,
-    failed,
-    failedOther,
-    byType,
-    logs: normalizedLogs,
-    failedDeliveryLogs,
-  };
+  return fetchEmailStats(supabase, timeRange);
 }
 
 async function findActiveCourtNumber(

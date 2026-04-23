@@ -29,4 +29,6 @@ Phased plan: [`.cursor/plans/rules.mdc_phased_refactor_c02ab9c1.plan.md`](../../
 
 ## Next phase pointer
 
-**Phase 5** — admin dashboard, users, email-stats: server-first reads per plan.
+**Phase 5** (admin dashboard, users list, user detail, email-stats) is **complete** — see [`phase-5-admin-routes-walkthrough.md`](phase-5-admin-routes-walkthrough.md).
+
+**Phase 6** — settings, membership, auth: server-first routes per plan.
