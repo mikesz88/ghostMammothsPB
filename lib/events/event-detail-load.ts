@@ -2,6 +2,7 @@ import {
   serializeEvent,
   serializeEventDetailAssignment,
 } from "@/lib/events/event-detail-serialize";
+import { fetchEventRowById } from "@/lib/events/fetch-event-row-by-id";
 import {
   COURT_ASSIGNMENTS_NESTED_SELECT,
   mapCourtAssignmentRows,
@@ -75,12 +76,8 @@ async function loadEventDetailCore(
   supabase: Awaited<ReturnType<typeof createClient>>,
   eventId: string,
 ) {
-  const { data: rawEvent, error: eventError } = await supabase
-    .from("events")
-    .select("*")
-    .eq("id", eventId)
-    .single();
-  if (eventError || !rawEvent) return null;
+  const rawEvent = await fetchEventRowById(supabase, eventId);
+  if (!rawEvent) return null;
   const event = mapEventRowToEvent(
     rawEvent as Parameters<typeof mapEventRowToEvent>[0],
   );

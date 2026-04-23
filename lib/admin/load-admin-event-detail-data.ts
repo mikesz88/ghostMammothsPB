@@ -16,11 +16,13 @@ import {
   mapAdminEventRowToEvent,
 } from "@/lib/admin/map-admin-event-row";
 import { fetchAdminQueueEntriesWithClient } from "@/lib/admin-queue";
+import { fetchEventRowById } from "@/lib/events/fetch-event-row-by-id";
 
+import type { Database } from "@/supabase/supa-schema";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 async function adminAssignmentsForEvent(
-  supabase: SupabaseClient,
+  supabase: SupabaseClient<Database>,
   eventId: string,
 ) {
   const { data: rawAssignments, error: assignmentsError } = await supabase
@@ -39,7 +41,7 @@ async function adminAssignmentsForEvent(
 }
 
 export async function fetchAdminEventDetailPayload(
-  supabase: SupabaseClient,
+  supabase: SupabaseClient<Database>,
   eventId: string,
 ): Promise<{
   initialEvent: AdminSerializedEvent;
@@ -47,12 +49,8 @@ export async function fetchAdminEventDetailPayload(
   initialQueue: AdminSerializedQueueEntry[];
   isTestEvent: boolean;
 } | null> {
-  const { data: rawEvent, error: eventError } = await supabase
-    .from("events")
-    .select("*")
-    .eq("id", eventId)
-    .single();
-  if (eventError || !rawEvent) return null;
+  const rawEvent = await fetchEventRowById(supabase, eventId);
+  if (!rawEvent) return null;
   const event = mapAdminEventRowToEvent(rawEvent);
   const assignments = await adminAssignmentsForEvent(supabase, eventId);
   const initialQueue = await fetchAdminQueueEntriesWithClient(supabase, eventId);
