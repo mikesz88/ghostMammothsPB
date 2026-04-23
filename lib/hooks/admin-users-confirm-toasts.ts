@@ -18,14 +18,17 @@ async function toggleAdminThenRefresh(
   refresh();
 }
 
-async function deleteUserThenRefresh(userId: string, refresh: () => void) {
+async function deleteUserThenComplete(
+  userId: string,
+  onSuccess: () => void,
+) {
   const { error } = await deleteUser(userId);
   if (error) {
     toast.error("Failed to delete user", { description: error });
     return;
   }
   toast.success("User deleted successfully!");
-  refresh();
+  onSuccess();
 }
 
 export function toastConfirmToggleAdmin(
@@ -55,7 +58,7 @@ export function toastConfirmToggleAdmin(
 export function toastConfirmDeleteUser(
   userId: string,
   userName: string,
-  refreshFromServer: () => void,
+  onSuccessAfterDelete: () => void,
 ) {
   toast(`Delete ${userName}?`, {
     description:
@@ -63,7 +66,7 @@ export function toastConfirmDeleteUser(
     action: {
       label: "Delete",
       onClick: () => {
-        void deleteUserThenRefresh(userId, refreshFromServer);
+        void deleteUserThenComplete(userId, onSuccessAfterDelete);
       },
     },
     cancel: { label: "Cancel", onClick: () => {} },

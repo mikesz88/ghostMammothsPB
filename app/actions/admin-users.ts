@@ -1,5 +1,6 @@
 "use server";
 
+import { fetchAdminUserById } from "@/lib/admin/fetch-admin-user-by-id";
 import { fetchAdminUsersList } from "@/lib/admin/fetch-admin-users-list";
 import { createClient } from "@/lib/supabase/server";
 
@@ -48,21 +49,10 @@ export async function getUserById(userId: string) {
     return { data: null, error: "Unauthorized - Admin access required" };
   }
 
-  const { data, error } = await supabase
-    .from("users")
-    .select(
-      `
-      *,
-      queue_entries(count),
-      event_registrations:event_registrations(count)
-    `
-    )
-    .eq("id", userId)
-    .single();
+  const { data, error } = await fetchAdminUserById(supabase, userId);
 
   if (error) {
-    console.error("Error fetching user:", error);
-    return { data: null, error: error.message };
+    return { data: null, error };
   }
 
   return { data, error: null };
