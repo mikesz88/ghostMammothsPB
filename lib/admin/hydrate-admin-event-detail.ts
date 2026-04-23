@@ -1,3 +1,10 @@
+import {
+  serializeCourtAssignmentDetailScalars,
+  serializeEventDetailSharedCourtPlayers,
+  serializeEventDetailSharedEventCore,
+  serializeEventDetailSharedUser,
+} from "@/lib/events/event-detail-serialize-shared";
+
 import type {
   EventDetailSharedSerializedCourtPlayers,
   EventDetailSharedSerializedEventCore,
@@ -85,65 +92,17 @@ export function hydrateAdminSerializedQueue(
   }));
 }
 
-function serializeUser(u: User): AdminSerializedUser {
-  return {
-    id: u.id,
-    email: u.email,
-    name: u.name,
-    skillLevel: u.skillLevel,
-    isAdmin: u.isAdmin,
-    createdAt: u.createdAt.toISOString(),
-  };
-}
-
 export function serializeAdminEvent(e: Event): AdminSerializedEvent {
-  return {
-    id: e.id,
-    name: e.name,
-    location: e.location,
-    date: e.date.toISOString(),
-    courtCount: e.courtCount,
-    teamSize: e.teamSize,
-    rotationType: e.rotationType,
-    status: e.status,
-    createdAt: e.createdAt.toISOString(),
-    updatedAt: e.updatedAt?.toISOString(),
-  };
-}
-
-function serializedAdminPlayers(a: CourtAssignment) {
-  return {
-    player1: a.player1 ? serializeUser(a.player1) : undefined,
-    player2: a.player2 ? serializeUser(a.player2) : undefined,
-    player3: a.player3 ? serializeUser(a.player3) : undefined,
-    player4: a.player4 ? serializeUser(a.player4) : undefined,
-    player5: a.player5 ? serializeUser(a.player5) : undefined,
-    player6: a.player6 ? serializeUser(a.player6) : undefined,
-    player7: a.player7 ? serializeUser(a.player7) : undefined,
-    player8: a.player8 ? serializeUser(a.player8) : undefined,
-  };
+  return serializeEventDetailSharedEventCore(e);
 }
 
 function serializeAdminCourtAssignmentRow(
   a: CourtAssignment,
 ): AdminSerializedCourtAssignment {
   return {
-    id: a.id,
-    eventId: a.eventId,
-    courtNumber: a.courtNumber,
-    player1Id: a.player1Id,
-    player2Id: a.player2Id,
-    player3Id: a.player3Id,
-    player4Id: a.player4Id,
-    player5Id: a.player5Id,
-    player6Id: a.player6Id,
-    player7Id: a.player7Id,
-    player8Id: a.player8Id,
-    player_names: a.player_names,
+    ...serializeCourtAssignmentDetailScalars(a),
     queueEntryIds: a.queueEntryIds,
-    startedAt: a.startedAt.toISOString(),
-    endedAt: a.endedAt?.toISOString(),
-    ...serializedAdminPlayers(a),
+    ...serializeEventDetailSharedCourtPlayers(a),
   };
 }
 
@@ -166,6 +125,6 @@ export function serializeAdminQueueEntries(
     position: e.position,
     status: e.status,
     joinedAt: e.joinedAt.toISOString(),
-    user: e.user ? serializeUser(e.user) : undefined,
+    user: e.user ? serializeEventDetailSharedUser(e.user) : undefined,
   }));
 }
