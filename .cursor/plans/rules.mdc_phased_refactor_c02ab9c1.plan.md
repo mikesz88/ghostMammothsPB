@@ -4,25 +4,25 @@ overview: "Refined phased migration: baseline inventory (Phase 0), RSC guardrail
 todos:
   - id: phase-0
     content: "Phase 0: Baseline inventory, tag files by refactor type, warn-level ESLint + architecture audit, no new page-level use client"
-    status: pending
+    status: completed
   - id: phase-1
     content: "Phase 1: Conventions + RSC guardrails, import order, target folders (events/admin/settings/auth/membership)"
-    status: pending
+    status: completed
   - id: phase-2
     content: "Phase 2: Member event detail app/events/[id] — server page, client islands, no Supabase in page.tsx"
-    status: pending
+    status: completed
   - id: phase-3
     content: "Phase 3: Admin event console + test-controls — server shell, isolated controls, no broad queue.ts split"
-    status: pending
+    status: completed
   - id: phase-4
     content: "Phase 4: Shared event/admin extraction — loaders, mappers, domain UI, stable types"
-    status: pending
+    status: completed
   - id: phase-5
     content: "Phase 5: Admin dashboard + users + email-stats — server reads, small client widgets"
-    status: pending
+    status: completed
   - id: phase-6
     content: "Phase 6: Settings, membership, auth — server-first, form client children"
-    status: pending
+    status: completed
   - id: phase-7
     content: "Phase 7: Action layer split — queue, notifications; re-exports; behavior unchanged"
     status: pending
@@ -149,9 +149,19 @@ Freeze bad patterns before route-by-route work begins.
 * lint rules and audit script are active
 * no architectural ambiguity for future phases
 
+### Implementation (repo)
+
+* Conventions doc: [`docs/engineering/phase-1-rsc-conventions.md`](../../docs/engineering/phase-1-rsc-conventions.md)
+* Domain folders (scaffold): `components/events/`, `components/admin/events/`, `components/settings/`, `components/auth/`, `components/membership/`
+* `.cursor/rules.mdc` — Phase 1 domain targets under **Next.js Structure → Routes**
+
 ---
 
 ## Phase 2 — Member Event Detail Route
+
+### Status
+
+**Completed (April 2026).** Server composition in `app/events/[id]/page.tsx`, client island under `components/events/`, loaders in `lib/events/`. Walkthrough: [`docs/engineering/phase-2-event-detail-walkthrough.md`](../../docs/engineering/phase-2-event-detail-walkthrough.md). Membership reads for this route use `canUserJoinEvent` / `getUserMembership` with an optional server Supabase client; `getUserMembership` lives under `lib/membership/`.
 
 ### Target
 
@@ -190,9 +200,15 @@ Convert the public/member event detail page to server-first composition.
 * page file becomes a composition layer, not a mega component
 * event flow smoke test passes
 
+### Implementation guide (repo)
+
+* Line-by-line walkthrough and suggested slices: [`docs/engineering/phase-2-event-detail-walkthrough.md`](../../docs/engineering/phase-2-event-detail-walkthrough.md)
+
 ---
 
 ## Phase 3 — Admin Event Console
+
+**Status: complete (April 2026).** See [`docs/engineering/phase-3-admin-event-walkthrough.md`](../../docs/engineering/phase-3-admin-event-walkthrough.md).
 
 ### Targets
 
@@ -236,6 +252,10 @@ Apply the same server-shell + client-island model to the most complex admin rout
 
 ## Phase 4 — Shared Event/Admin Extraction Pass
 
+### Status
+
+**Completed (April 2026).** Shared loaders, serializers, hydrators, DTOs, and canonical court player slots for member + admin event detail. Inventory: [`docs/engineering/phase-4-shared-event-admin-extraction.md`](../../docs/engineering/phase-4-shared-event-admin-extraction.md).
+
 ### Goal
 
 Stabilize shared patterns before expanding to more routes.
@@ -262,6 +282,8 @@ Stabilize shared patterns before expanding to more routes.
 ---
 
 ## Phase 5 — Admin Dashboard + User/Roster Routes
+
+**Status: complete (April 2026).** All four targets use server-first `page.tsx` files, `loadAdmin*PageData` helpers under `lib/admin/`, and client islands under `components/admin/`. Supporting notes: [`docs/engineering/phase-5-admin-routes-walkthrough.md`](../../docs/engineering/phase-5-admin-routes-walkthrough.md).
 
 ### Targets
 
@@ -301,6 +323,10 @@ Convert admin data pages to server-rendered reads with small interactive widgets
 ---
 
 ## Phase 6 — Settings, Membership, and Auth Routes
+
+### Status
+
+**Completed (April 2026).** Settings hub, membership sub-settings, notification prefs, membership marketing/checkout/success (plus cancel), and auth routes (`login`, `signup`, `forgot-password`, `reset-password`) use server-first `page.tsx` files, loaders under `lib/settings/` and `lib/membership/`, client islands under `components/settings/`, `components/membership/`, and `components/auth/`, and focused auth helpers under `lib/auth/` with a thin `lib/auth-context.tsx` provider. Walkthrough: [`docs/engineering/phase-6-settings-membership-auth-walkthrough.md`](../../docs/engineering/phase-6-settings-membership-auth-walkthrough.md).
 
 ### Targets
 
@@ -475,6 +501,10 @@ Architectural phases shrink **max-lines**, **complexity**, and **client sprawl**
 
 * ESLint **exits non-zero on errors**. Fix error-level rules (for example `unused-imports`, `@typescript-eslint/no-unused-vars`) before `npm run lint`, `npm run build`, or `npm run ci` can pass end-to-end.
 * **Warnings** do not fail the run unless you add `--max-warnings 0` (or equivalent). You can “endure” warning noise while fixing errors first.
+
+### After Phase 0 — progressively stronger lint
+
+Phase 0 is intentionally **warning-first** so the map and refactors can proceed without blocking on every `max-lines` / `complexity` finding. **As each phase (or hygiene PR) lands**, the team should **promote selected rules from `warn` to `error`**, add **stricter rules** where the codebase is ready, and optionally adopt **`--max-warnings 0`** on the `lint` script once a baseline burn-down makes that realistic. Do this in **small steps** (one rule family or one folder at a time) so CI stays tractable.
 
 ### What `npm run ci` does today
 

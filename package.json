@@ -19,6 +19,7 @@
     "seed:event": "npx tsx scripts/seed-test-event.ts",
     "pr": "node script/pr-gate.mjs",
     "architecture:audit": "node script/architecture-audit.mjs",
+    "inventory:phase0": "node script/refactor-inventory.mjs",
     "prepare": "node -e \"if(process.env.CI||process.env.VERCEL)process.exit(0);require('child_process').execSync('husky',{stdio:'inherit'})\""
   },
   "dependencies": {
@@ -88,11 +89,14 @@
     "@types/node": "^22",
     "@types/react": "19.2.2",
     "@types/react-dom": "19.2.2",
+    "@typescript-eslint/eslint-plugin": "^8.56.0",
+    "@typescript-eslint/parser": "^8.56.0",
     "baseline-browser-mapping": "^2.9.19",
     "dotenv": "^17.2.3",
     "eslint": "^9",
     "eslint-config-next": "^16.1.6",
     "eslint-import-resolver-typescript": "^4.4.4",
+    "eslint-plugin-boundaries": "^6.0.2",
     "eslint-plugin-import": "^2.32.0",
     "eslint-plugin-jsx-a11y": "^6.10.2",
     "eslint-plugin-unused-imports": "^4.4.1",

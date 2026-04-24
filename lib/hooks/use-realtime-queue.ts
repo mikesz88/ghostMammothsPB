@@ -2,9 +2,11 @@
 
 import { useEffect, useRef, useState } from "react";
 
+import { subscribeRealtimeQueueEntries } from "@/lib/hooks/realtime-queue-channel";
+import { fetchRealtimeQueueRows } from "@/lib/hooks/realtime-queue-fetch";
 import { createClient } from "@/lib/supabase/client";
 
-import type { QueueEntry } from "../types";
+import type { QueueEntry } from "@/lib/types";
 
 export function useRealtimeQueue(eventId: string) {
   const [queue, setQueue] = useState<QueueEntry[]>([]);
@@ -13,54 +15,18 @@ export function useRealtimeQueue(eventId: string) {
 
   useEffect(() => {
     const supabase = createClient();
-
     const fetchQueue = async () => {
-      const { data, error } = await supabase
-        .from("queue_entries")
-        .select(
-          `
-          *,
-          user:users(*)
-        `
-        )
-        .eq("event_id", eventId)
-        .in("status", ["waiting", "pending_solo", "pending_stay"])
-        .order("position");
-
-      if (error) {
-        console.error("Error fetching queue:", error);
-      } else {
-        const queueWithDates = (data || []).map((entry: any) => ({
-          ...entry,
-          eventId: entry.event_id,
-          userId: entry.user_id,
-          groupId: entry.group_id,
-          groupSize: entry.group_size,
-          status: entry.status,
-          joinedAt: new Date(entry.joined_at),
-        }));
-        setQueue(queueWithDates);
-      }
+      const rows = await fetchRealtimeQueueRows(supabase, eventId);
+      setQueue(rows);
       setLoading(false);
     };
-
     fetchRef.current = fetchQueue;
     queueMicrotask(() => fetchQueue());
-
-    const channel = supabase
-      .channel(`queue:${eventId}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "queue_entries",
-          filter: `event_id=eq.${eventId}`,
-        },
-        () => fetchQueue()
-      )
-      .subscribe();
-
+    const channel = subscribeRealtimeQueueEntries(
+      supabase,
+      eventId,
+      fetchQueue,
+    );
     return () => {
       supabase.removeChannel(channel);
     };

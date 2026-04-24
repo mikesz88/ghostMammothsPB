@@ -7,6 +7,7 @@ import type {
   SkillLevel,
 } from "@/lib/types";
 import type { Database } from "@/supabase/supa-schema";
+import type { SupabaseClient } from "@supabase/supabase-js";
 
 type QueueEntryRow = Database["public"]["Tables"]["queue_entries"]["Row"];
 type QueueEntryWithUser = QueueEntryRow & {
@@ -22,10 +23,10 @@ type QueueEntryWithUser = QueueEntryRow & {
 export const adminQueueQueryKey = (eventId: string) =>
   ["admin-queue", eventId] as const;
 
-export async function fetchAdminQueueEntries(
+export async function fetchAdminQueueEntriesWithClient(
+  supabase: SupabaseClient<Database>,
   eventId: string,
 ): Promise<QueueEntry[]> {
-  const supabase = createClient();
   const { data, error } = await supabase
     .from("queue_entries")
     .select(
@@ -85,4 +86,11 @@ export async function fetchAdminQueueEntries(
         : undefined,
     };
   });
+}
+
+export async function fetchAdminQueueEntries(
+  eventId: string,
+): Promise<QueueEntry[]> {
+  const supabase = createClient();
+  return fetchAdminQueueEntriesWithClient(supabase, eventId);
 }

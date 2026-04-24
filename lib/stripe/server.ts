@@ -133,9 +133,10 @@ export async function createCustomerPortalSession(
       throw new Error("Customer has been deleted in Stripe");
     }
 
+    const activeCustomer = customer as Stripe.Customer;
     console.log("Customer verified in Stripe:", {
       id: customer.id,
-      email: (customer as any).email,
+      email: activeCustomer.email,
     });
 
     const session = await stripe.billingPortal.sessions.create({

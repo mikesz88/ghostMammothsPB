@@ -2,7 +2,51 @@ import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
 
 import { stripe } from "@/lib/stripe/server";
+import { asSubscriptionWithBillingPeriods } from "@/lib/stripe/subscription-billing";
 import { createClient } from "@/lib/supabase/server";
+
+import type { Database } from "@/supabase/supa-schema";
+import type { SupabaseClient } from "@supabase/supabase-js";
+
+type DbClient = SupabaseClient<Database>;
+
+/** Fields used by webhooks; Stripe’s generated `Invoice` type may omit some for newer API versions. */
+type StripeInvoiceLike = Stripe.Invoice & {
+  subscription?: string | Stripe.Subscription | null;
+  payment_intent?: string | Stripe.PaymentIntent | null;
+  subscription_details?: {
+    metadata?: Record<string, string | undefined>;
+  } | null;
+};
+
+function invoiceSubscriptionId(invoice: Stripe.Invoice): string | undefined {
+  const sub = (invoice as StripeInvoiceLike).subscription;
+  if (typeof sub === "string") return sub;
+  if (sub && typeof sub === "object" && "id" in sub) return sub.id;
+  return undefined;
+}
+
+function invoicePaymentIntentId(invoice: Stripe.Invoice): string | undefined {
+  const pi = (invoice as StripeInvoiceLike).payment_intent;
+  if (typeof pi === "string") return pi;
+  if (pi && typeof pi === "object" && "id" in pi) return pi.id;
+  return undefined;
+}
+
+/** Stripe invoice metadata location varies by API version; narrow without `any`. */
+function invoiceMetadataUserId(invoice: Stripe.Invoice): string | undefined {
+  const details = (invoice as StripeInvoiceLike).subscription_details;
+  const id = details?.metadata?.user_id;
+  return typeof id === "string" ? id : undefined;
+}
+
+function checkoutSessionSubscriptionId(
+  sub: Stripe.Checkout.Session["subscription"],
+): string | null {
+  if (sub == null) return null;
+  if (typeof sub === "string") return sub;
+  return sub.id;
+}
 
 export async function POST(request: NextRequest) {
   const body = await request.text();
@@ -87,7 +131,7 @@ export async function POST(request: NextRequest) {
 
 async function handleCheckoutCompleted(
   session: Stripe.Checkout.Session,
-  supabase: any
+  supabase: DbClient,
 ) {
   const userId = session.metadata?.user_id;
   const tierId = session.metadata?.tier_id;
@@ -160,7 +204,7 @@ async function handleCheckoutCompleted(
       description: `${tier.display_name} - Initial subscription payment`,
       metadata: {
         checkout_session_id: session.id,
-        subscription_id: session.subscription,
+        subscription_id: checkoutSessionSubscriptionId(session.subscription),
         tier_id: tierId,
         tier_name: tier.name,
       },
@@ -176,11 +220,10 @@ async function handleCheckoutCompleted(
 
 async function handleSubscriptionUpdate(
   subscription: Stripe.Subscription,
-  supabase: any
+  supabase: DbClient,
 ) {
-  const userId = subscription.metadata.user_id;
-  const tierId = subscription.metadata.tier_id;
-  const tierName = subscription.metadata.tier_name;
+  const userId = subscription.metadata?.user_id;
+  const tierId = subscription.metadata?.tier_id;
 
   if (!userId) {
     console.error("No user_id in subscription metadata");
@@ -205,6 +248,8 @@ async function handleSubscriptionUpdate(
   }
 
   // Upsert user membership
+  const sub = asSubscriptionWithBillingPeriods(subscription);
+
   const { error } = await supabase.from("user_memberships").upsert(
     {
       user_id: userId,
@@ -213,12 +258,12 @@ async function handleSubscriptionUpdate(
       stripe_customer_id: subscription.customer as string,
       stripe_subscription_id: subscription.id,
       current_period_start: new Date(
-        (subscription as any).current_period_start * 1000
+        sub.current_period_start * 1000,
       ).toISOString(),
       current_period_end: new Date(
-        (subscription as any).current_period_end * 1000
+        sub.current_period_end * 1000,
       ).toISOString(),
-      cancel_at_period_end: (subscription as any).cancel_at_period_end || false,
+      cancel_at_period_end: subscription.cancel_at_period_end ?? false,
       updated_at: new Date().toISOString(),
     },
     {
@@ -247,9 +292,9 @@ async function handleSubscriptionUpdate(
 
 async function handleSubscriptionDeleted(
   subscription: Stripe.Subscription,
-  supabase: any
+  supabase: DbClient,
 ) {
-  const userId = subscription.metadata.user_id;
+  const userId = subscription.metadata?.user_id;
 
   if (!userId) {
     console.error("No user_id in subscription metadata");
@@ -275,9 +320,12 @@ async function handleSubscriptionDeleted(
   console.log(`Subscription cancelled for user ${userId}`);
 }
 
-async function handlePaymentSucceeded(invoice: Stripe.Invoice, supabase: any) {
-  const subscription = (invoice as any).subscription;
-  const userId = (invoice as any).subscription_details?.metadata?.user_id;
+async function handlePaymentSucceeded(
+  invoice: Stripe.Invoice,
+  supabase: DbClient,
+) {
+  const subscription = invoiceSubscriptionId(invoice);
+  const userId = invoiceMetadataUserId(invoice);
 
   if (!userId) {
     console.error("No user_id in invoice metadata");
@@ -299,7 +347,7 @@ async function handlePaymentSucceeded(invoice: Stripe.Invoice, supabase: any) {
     amount: (invoice.amount_paid || 0) / 100, // Convert from cents
     currency: invoice.currency.toUpperCase(),
     payment_type: "membership",
-    stripe_payment_intent_id: (invoice as any).payment_intent as string,
+    stripe_payment_intent_id: invoicePaymentIntentId(invoice) ?? null,
     status: "succeeded",
     description: `${tierName} payment`,
     metadata: {
@@ -313,8 +361,11 @@ async function handlePaymentSucceeded(invoice: Stripe.Invoice, supabase: any) {
   );
 }
 
-async function handlePaymentFailed(invoice: Stripe.Invoice, supabase: any) {
-  const userId = (invoice as any).subscription_details?.metadata?.user_id;
+async function handlePaymentFailed(
+  invoice: Stripe.Invoice,
+  supabase: DbClient,
+) {
+  const userId = invoiceMetadataUserId(invoice);
 
   if (!userId) {
     console.error("No user_id in invoice metadata");
@@ -355,7 +406,7 @@ async function handlePaymentFailed(invoice: Stripe.Invoice, supabase: any) {
     description: `Failed ${tierName} payment`,
     metadata: {
       invoice_id: invoice.id,
-      subscription_id: (invoice as any).subscription,
+      subscription_id: invoiceSubscriptionId(invoice),
     },
   });
 
