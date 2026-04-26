@@ -7,6 +7,11 @@ import {
   isRotateAllStyleRotation,
   isWinnersStayStyleRotation,
 } from "@/lib/rotation-policy";
+import {
+  getAllParticipantEntryIdsSlotOrder,
+  getSideEntryIdsSlotOrder,
+} from "@/lib/queue/assignment-helpers";
+import { countSlotsForEntries, mapDbEntryToManagerEntry } from "@/lib/queue/mappers";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/service-role";
 
@@ -15,47 +20,8 @@ import {
   sendQueueNotification,
 } from "./notifications";
 
-import type { GroupSize, RotationType, TeamSize } from "@/lib/types";
-import type { Database } from "@/supabase/supa-schema";
-import type { SupabaseClient } from "@supabase/supabase-js";
-
-type QueueEntryRow = Database["public"]["Tables"]["queue_entries"]["Row"];
-type CourtAssignmentInsert =
-  Database["public"]["Tables"]["court_assignments"]["Insert"] & {
-    player_names?: string[]; // JSON field that may not be in schema
-    queue_entry_ids?: string[]; // JSON field that may not be in schema
-  };
-
-// Custom type for the query result with partial user data
-type QueueEntryWithUser = QueueEntryRow & {
-  player_names?: unknown; // JSON field that may not be in schema
-  user: {
-    id: string;
-    name: string;
-    email: string;
-    skill_level: string;
-  } | null;
-};
-
-const ASSIGNMENT_PLAYER_KEYS = [
-  "player1_id",
-  "player2_id",
-  "player3_id",
-  "player4_id",
-  "player5_id",
-  "player6_id",
-  "player7_id",
-  "player8_id",
-] as const;
-
-type GameEntryRow = {
-  id: string;
-  user_id: string;
-  group_size: number | null;
-  position: number;
-};
-
-type DbClient = SupabaseClient<Database>;
+import type { DbClient, CourtAssignmentInsert, GameEntryRow, QueueEntryWithUser } from "@/lib/queue/types";
+import type { RotationType, TeamSize } from "@/lib/types";
 
 /** Drop removed queue entry ids from winners-on-deck rows (avoids ghost UUIDs after leave/admin remove). */
 async function removeQueueEntryIdsFromCourtPendingStayers(
@@ -236,66 +202,6 @@ export async function reconcilePendingSoloForEvent(
     .from("queue_entries")
     .update({ status: "pending_solo" })
     .eq("id", soloEntryId);
-}
-
-function entryIdForGameUser(
-  gameQueueEntryIds: string[],
-  userId: string,
-  entriesById: Map<string, GameEntryRow>,
-): string | undefined {
-  for (const eid of gameQueueEntryIds) {
-    const e = entriesById.get(eid);
-    if (e?.user_id === userId) return eid;
-  }
-  return undefined;
-}
-
-/** Queue entry ids for one side in court slot order (player1 →), unique entries first-seen. */
-function getSideEntryIdsSlotOrder(
-  assignmentRow: Record<string, string | null | undefined>,
-  teamSize: number,
-  gameQueueEntryIds: string[],
-  entriesById: Map<string, GameEntryRow>,
-  side: "team1" | "team2",
-): string[] {
-  const out: string[] = [];
-  const seen = new Set<string>();
-  for (let slotIdx = 0; slotIdx < teamSize * 2; slotIdx++) {
-    const key = ASSIGNMENT_PLAYER_KEYS[slotIdx];
-    const uid = assignmentRow[key];
-    if (!uid) continue;
-    const team: "team1" | "team2" =
-      slotIdx < teamSize ? "team1" : "team2";
-    if (team !== side) continue;
-    const eid = entryIdForGameUser(gameQueueEntryIds, uid, entriesById);
-    if (eid && !seen.has(eid)) {
-      seen.add(eid);
-      out.push(eid);
-    }
-  }
-  return out;
-}
-
-/** All participants in slot order (both teams), unique entries first-seen. */
-function getAllParticipantEntryIdsSlotOrder(
-  assignmentRow: Record<string, string | null | undefined>,
-  teamSize: number,
-  gameQueueEntryIds: string[],
-  entriesById: Map<string, GameEntryRow>,
-): string[] {
-  const out: string[] = [];
-  const seen = new Set<string>();
-  for (let slotIdx = 0; slotIdx < teamSize * 2; slotIdx++) {
-    const key = ASSIGNMENT_PLAYER_KEYS[slotIdx];
-    const uid = assignmentRow[key];
-    if (!uid) continue;
-    const eid = entryIdForGameUser(gameQueueEntryIds, uid, entriesById);
-    if (eid && !seen.has(eid)) {
-      seen.add(eid);
-      out.push(eid);
-    }
-  }
-  return out;
 }
 
 export async function getQueue(eventId: string) {
@@ -805,57 +711,6 @@ export async function endGameAndReorderQueue(
   revalidatePath(`/admin/events/${eventId}`);
 
   return { success: true };
-}
-
-function mapDbEntryToManagerEntry(entry: QueueEntryWithUser) {
-  let playerNamesArray: Array<{ name: string; skillLevel: string }> = [];
-  if (entry.player_names) {
-    try {
-      const parsed = entry.player_names as unknown as Array<{
-        name: string;
-        skillLevel: string;
-      }>;
-      playerNamesArray = Array.isArray(parsed) ? parsed : [];
-    } catch {
-      playerNamesArray = [];
-    }
-  }
-  return {
-    id: entry.id,
-    eventId: entry.event_id,
-    userId: entry.user_id,
-    groupId: entry.group_id || undefined,
-    groupSize: (entry.group_size || 1) as GroupSize,
-    player_names: playerNamesArray,
-    position: entry.position,
-    status: entry.status as
-      | "waiting"
-      | "pending_solo"
-      | "playing"
-      | "completed"
-      | "pending_stay",
-    joinedAt: new Date(entry.joined_at),
-    user: entry.user
-      ? {
-          id: entry.user.id,
-          name: entry.user.name,
-          email: entry.user.email,
-          skillLevel: entry.user.skill_level as
-            | "beginner"
-            | "intermediate"
-            | "advanced"
-            | "pro",
-          isAdmin: false,
-          createdAt: new Date(),
-        }
-      : undefined,
-  };
-}
-
-function countSlotsForEntries(
-  entries: Array<{ groupSize?: GroupSize }>,
-): number {
-  return entries.reduce((sum, entry) => sum + (entry.groupSize || 1), 0);
 }
 
 export async function assignPlayersToNextCourt(eventId: string) {
