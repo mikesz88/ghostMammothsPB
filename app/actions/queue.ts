@@ -7,6 +7,7 @@ import { reconcilePendingSoloForEvent } from "@/lib/queue/pending-solo";
 import { removeQueueEntryIdsFromCourtPendingStayers } from "@/lib/queue/pending-stayers";
 import { assignPlayersToNextCourt as assignPlayersToNextCourtService } from "@/lib/queue/services/court-assignment";
 import { endGameAndReorderQueue as endGameAndReorderQueueService } from "@/lib/queue/services/end-game";
+import { runQueueMaintenance, runQueueMaintenanceWithPreReorder } from "@/lib/queue/services/maintenance";
 import { reorderQueue as reorderQueueService } from "@/lib/queue/services/queue-ordering";
 import { createClient } from "@/lib/supabase/server";
 
@@ -138,8 +139,9 @@ export async function joinQueue(
       .eq("group_size", 1);
   }
 
-  await reconcilePendingSoloForEvent(eventId);
-  await reorderQueue(eventId);
+  await runQueueMaintenance(eventId, {
+    flushQueueNotifications: flushQueueEmailNotifications,
+  });
 
   // Send email notification (async, don't await to avoid blocking)
   await sendQueueNotification(userId, eventId, position, "join").catch((err) =>
@@ -187,9 +189,9 @@ export async function leaveQueue(queueEntryId: string) {
   ]);
 
   // Reorder remaining queue positions
-  await reorderQueue(entry.event_id);
-  await reconcilePendingSoloForEvent(entry.event_id);
-  await reorderQueue(entry.event_id);
+  await runQueueMaintenanceWithPreReorder(entry.event_id, {
+    flushQueueNotifications: flushQueueEmailNotifications,
+  });
 
   revalidatePath(`/events/${entry.event_id}`);
   return { error: null };
@@ -319,9 +321,9 @@ export async function adminRemoveFromQueue(queueEntryId: string) {
 
   await removeQueueEntryIdsFromCourtPendingStayers(supabase, eventId, idsToPrune);
 
-  await reorderQueue(entry.event_id);
-  await reconcilePendingSoloForEvent(entry.event_id);
-  await reorderQueue(entry.event_id);
+  await runQueueMaintenanceWithPreReorder(entry.event_id, {
+    flushQueueNotifications: flushQueueEmailNotifications,
+  });
 
   revalidatePath(`/events/${entry.event_id}`);
   revalidatePath(`/admin/events/${entry.event_id}`);
