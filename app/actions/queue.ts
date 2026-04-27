@@ -14,6 +14,7 @@ import {
 import { countSlotsForEntries, mapDbEntryToManagerEntry } from "@/lib/queue/mappers";
 import { reconcilePendingSoloForEvent } from "@/lib/queue/pending-solo";
 import { removeQueueEntryIdsFromCourtPendingStayers } from "@/lib/queue/pending-stayers";
+import { reorderQueue as reorderQueueService } from "@/lib/queue/services/queue-ordering";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/service-role";
 
@@ -203,61 +204,10 @@ export async function leaveQueue(queueEntryId: string) {
 }
 
 export async function reorderQueue(eventId: string, db?: DbClient) {
-  const supabase = db ?? (await createClient());
-
-  const { data: queue } = await supabase
-    .from("queue_entries")
-    .select("*")
-    .eq("event_id", eventId)
-    .in("status", ["waiting", "pending_solo"])
-    .order("position");
-
-  if (queue) {
-    const toNotify: Array<{
-      userId: string;
-      eventId: string;
-      position: number;
-      notificationType: "up-next" | "position-update";
-    }> = [];
-
-    // Update positions
-    for (let i = 0; i < queue.length; i++) {
-      const newPosition = i + 1;
-      const oldPosition = queue[i].position;
-
-      await supabase
-        .from("queue_entries")
-        .update({ position: newPosition })
-        .eq("id", queue[i].id);
-
-      if (queue[i].status !== "waiting") {
-        continue;
-      }
-
-      // Send "up next" email if they just entered top 4
-      if (newPosition <= 4 && oldPosition > 4) {
-        toNotify.push({
-          userId: queue[i].user_id,
-          eventId,
-          position: newPosition,
-          notificationType: "up-next",
-        });
-      }
-      // Send position update if they moved up significantly (3+ positions)
-      else if (oldPosition - newPosition >= 3) {
-        toNotify.push({
-          userId: queue[i].user_id,
-          eventId,
-          position: newPosition,
-          notificationType: "position-update",
-        });
-      }
-    }
-
-    await flushQueueEmailNotifications(toNotify).catch((err) =>
-      console.error("Error sending queue notification emails:", err),
-    );
-  }
+  return reorderQueueService(eventId, {
+    db,
+    flushQueueNotifications: flushQueueEmailNotifications,
+  });
 }
 
 export async function endGameAndReorderQueue(
