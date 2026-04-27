@@ -1,9 +1,11 @@
-import { is2Stay2OffRotation } from "@/lib/rotation-policy";
 import { countSlotsForEntries, mapDbEntryToManagerEntry } from "@/lib/queue/mappers";
+import { is2Stay2OffRotation } from "@/lib/rotation-policy";
 
 import type { CourtAssignmentInsert, DbClient, QueueEntryWithUser } from "@/lib/queue/types";
 import type { RotationType } from "@/lib/types";
 import type { Database } from "@/supabase/supa-schema";
+
+export { loadStayingMappedForCourt } from "./load-staying-mapped-for-court";
 
 export type ManagerEntry = ReturnType<typeof mapDbEntryToManagerEntry>;
 
@@ -66,72 +68,6 @@ export async function deleteStaleEndedAssignmentsOnCourt(
     .not("ended_at", "is", null);
 }
 
-export async function loadStayingMappedForCourt(
-  supabase: DbClient,
-  eventId: string,
-  availableCourt: number,
-  playersPerCourt: number,
-): Promise<
-  AssignPlayersFail | { success: true; stayingMapped: ManagerEntry[]; pendingRow: CourtPendingStayerRow }
-> {
-  const { data: pendingRow } = await supabase
-    .from("court_pending_stayers")
-    .select("*")
-    .eq("event_id", eventId)
-    .eq("court_number", availableCourt)
-    .maybeSingle();
-
-  let stayingMapped: ManagerEntry[] = [];
-
-  const pendingIds = pendingRow?.queue_entry_ids;
-  if (
-    pendingRow &&
-    Array.isArray(pendingIds) &&
-    (pendingIds as string[]).length > 0
-  ) {
-    const ids = pendingIds as string[];
-    const { data: stayRows, error: stayErr } = await supabase
-      .from("queue_entries")
-      .select(
-        `
-        *,
-        user:users(id, name, email, skill_level)
-      `,
-      )
-      .in("id", ids);
-
-    if (stayErr) {
-      return { success: false, error: "Failed to load pending stayers" };
-    }
-
-    const byId = new Map(
-      (stayRows || []).map((r) => [r.id, r as QueueEntryWithUser]),
-    );
-    const ordered = ids
-      .map((id) => byId.get(id))
-      .filter((r): r is QueueEntryWithUser => Boolean(r));
-
-    if (ordered.length === 0) {
-      await supabase
-        .from("court_pending_stayers")
-        .delete()
-        .eq("event_id", eventId)
-        .eq("court_number", availableCourt);
-    } else {
-      stayingMapped = ordered.map(mapDbEntryToManagerEntry);
-      const sc = countSlotsForEntries(stayingMapped);
-      if (sc > playersPerCourt) {
-        return {
-          success: false,
-          error: "Pending stayers exceed court capacity.",
-        };
-      }
-    }
-  }
-
-  return { success: true, stayingMapped, pendingRow };
-}
-
 export async function loadWaitingQueueMapped(
   supabase: DbClient,
   eventId: string,
@@ -158,28 +94,43 @@ export async function loadWaitingQueueMapped(
   return { success: true, waitingQueue };
 }
 
-export function resolveNextPlayersForCourt(
-  event: EventRow,
-  rotationType: RotationType,
+export type ResolveNextPlayersParams = {
+  event: EventRow;
+  rotationType: RotationType;
+  stayingMapped: ManagerEntry[];
+  newFromQueue: ManagerEntry[];
+  playersPerCourt: number;
+};
+
+function orderedPlayers2Stay2OffDoubles(
   stayingMapped: ManagerEntry[],
   newFromQueue: ManagerEntry[],
-  playersPerCourt: number,
-): AssignPlayersFail | { success: true; nextPlayers: ManagerEntry[] } {
-  let nextPlayers: ManagerEntry[] = [...stayingMapped, ...newFromQueue];
+): ManagerEntry[] | null {
   if (
-    is2Stay2OffRotation(rotationType) &&
-    event.team_size === 2 &&
     stayingMapped.length === 2 &&
     newFromQueue.length === 2 &&
     countSlotsForEntries(stayingMapped) === 2 &&
     countSlotsForEntries(newFromQueue) === 2
   ) {
-    nextPlayers = [
+    return [
       stayingMapped[0],
       newFromQueue[0],
       stayingMapped[1],
       newFromQueue[1],
     ];
+  }
+  return null;
+}
+
+export function resolveNextPlayersForCourt(
+  params: ResolveNextPlayersParams,
+): AssignPlayersFail | { success: true; nextPlayers: ManagerEntry[] } {
+  const { event, rotationType, stayingMapped, newFromQueue, playersPerCourt } =
+    params;
+  let nextPlayers: ManagerEntry[] = [...stayingMapped, ...newFromQueue];
+  if (is2Stay2OffRotation(rotationType) && event.team_size === 2) {
+    const reordered = orderedPlayers2Stay2OffDoubles(stayingMapped, newFromQueue);
+    if (reordered) nextPlayers = reordered;
   }
 
   const totalSlots = countSlotsForEntries(nextPlayers);
@@ -198,6 +149,38 @@ export type PlayerSlot = {
   skillLevel: string;
 };
 
+function pushNamedPlayerSlots(
+  entry: ManagerEntry,
+  groupSize: number,
+  playerNames: Array<{ name: string; skillLevel: string }>,
+  playerSlots: PlayerSlot[],
+) {
+  for (let i = 0; i < groupSize; i++) {
+    playerSlots.push({
+      userId: entry.userId,
+      name: playerNames[i]?.name || entry.user?.name || "Player",
+      skillLevel:
+        playerNames[i]?.skillLevel ||
+        entry.user?.skillLevel ||
+        "intermediate",
+    });
+  }
+}
+
+function pushAnonymousPlayerSlots(
+  entry: ManagerEntry,
+  groupSize: number,
+  playerSlots: PlayerSlot[],
+) {
+  for (let i = 0; i < groupSize; i++) {
+    playerSlots.push({
+      userId: entry.userId,
+      name: entry.user?.name || "Player",
+      skillLevel: entry.user?.skillLevel || "intermediate",
+    });
+  }
+}
+
 export function expandNextPlayersToPlayerSlots(
   nextPlayers: ManagerEntry[],
 ): PlayerSlot[] {
@@ -206,26 +189,10 @@ export function expandNextPlayersToPlayerSlots(
   for (const entry of nextPlayers) {
     const groupSize = entry.groupSize || 1;
     const playerNames = entry.player_names || [];
-
     if (playerNames.length > 0) {
-      for (let i = 0; i < groupSize; i++) {
-        playerSlots.push({
-          userId: entry.userId,
-          name: playerNames[i]?.name || entry.user?.name || "Player",
-          skillLevel:
-            playerNames[i]?.skillLevel ||
-            entry.user?.skillLevel ||
-            "intermediate",
-        });
-      }
+      pushNamedPlayerSlots(entry, groupSize, playerNames, playerSlots);
     } else {
-      for (let i = 0; i < groupSize; i++) {
-        playerSlots.push({
-          userId: entry.userId,
-          name: entry.user?.name || "Player",
-          skillLevel: entry.user?.skillLevel || "intermediate",
-        });
-      }
+      pushAnonymousPlayerSlots(entry, groupSize, playerSlots);
     }
   }
 

@@ -78,7 +78,13 @@ async function callJoinQueueRpc(
   players: JoinPlayer[],
 ) {
   const groupId = groupSize > 1 ? crypto.randomUUID() : undefined;
-  return joinQueue(eventId, user.id, groupSize, groupId, players);
+  return joinQueue({
+    eventId,
+    userId: user.id,
+    groupSize,
+    groupId,
+    playerNames: players,
+  });
 }
 
 type SubmitJoinParams = {

@@ -46,24 +46,20 @@ export async function getQueue(eventId: string) {
   return { queue: queue || [], error: null };
 }
 
-export async function joinQueue(
-  eventId: string,
-  userId: string,
-  groupSize: number,
-  groupId?: string,
-  playerNames?: Array<{ name: string; skillLevel: string }>,
-) {
-  const result = await joinQueueService(
-    eventId,
-    userId,
-    groupSize,
-    groupId,
-    playerNames,
-    membershipDeps,
-  );
+export async function joinQueue(input: {
+  eventId: string;
+  userId: string;
+  groupSize: number;
+  groupId?: string;
+  playerNames?: Array<{ name: string; skillLevel: string }>;
+}) {
+  const result = await joinQueueService({
+    ...input,
+    deps: membershipDeps,
+  });
 
   if ("data" in result) {
-    revalidatePath(`/events/${eventId}`);
+    revalidatePath(`/events/${input.eventId}`);
     return { data: result.data, error: null };
   }
 
