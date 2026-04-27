@@ -3,15 +3,16 @@
 import { formatInTimeZone, fromZonedTime } from "date-fns-tz";
 
 import {
-  sendQueueJoinEmail,
-  sendPositionUpdateEmail,
-  sendUpNextEmail,
   sendCourtAssignmentEmail,
-  type QueueEmailData,
+  sendPositionUpdateEmail,
+  sendQueueJoinEmail,
+  sendUpNextEmail,
 } from "@/lib/email/resend";
 import { formatSendError } from "@/lib/notifications/format-send-error";
 import { runWithConcurrency } from "@/lib/run-with-concurrency";
 import { createClient } from "@/lib/supabase/server";
+
+import type { QueueEmailData } from "@/lib/email/queue-email-data";
 
 const CENTRAL_TZ = "America/Chicago";
 const QUEUE_EMAIL_CONCURRENCY = 3;

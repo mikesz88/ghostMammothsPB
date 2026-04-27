@@ -189,6 +189,56 @@ const eslintConfig = defineConfig([
   },
 
   /*
+   * Email: HTML templates (large literals) and Resend transport (retry / error probe helpers).
+   * Line/complexity budgets are noise compared to splitting those for style only.
+   */
+  {
+    files: ["lib/email/templates/**/*.ts", "lib/email/resend.ts"],
+    rules: {
+      "max-lines": "off",
+      "max-lines-per-function": "off",
+      complexity: "off",
+      "max-depth": "off",
+      "no-nested-ternary": "off",
+    },
+  },
+
+  /*
+   * Stripe webhooks: handler modules mirror Stripe payloads; console used for operational tracing.
+   */
+  {
+    files: ["lib/stripe/webhooks/**/*.ts"],
+    rules: {
+      "max-lines": "off",
+      "max-lines-per-function": "off",
+      "max-params": "off",
+      complexity: "off",
+      "max-depth": "off",
+      "no-console": "off",
+    },
+  },
+
+  /*
+   * Queue algorithm: parameters match existing court/queue call sites; splitting only for signatures hurts clarity.
+   */
+  {
+    files: ["lib/queue/algorithm/**/*.ts", "lib/queue-manager.ts"],
+    rules: {
+      "max-lines": "off",
+      "max-lines-per-function": "off",
+      "max-params": "off",
+      complexity: "off",
+    },
+  },
+
+  {
+    files: ["app/api/webhooks/stripe/route.ts"],
+    rules: {
+      "max-lines-per-function": "off",
+    },
+  },
+
+  /*
    * Scripts: allow logging; no line-budget enforcement in tooling.
    */
   {

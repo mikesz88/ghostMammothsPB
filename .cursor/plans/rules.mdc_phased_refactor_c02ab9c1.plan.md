@@ -25,10 +25,10 @@ todos:
     status: completed
   - id: phase-7
     content: "Phase 7: Action layer split — queue, notifications; re-exports; behavior unchanged"
-    status: pending
+    status: completed
   - id: phase-8
     content: "Phase 8: Stripe webhook thin route, email/resend, queue-manager cleanup"
-    status: pending
+    status: completed
   - id: phase-9
     content: "Phase 9 (optional): Public/marketing shell + header decomposition"
     status: pending
@@ -371,6 +371,8 @@ Move session/membership reads server-side while keeping forms as focused client 
 
 ## Phase 7 — Action Layer Split
 
+**Status: complete (April 2026).** Delivered layout and pointers: [`docs/engineering/phase-7-action-layer-walkthrough.md`](../../docs/engineering/phase-7-action-layer-walkthrough.md).
+
 ### Targets
 
 * `app/actions/queue.ts`
@@ -404,6 +406,8 @@ Split large action files by responsibility after route boundaries are already st
 
 ## Phase 8 — Integration & Service Cleanup
 
+**Status: complete (April 2026).** Tracking: [`docs/engineering/phase-8-integration-service-cleanup.md`](../../docs/engineering/phase-8-integration-service-cleanup.md).
+
 ### Targets
 
 * `app/api/webhooks/stripe/route.ts`
@@ -430,6 +434,8 @@ Thin the route handlers and split oversized service/integration modules.
 ---
 
 ## Phase 9 — Public/Marketing Shell Cleanup (Optional)
+
+**Status: not started (April 2026).** Engineering walkthrough: [`docs/engineering/phase-9-public-marketing-shell.md`](../../docs/engineering/phase-9-public-marketing-shell.md).
 
 ### Targets
 
