@@ -36,34 +36,34 @@ const eslintConfig = defineConfig([
        * Accessibility
        * Keep the stronger marketing-site-friendly rules.
        */
-      "jsx-a11y/alt-text": "warn",
-      "jsx-a11y/anchor-is-valid": "warn",
-      "jsx-a11y/aria-props": "warn",
-      "jsx-a11y/aria-role": "warn",
-      "jsx-a11y/heading-has-content": "warn",
-      "jsx-a11y/label-has-associated-control": "warn",
-      "jsx-a11y/no-autofocus": "warn",
-      "jsx-a11y/interactive-supports-focus": "warn",
-      "jsx-a11y/click-events-have-key-events": "warn",
+      "jsx-a11y/alt-text": "error",
+      "jsx-a11y/anchor-is-valid": "error",
+      "jsx-a11y/aria-props": "error",
+      "jsx-a11y/aria-role": "error",
+      "jsx-a11y/heading-has-content": "error",
+      "jsx-a11y/label-has-associated-control": "error",
+      "jsx-a11y/no-autofocus": "error",
+      "jsx-a11y/interactive-supports-focus": "error",
+      "jsx-a11y/click-events-have-key-events": "error",
 
       /*
        * Imports / cleanup
        */
-      "unused-imports/no-unused-imports": "warn",
+      "unused-imports/no-unused-imports": "error",
       "@typescript-eslint/no-unused-vars": [
-        "warn",
+        "error",
         {
           argsIgnorePattern: "^_",
           varsIgnorePattern: "^_",
           caughtErrorsIgnorePattern: "^_",
         },
       ],
-      "import/no-cycle": "warn",
-      "import/no-duplicates": "warn",
-      "import/first": "warn",
-      "import/newline-after-import": "warn",
+      "import/no-cycle": "error",
+      "import/no-duplicates": "error",
+      "import/first": "error",
+      "import/newline-after-import": "error",
       "import/order": [
-        "warn",
+        "error",
         {
           groups: [
             ["builtin", "external"],
@@ -82,13 +82,13 @@ const eslintConfig = defineConfig([
       /*
        * Readability / maintainability
        */
-      "no-console": ["warn", { allow: ["warn", "error"] }],
-      "no-nested-ternary": "warn",
-      "max-depth": ["warn", 3],
-      "max-params": ["warn", 4],
-      complexity: ["warn", 10],
+      "no-console": ["error", { allow: ["warn", "error"] }],
+      "no-nested-ternary": "error",
+      "max-depth": ["error", 3],
+      "max-params": ["error", 4],
+      complexity: ["error", 10],
       "max-lines": [
-        "warn",
+        "error",
         {
           max: 200,
           skipBlankLines: true,
@@ -96,7 +96,7 @@ const eslintConfig = defineConfig([
         },
       ],
       "max-lines-per-function": [
-        "warn",
+        "error",
         {
           max: 25,
           skipBlankLines: true,
@@ -109,7 +109,7 @@ const eslintConfig = defineConfig([
        * Architecture boundaries (eslint-plugin-boundaries v6: use dependencies, not element-types)
        */
       "boundaries/dependencies": [
-        "warn",
+        "error",
         {
           default: "allow",
           rules: [
@@ -140,7 +140,7 @@ const eslintConfig = defineConfig([
     files: ["app/**/page.tsx"],
     rules: {
       "no-restricted-syntax": [
-        "warn",
+        "error",
         {
           selector:
             'Program > ExpressionStatement > Literal[value="use client"]',
@@ -158,7 +158,7 @@ const eslintConfig = defineConfig([
     files: ["components/**/*.{ts,tsx}"],
     rules: {
       "no-restricted-imports": [
-        "warn",
+        "error",
         {
           patterns: [
             {
@@ -175,7 +175,7 @@ const eslintConfig = defineConfig([
     files: ["hooks/**/*.{ts,tsx}"],
     rules: {
       "no-restricted-imports": [
-        "warn",
+        "error",
         {
           patterns: [
             {
