@@ -31,7 +31,7 @@ todos:
     status: completed
   - id: phase-9
     content: "Phase 9 (optional): Public/marketing shell + header decomposition"
-    status: pending
+    status: completed
   - id: phase-0-lint-ci
     content: "Optional hygiene: ESLint error burn-down, ignores for generated paths, CI/PR policy — see Lint appendix"
     status: pending
@@ -435,14 +435,14 @@ Thin the route handlers and split oversized service/integration modules.
 
 ## Phase 9 — Public/Marketing Shell Cleanup (Optional)
 
-**Status: not started (April 2026).** Engineering walkthrough: [`docs/engineering/phase-9-public-marketing-shell.md`](../../docs/engineering/phase-9-public-marketing-shell.md).
+**Status: complete (April 2026).** Engineering walkthrough: [`docs/engineering/phase-9-public-marketing-shell.md`](../../docs/engineering/phase-9-public-marketing-shell.md).
 
 ### Targets
 
 * `app/page.tsx`
 * `app/events/page.tsx`
 * `app/about/page.tsx`
-* `components/ui/header.tsx`
+* `components/ui/header/` (`SiteHeader`, `Header`, `parts/*` — replaces monolithic `components/ui/header.tsx`)
 
 ### Goal
 

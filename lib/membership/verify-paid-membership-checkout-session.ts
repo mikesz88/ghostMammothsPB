@@ -96,6 +96,5 @@ export async function verifyPaidMembershipCheckoutSession(
   if (!("tierStub" in ctx)) {
     return ctx;
   }
-  const data = await finalizePaidMembershipAfterStripeSession(supabase, ctx);
-  return { ok: true, data };
+  return finalizePaidMembershipAfterStripeSession(ctx);
 }

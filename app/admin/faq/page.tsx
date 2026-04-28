@@ -1,4 +1,3 @@
-import type { Metadata } from "next";
 import Link from "next/link";
 
 import {
@@ -8,7 +7,9 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Header } from "@/components/ui/header";
+import { SiteHeader } from "@/components/ui/header/site-header";
+
+import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "Host help | Admin",
@@ -16,10 +17,10 @@ export const metadata: Metadata = {
     "How to run events: end game, assign next, queue management, and rotation modes.",
 };
 
-export default function AdminFaqPage() {
+export default async function AdminFaqPage() {
   return (
     <div className="min-h-screen bg-background">
-      <Header
+      <SiteHeader
         variant="admin"
         backButton={{ href: "/admin", label: "Back to Dashboard" }}
       />

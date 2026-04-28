@@ -1,11 +1,11 @@
-import { Header } from "@/components/ui/header";
+import { SiteHeader } from "@/components/ui/header/site-header";
 
 import type { ReactNode } from "react";
 
-export function AuthPageShell({ children }: { children: ReactNode }) {
+export async function AuthPageShell({ children }: { children: ReactNode }) {
   return (
     <div className="min-h-screen bg-background">
-      <Header />
+      <SiteHeader />
       {children}
     </div>
   );

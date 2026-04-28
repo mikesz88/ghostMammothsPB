@@ -2,10 +2,12 @@ import "server-only";
 
 import { stripe } from "@/lib/stripe/server";
 import { asSubscriptionWithBillingPeriods } from "@/lib/stripe/subscription-billing";
+import { createServiceRoleClient } from "@/lib/supabase/service-role";
 
 import type { AppSupabaseClient } from "@/lib/membership/supabase-client-type";
 import type {
   ValidCheckoutSessionContext,
+  VerifyPaidMembershipCheckoutResult,
   VerifyPaidMembershipCheckoutSuccess,
 } from "@/lib/membership/verify-paid-membership-checkout-types";
 
@@ -59,7 +61,7 @@ async function upsertUserMembershipForPaidCheckout(
     currentPeriodStart?: string;
     currentPeriodEnd?: string;
   },
-) {
+): Promise<{ error: string | null }> {
   const { error: membershipError } = await supabase
     .from("user_memberships")
     .upsert(paidCheckoutMembershipUpsertRow(args), {
@@ -67,7 +69,9 @@ async function upsertUserMembershipForPaidCheckout(
     });
   if (membershipError) {
     console.error("Error updating membership:", membershipError);
+    return { error: membershipError.message };
   }
+  return { error: null };
 }
 
 async function updateUserMembershipStatusAfterCheckout(
@@ -75,7 +79,7 @@ async function updateUserMembershipStatusAfterCheckout(
   userId: string,
   membershipStatusName: string,
   customerId: string,
-) {
+): Promise<{ error: string | null }> {
   const { error: userError } = await supabase
     .from("users")
     .update({
@@ -85,18 +89,24 @@ async function updateUserMembershipStatusAfterCheckout(
     .eq("id", userId);
   if (userError) {
     console.error("Error updating users table:", userError);
+    return { error: userError.message };
   }
+  return { error: null };
 }
 
 async function persistMembershipAfterPaidCheckout(
   supabase: AppSupabaseClient,
   ctx: ValidCheckoutSessionContext,
-) {
+): Promise<
+  | { ok: true; payload: VerifyPaidMembershipCheckoutSuccess }
+  | { ok: false; error: string }
+> {
   const { userId, session, meta, tierStub } = ctx;
   const subscriptionId = session.subscription as string | null;
   const customerId = session.customer as string;
   const { start, end } = await subscriptionPeriodBounds(subscriptionId);
-  await upsertUserMembershipForPaidCheckout(supabase, {
+
+  const membershipResult = await upsertUserMembershipForPaidCheckout(supabase, {
     userId,
     tierId: meta.tierId,
     customerId,
@@ -104,25 +114,61 @@ async function persistMembershipAfterPaidCheckout(
     currentPeriodStart: start,
     currentPeriodEnd: end,
   });
-  await updateUserMembershipStatusAfterCheckout(
+  if (membershipResult.error) {
+    return { ok: false, error: membershipResult.error };
+  }
+
+  const userResult = await updateUserMembershipStatusAfterCheckout(
     supabase,
     userId,
     tierStub.name,
     customerId,
   );
-  return { meta, customerId, subscriptionId };
+  if (userResult.error) {
+    return { ok: false, error: userResult.error };
+  }
+
+  return {
+    ok: true,
+    payload: {
+      tierId: meta.tierId,
+      tierName: meta.tierName,
+      customerId,
+      subscriptionId,
+    },
+  };
 }
 
+/**
+ * Persists membership after Stripe confirms payment. Uses the **service role**
+ * client so writes succeed under RLS (the user-scoped client cannot upsert
+ * `user_memberships` in typical policies). Safe here because Stripe session
+ * is verified and `ctx.userId` matches `session.metadata.user_id` before this runs.
+ */
 export async function finalizePaidMembershipAfterStripeSession(
-  supabase: AppSupabaseClient,
   ctx: ValidCheckoutSessionContext,
-): Promise<VerifyPaidMembershipCheckoutSuccess> {
-  const { meta, customerId, subscriptionId } =
-    await persistMembershipAfterPaidCheckout(supabase, ctx);
-  return {
-    tierId: meta.tierId,
-    tierName: meta.tierName,
-    customerId,
-    subscriptionId,
-  };
+): Promise<VerifyPaidMembershipCheckoutResult> {
+  const admin = createServiceRoleClient();
+  if (!admin) {
+    return {
+      ok: false,
+      failure: {
+        error:
+          "Membership sync is unavailable. Set SUPABASE_SERVICE_ROLE_KEY on the server.",
+        status: 503,
+      },
+    };
+  }
+
+  const result = await persistMembershipAfterPaidCheckout(admin, ctx);
+  if (!result.ok) {
+    return {
+      ok: false,
+      failure: {
+        error: result.error,
+        status: 500,
+      },
+    };
+  }
+  return { ok: true, data: result.payload };
 }

@@ -1,4 +1,3 @@
-import type { Metadata } from "next";
 import Link from "next/link";
 
 import {
@@ -8,7 +7,9 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Header } from "@/components/ui/header";
+import { SiteHeader } from "@/components/ui/header/site-header";
+
+import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "How queuing works | Ghost Mammoth PB",
@@ -16,10 +17,10 @@ export const metadata: Metadata = {
     "How to join the queue, team size vs group size, rotation modes, and what happens after a game.",
 };
 
-export default function FaqPage() {
+export default async function FaqPage() {
   return (
     <div className="min-h-screen bg-background">
-      <Header />
+      <SiteHeader />
       <main className="container mx-auto px-4 py-10 max-w-3xl">
         <p className="text-sm text-muted-foreground mb-4">
           <Link href="/events" className="text-primary hover:underline">

@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 
 import { EventDetailClient } from "@/components/events/event-detail-client";
-import { Header } from "@/components/ui/header";
+import { SiteHeader } from "@/components/ui/header/site-header";
 import { loadEventDetailPageData } from "@/lib/events/event-detail-server";
 
 export default async function EventDetailPage({
@@ -17,7 +17,7 @@ export default async function EventDetailPage({
 
   return (
     <div className="min-h-screen bg-background">
-      <Header backButton={{ href: "/events", label: "Back to Events" }} />
+      <SiteHeader backButton={{ href: "/events", label: "Back to Events" }} />
       <EventDetailClient
         eventId={id}
         initialEvent={data.serializedEvent}

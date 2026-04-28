@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { stripe } from "@/lib/stripe/server";
 import { dispatchStripeWebhookEvent } from "@/lib/stripe/webhooks/dispatch";
-import { createClient } from "@/lib/supabase/server";
+import { createServiceRoleClient } from "@/lib/supabase/service-role";
 
 import type Stripe from "stripe";
 
@@ -34,7 +34,14 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const supabase = await createClient();
+  const supabase = createServiceRoleClient();
+  if (!supabase) {
+    console.error("Stripe webhook: missing service role client");
+    return NextResponse.json(
+      { error: "Server configuration error" },
+      { status: 503 },
+    );
+  }
 
   try {
     await dispatchStripeWebhookEvent(event, supabase);

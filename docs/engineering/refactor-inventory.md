@@ -1,6 +1,6 @@
 # Phase 0 — refactor inventory (hybrid)
 
-**Phase 1 is active** — for **new or touched** routes and client UI, follow [`phase-1-rsc-conventions.md`](phase-1-rsc-conventions.md) and domain folders under `components/`. **Phase 2** (member `app/events/[id]`) is **complete**; see [`phase-2-event-detail-walkthrough.md`](phase-2-event-detail-walkthrough.md). **Phase 3** (admin `app/admin/events/[id]`) is **complete**; see [`phase-3-admin-event-walkthrough.md`](phase-3-admin-event-walkthrough.md). **Phase 4** (shared event/admin extraction for those routes) is **complete**; see [`phase-4-shared-event-admin-extraction.md`](phase-4-shared-event-admin-extraction.md). **Phase 5** (admin dashboard, users list, user detail, email-stats) is **complete**; see [`phase-5-admin-routes-walkthrough.md`](phase-5-admin-routes-walkthrough.md). **Phase 6** (settings, membership, auth) is **complete**; see [`phase-6-settings-membership-auth-walkthrough.md`](phase-6-settings-membership-auth-walkthrough.md). **Phase 7** (action layer split: queue + notifications) is **complete**; see [`phase-7-action-layer-walkthrough.md`](phase-7-action-layer-walkthrough.md).
+**Phase 1 is active** — for **new or touched** routes and client UI, follow [`phase-1-rsc-conventions.md`](phase-1-rsc-conventions.md) and domain folders under `components/`. **Phase 2** (member `app/events/[id]`) is **complete**; see [`phase-2-event-detail-walkthrough.md`](phase-2-event-detail-walkthrough.md). **Phase 3** (admin `app/admin/events/[id]`) is **complete**; see [`phase-3-admin-event-walkthrough.md`](phase-3-admin-event-walkthrough.md). **Phase 4** (shared event/admin extraction for those routes) is **complete**; see [`phase-4-shared-event-admin-extraction.md`](phase-4-shared-event-admin-extraction.md). **Phase 5** (admin dashboard, users list, user detail, email-stats) is **complete**; see [`phase-5-admin-routes-walkthrough.md`](phase-5-admin-routes-walkthrough.md). **Phase 6** (settings, membership, auth) is **complete**; see [`phase-6-settings-membership-auth-walkthrough.md`](phase-6-settings-membership-auth-walkthrough.md). **Phase 7** (action layer split: queue + notifications) is **complete**; see [`phase-7-action-layer-walkthrough.md`](phase-7-action-layer-walkthrough.md). **Phase 8** (Stripe webhooks, email transport/templates, `lib/queue/algorithm/*`) is **complete**; see [`phase-8-integration-service-cleanup.md`](phase-8-integration-service-cleanup.md). **Phase 9 (optional)** — public / marketing shell (home, events list, about, header split) is **complete**; see [`phase-9-public-marketing-shell.md`](phase-9-public-marketing-shell.md).
 
 This doc is **team-owned**. The repo also contains a **machine-generated snapshot** you refresh when the map drifts.
 
@@ -8,8 +8,9 @@ This doc is **team-owned**. The repo also contains a **machine-generated snapsho
 
 1. **Refresh metrics:** `npm run inventory:phase0` → updates [`refactor-inventory.snapshot.md`](refactor-inventory.snapshot.md).
 2. **Prioritize:** Decide which rows matter next; copy them into the **Team backlog** table below (or reference paths only).
-3. **Tag:** Set **Primary tag** and **Target phase** using the taxonomy below. Multiple tags may apply; pick one **primary** for ordering.
-4. **Agree:** Align with the phased plan ([`.cursor/plans/rules.mdc_phased_refactor_c02ab9c1.plan.md`](../../.cursor/plans/rules.mdc_phased_refactor_c02ab9c1.plan.md)) before starting Phase 1+ route work.
+3. **Lint health (optional):** `npm run lint` must report **0 errors** for CI/`npm run build`. **`npm run lint:report`** prints totals by rule/file. Target baseline: **0 warnings** — some procedural routes and large queue/event modules use **documented** `eslint.config.mjs` overrides until refactors land (see block comment *Procedural HTTP handlers…* in that file). Application code uses **`console.warn`** / **`console.error`** only (scripts under `script/` keep relaxed `no-console`).
+4. **Tag:** Set **Primary tag** and **Target phase** using the taxonomy below. Multiple tags may apply; pick one **primary** for ordering.
+5. **Agree:** Align with the phased plan ([`.cursor/plans/rules.mdc_phased_refactor_c02ab9c1.plan.md`](../../.cursor/plans/rules.mdc_phased_refactor_c02ab9c1.plan.md)) before starting Phase 1+ route work.
 
 Regenerating the snapshot **overwrites** the snapshot file only — not this file. If you inlined rows here and want to refresh metrics, update line counts from the new snapshot or re-copy rows.
 
@@ -40,9 +41,9 @@ Use the refined plan phase numbers (e.g. **2** = member event detail, **3** = ad
 
 ## Team backlog
 
-Seeded from [`refactor-inventory.snapshot.md`](refactor-inventory.snapshot.md) (refresh with `npm run inventory:phase0`). Reconcile line counts here when the map drifts.
+Seeded from [`refactor-inventory.snapshot.md`](refactor-inventory.snapshot.md) (refresh with `npm run inventory:phase0`; last run reflected in snapshot header). Reconcile line counts here when the map drifts.
 
-**Priority gist:** **Phase 8** is **complete** (Stripe webhooks, email split, `lib/queue/algorithm/*`). **Phase 9 (optional)** = public/marketing shell — see [`phase-9-public-marketing-shell.md`](phase-9-public-marketing-shell.md). **P1** = event queue UI, test-helpers, optional split of `lib/stripe/webhooks/handlers.ts`. **P2** = Phase 9 hotspots (`app/page.tsx`, `app/events/page.tsx`, `app/about/page.tsx`, `components/ui/header.tsx`) and other small client pages.
+**Priority gist:** **Phase 8** is **complete** (Stripe webhooks, email split, `lib/queue/algorithm/*`). **Phase 9 (optional)** — public/marketing shell — is **complete**; see [`phase-9-public-marketing-shell.md`](phase-9-public-marketing-shell.md). **P1** = event queue UI, test-helpers, optional split of `lib/stripe/webhooks/handlers.ts`. **P2** = optional root `SiteHeader` in `app/layout.tsx` and incremental refactors where ESLint size rules are relaxed (see `eslint.config.mjs`).
 
 | Path | Lines | Bucket | Auto flags | Primary tag | Priority | Target phase | Notes |
 | --- | ---: | --- | --- | --- | --- | --- | --- |
@@ -77,20 +78,22 @@ Seeded from [`refactor-inventory.snapshot.md`](refactor-inventory.snapshot.md) (
 | lib/auth-context.tsx | ~26 | lib | — | service split | — | **Done** | Phase 6: thin provider; logic in `lib/auth/*` (`useAuthSessionState`, sign-in/up factories, password actions). |
 | app/api/webhooks/stripe/route.ts | ~49 | api-route | — | action split | — | **Done** | Phase 8: verify + `dispatchStripeWebhookEvent` → `lib/stripe/webhooks/*`. |
 | lib/email/resend.ts | ~170 | lib | — | service split | — | **Done** | Phase 8: transport + retry; templates `lib/email/templates/queue-notifications.ts`. |
-| lib/stripe/webhooks/handlers.ts | ~281 | lib | large | service split | P1 | — | Phase 8 follow-up: optional split by event family (`checkout`, `subscription`, `invoice`). |
-| components/ui/header.tsx | 374 | component | very large; persistence-like patterns | shared UI split | P2 | 9 | Public shell; server parent + small client pieces. |
+| lib/stripe/webhooks/handlers.ts | 280 | lib | large | service split | P1 | — | Phase 8 follow-up: optional split by event family (`checkout`, `subscription`, `invoice`). |
 | components/create-event-dialog.tsx | 255 | component | large; persistence-like patterns | shared UI split | P2 | 4–5 | Admin/event dialogs — candidate for `components/admin/events/`. |
 | components/edit-event-dialog.tsx | 213 | component | large; persistence-like patterns | shared UI split | P2 | 4–5 | |
 | components/ui/dropdown-menu.tsx | 202 | component | large; persistence-like patterns | shared UI split | P2 | 1–4 | Radix wrapper; often low ROI unless touched. |
-| app/page.tsx | 204 | route-page | large; `"use client"` page | server-page migration | P2 | 9 | Home — optional public shell phase. |
-| app/events/page.tsx | 182 | route-page | `"use client"` page | server-page migration | P2 | 9 | Events list; can precede or follow Phase 2. |
-| app/about/page.tsx | 210 | route-page | large; `"use client"` page | server-page migration | P2 | 9 | |
-| app/search/page.tsx | 57 | route-page | `"use client"` page | server-page migration | P2 | 9 | Small page. |
+| components/ui/header/ | — | component | — | shared UI split | — | **Done** | Phase 9: `site-header.tsx`, `header-client.tsx`, `header-user-menu.tsx`, `parts/*`; barrel exports `Header` only (not `SiteHeader`). See [`phase-9-public-marketing-shell.md`](phase-9-public-marketing-shell.md). |
+| components/events/events-page-client.tsx | 212 | component | large (200+) | client-island extraction | — | **Done** | Phase 9: public events list; `useRealtimeEvents(initial)` + server `loadActiveEventsListData`. |
+| app/page.tsx | 25 | route-page | — | server-page migration | — | **Done** | Phase 9: `SiteHeader`, `HomeHeroClient`, `HomePageBody`, `loadHomeAuthSnapshot`. |
+| app/events/page.tsx | 21 | route-page | — | server-page migration | — | **Done** | Phase 9: server shell + `EventsPageClient` (see row above). |
+| app/about/page.tsx | 14 | route-page | — | server-page migration | — | **Done** | Phase 9: `AboutPageBody`, `AboutPageCtaClient`. |
+| app/search/page.tsx | 12 | route-page | — | server-page migration | — | **Done** | Phase 9 follow-up: `SiteHeader` + `SearchPageClient`; Google site search (new tab). |
 
 ---
 
 ## Related tooling
 
 - `npm run architecture:audit` — warn-only structural findings (pages, size, imports).
-- `npm run lint` — ESLint warnings for complexity / `max-lines` / page `use client`.
+- `npm run lint` — ESLint (0 errors required for `build` / CI); warnings include complexity / `max-lines` / `"use client"` pages.
+- `npm run lint:report` — aggregate warning counts by **rule** and by **file** (`script/eslint-report.mjs`).
 - Phase 0 exit criteria: shared map, warnings non-blocking, **no new** full-client `page.tsx` on new or touched routes.

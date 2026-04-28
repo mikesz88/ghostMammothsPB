@@ -2,22 +2,26 @@
 
 import { useEffect, useState } from "react";
 
+import { eventRowToEvent } from "@/lib/events/event-row-to-domain";
+import { hydrateSerializedEvent } from "@/lib/events/hydrate-event-detail";
 import { createClient } from "@/lib/supabase/client";
 
-import type {
-  Event,
-  EventStatus,
-  RotationType,
-  TeamSize,
-} from "../types";
-import type { Database } from "@/supabase/supa-schema";
+import type { Event } from "../types";
+import type { EventDetailSerializedEvent } from "@/lib/events/event-detail-server";
 
+export function useRealtimeEvents(
+  initialSerializedEvents?: EventDetailSerializedEvent[],
+) {
+  const seededFromServer = initialSerializedEvents !== undefined;
 
-type EventRow = Database["public"]["Tables"]["events"]["Row"];
-
-export function useRealtimeEvents() {
-  const [events, setEvents] = useState<Event[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [events, setEvents] = useState<Event[]>(() =>
+    initialSerializedEvents === undefined
+      ? []
+      : initialSerializedEvents.map(hydrateSerializedEvent),
+  );
+  const [loading, setLoading] = useState(
+    () => initialSerializedEvents === undefined,
+  );
 
   useEffect(() => {
     const supabase = createClient();
@@ -32,31 +36,14 @@ export function useRealtimeEvents() {
       if (error) {
         console.error("Error fetching events:", error);
       } else {
-        const eventsWithDates: Event[] = (data || []).map((event: EventRow) => ({
-          id: event.id,
-          name: event.name,
-          location: event.location,
-          date:
-            event.date && event.time
-              ? new Date(`${event.date}T${event.time}`)
-              : new Date(event.date),
-          time: event.time,
-          numCourts: event.num_courts,
-          courtCount:
-            event.court_count ||
-            Number.parseInt(event.num_courts, 10) ||
-            0,
-          teamSize: (event.team_size || 2) as TeamSize,
-          rotationType: event.rotation_type as RotationType,
-          status: event.status as EventStatus,
-          createdAt: new Date(event.created_at),
-        }));
-        setEvents(eventsWithDates);
+        setEvents((data ?? []).map(eventRowToEvent));
       }
       setLoading(false);
     };
 
-    fetchEvents();
+    if (!seededFromServer) {
+      void fetchEvents();
+    }
 
     const channel = supabase
       .channel("events")
@@ -68,15 +55,15 @@ export function useRealtimeEvents() {
           table: "events",
         },
         () => {
-          fetchEvents();
-        }
+          void fetchEvents();
+        },
       )
       .subscribe();
 
     return () => {
       supabase.removeChannel(channel);
     };
-  }, []);
+  }, [seededFromServer]);
 
   return { events, loading };
 }

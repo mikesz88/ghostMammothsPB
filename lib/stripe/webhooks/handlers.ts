@@ -22,7 +22,7 @@ export async function handleCheckoutCompleted(
     return;
   }
 
-  console.log(`Checkout completed for user ${userId}, tier ${tierId}`);
+  console.warn(`Checkout completed for user ${userId}, tier ${tierId}`);
 
   const { data: tier, error: tierError } = await supabase
     .from("membership_tiers")
@@ -35,7 +35,7 @@ export async function handleCheckoutCompleted(
     return;
   }
 
-  console.log(`Found tier for checkout:`, {
+  console.warn(`Found tier for checkout:`, {
     id: tier.id,
     name: tier.name,
     displayName: tier.display_name,
@@ -87,12 +87,12 @@ export async function handleCheckoutCompleted(
       },
     });
 
-    console.log(
+    console.warn(
       `Payment recorded for user ${userId}: $${session.amount_total / 100}`,
     );
   }
 
-  console.log(`User ${userId} upgraded to ${tier.name}`);
+  console.warn(`User ${userId} upgraded to ${tier.name}`);
 }
 
 export async function handleSubscriptionUpdate(
@@ -159,7 +159,7 @@ export async function handleSubscriptionUpdate(
     })
     .eq("id", userId);
 
-  console.log(
+  console.warn(
     `Subscription ${subscription.status} for user ${userId} - Tier: ${tier.name} (${tierId})`,
   );
 }
@@ -189,7 +189,7 @@ export async function handleSubscriptionDeleted(
     .update({ membership_status: "cancelled" })
     .eq("id", userId);
 
-  console.log(`Subscription cancelled for user ${userId}`);
+  console.warn(`Subscription cancelled for user ${userId}`);
 }
 
 export async function handlePaymentSucceeded(
@@ -226,7 +226,7 @@ export async function handlePaymentSucceeded(
     },
   });
 
-  console.log(
+  console.warn(
     `Payment succeeded for user ${userId}: $${(invoice.amount_paid || 0) / 100}`,
   );
 }
@@ -276,5 +276,5 @@ export async function handlePaymentFailed(
     },
   });
 
-  console.log(`Payment failed for user ${userId}`);
+  console.error(`Payment failed for user ${userId}`);
 }

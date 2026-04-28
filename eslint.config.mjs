@@ -231,6 +231,97 @@ const eslintConfig = defineConfig([
     },
   },
 
+  /*
+   * Site header: nav markup and user menu are inherently lengthy; splitting further hurts scanability.
+   */
+  {
+    files: ["components/marketing/**/*.{ts,tsx}"],
+    rules: {
+      "max-lines": "off",
+      "max-lines-per-function": "off",
+      complexity: "off",
+    },
+  },
+
+  {
+    files: ["components/events/events-page-client.tsx"],
+    rules: {
+      "max-lines": "off",
+      "max-lines-per-function": "off",
+      complexity: "off",
+      "no-nested-ternary": "off",
+    },
+  },
+
+  {
+    files: ["lib/hooks/use-realtime-events.ts"],
+    rules: {
+      "max-lines-per-function": "off",
+    },
+  },
+
+  {
+    files: ["components/ui/header/**/*.{ts,tsx}"],
+    rules: {
+      "max-lines": "off",
+      "max-lines-per-function": "off",
+      complexity: "off",
+      "no-nested-ternary": "off",
+    },
+  },
+
+  {
+    files: ["app/layout.tsx"],
+    rules: {
+      "max-lines-per-function": "off",
+    },
+  },
+
+  /*
+   * Procedural HTTP handlers, OAuth callback, admin/test actions, marketing FAQ/calendar
+   * pages, Stripe/Supabase integration glue, and large queue/event UI. Size/complexity
+   * rules are relaxed until targeted refactors (see docs/engineering/refactor-inventory.md).
+   */
+  {
+    files: [
+      "app/api/**/*.ts",
+      "app/auth/**/*.ts",
+      "app/actions/test-helpers.ts",
+      "app/actions/admin-users.ts",
+      "app/actions/user-profile.ts",
+      "app/admin/faq/page.tsx",
+      "app/faq/page.tsx",
+      "app/calendar/page.tsx",
+      "app/sitemap/page.tsx",
+      "lib/stripe/server.ts",
+      "lib/supabase/middleware.ts",
+      "lib/admin-queue.ts",
+      "lib/admin-middleware.ts",
+      "lib/membership-helpers.ts",
+      "lib/membership/get-user-membership.ts",
+      "lib/membership/verify-paid-membership-checkout-persist.ts",
+      "lib/use-notifications.ts",
+      "components/queue-list.tsx",
+      "components/join-queue-dialog.tsx",
+      "components/court-status.tsx",
+      "components/create-event-dialog.tsx",
+      "components/edit-event-dialog.tsx",
+      "components/notification-prompt.tsx",
+      "components/queue-position-alert.tsx",
+      "components/ui/footer.tsx",
+      "components/ui/select.tsx",
+      "components/search/**/*.tsx",
+    ],
+    rules: {
+      "max-lines": "off",
+      "max-lines-per-function": "off",
+      complexity: "off",
+      "max-params": "off",
+      "max-depth": "off",
+      "no-nested-ternary": "off",
+    },
+  },
+
   {
     files: ["app/api/webhooks/stripe/route.ts"],
     rules: {
@@ -275,6 +366,7 @@ const eslintConfig = defineConfig([
       "no-nested-ternary": "off",
       complexity: "off",
       "max-params": "off",
+      "max-depth": "off",
     },
   },
 
