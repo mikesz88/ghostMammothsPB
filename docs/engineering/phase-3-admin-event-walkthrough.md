@@ -1,6 +1,6 @@
 # Phase 3 walkthrough — `app/admin/events/[id]/page.tsx`
 
-**Status: complete (April 2026).** This doc maps the **delivered** admin event console layout so future work (Phase 7 queue actions, etc.) can find boundaries quickly. **Phase 4** shared loaders/serializers for member + admin event detail are **complete** — see [`phase-4-shared-event-admin-extraction.md`](phase-4-shared-event-admin-extraction.md).
+**Status: complete (April 2026).** This doc maps the **delivered** admin event console layout. **Phase 7** (queue + notifications action split) is **complete** — see [`phase-7-action-layer-walkthrough.md`](phase-7-action-layer-walkthrough.md). **Phase 4** shared loaders/serializers for member + admin event detail are **complete** — see [`phase-4-shared-event-admin-extraction.md`](phase-4-shared-event-admin-extraction.md).
 
 ## Delivered layout
 

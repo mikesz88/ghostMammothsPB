@@ -16,10 +16,33 @@ type ReorderQueueOptions = {
   flushQueueNotifications: FlushQueueNotifications;
 };
 
-export async function reorderQueue(
+function notificationForReorderChange(
   eventId: string,
-  options: ReorderQueueOptions,
-) {
+  row: { user_id: string; status: string },
+  newPosition: number,
+  oldPosition: number,
+): QueueNotification | null {
+  if (row.status !== "waiting") return null;
+  if (newPosition <= 4 && oldPosition > 4) {
+    return {
+      userId: row.user_id,
+      eventId,
+      position: newPosition,
+      notificationType: "up-next",
+    };
+  }
+  if (oldPosition - newPosition >= 3) {
+    return {
+      userId: row.user_id,
+      eventId,
+      position: newPosition,
+      notificationType: "position-update",
+    };
+  }
+  return null;
+}
+
+export async function reorderQueue(eventId: string, options: ReorderQueueOptions) {
   const supabase = options.db ?? (await createClient());
   const { flushQueueNotifications } = options;
 
@@ -33,39 +56,12 @@ export async function reorderQueue(
   if (!queue) return;
 
   const toNotify: QueueNotification[] = [];
-
-  // Update positions
   for (let i = 0; i < queue.length; i++) {
     const newPosition = i + 1;
     const oldPosition = queue[i].position;
-
-    await supabase
-      .from("queue_entries")
-      .update({ position: newPosition })
-      .eq("id", queue[i].id);
-
-    if (queue[i].status !== "waiting") {
-      continue;
-    }
-
-    // Send "up next" email if they just entered top 4
-    if (newPosition <= 4 && oldPosition > 4) {
-      toNotify.push({
-        userId: queue[i].user_id,
-        eventId,
-        position: newPosition,
-        notificationType: "up-next",
-      });
-    }
-    // Send position update if they moved up significantly (3+ positions)
-    else if (oldPosition - newPosition >= 3) {
-      toNotify.push({
-        userId: queue[i].user_id,
-        eventId,
-        position: newPosition,
-        notificationType: "position-update",
-      });
-    }
+    await supabase.from("queue_entries").update({ position: newPosition }).eq("id", queue[i].id);
+    const n = notificationForReorderChange(eventId, queue[i], newPosition, oldPosition);
+    if (n) toNotify.push(n);
   }
 
   await flushQueueNotifications(toNotify).catch((err) =>

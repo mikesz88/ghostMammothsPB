@@ -23,14 +23,20 @@ function entryIdForGameUser(
   return undefined;
 }
 
+export type SideEntryIdsSlotOrderParams = {
+  assignmentRow: Record<string, string | null | undefined>;
+  teamSize: number;
+  gameQueueEntryIds: string[];
+  entriesById: Map<string, GameEntryRow>;
+  side: "team1" | "team2";
+};
+
 /** Queue entry ids for one side in court slot order (player1 ->), unique entries first-seen. */
 export function getSideEntryIdsSlotOrder(
-  assignmentRow: Record<string, string | null | undefined>,
-  teamSize: number,
-  gameQueueEntryIds: string[],
-  entriesById: Map<string, GameEntryRow>,
-  side: "team1" | "team2",
+  params: SideEntryIdsSlotOrderParams,
 ): string[] {
+  const { assignmentRow, teamSize, gameQueueEntryIds, entriesById, side } =
+    params;
   const out: string[] = [];
   const seen = new Set<string>();
   for (let slotIdx = 0; slotIdx < teamSize * 2; slotIdx++) {

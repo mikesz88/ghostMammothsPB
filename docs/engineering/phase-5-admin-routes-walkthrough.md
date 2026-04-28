@@ -31,4 +31,8 @@ Schema typing: `email_logs` is represented in [`supabase/supa-schema.ts`](../../
 
 **Phase 6** (settings, membership, auth) is **complete** — see [`phase-6-settings-membership-auth-walkthrough.md`](phase-6-settings-membership-auth-walkthrough.md).
 
-**Phase 7** — action layer split (`queue.ts`, `notifications.ts`) per plan.
+**Phase 7** (action layer split) is **complete** — see [`phase-7-action-layer-walkthrough.md`](phase-7-action-layer-walkthrough.md).
+
+**Phase 8** (integrations + `queue-manager` / email / Stripe) is **complete** — see [`phase-8-integration-service-cleanup.md`](phase-8-integration-service-cleanup.md).
+
+**Phase 9 (optional)** — public/marketing shell + header — see [`phase-9-public-marketing-shell.md`](phase-9-public-marketing-shell.md).

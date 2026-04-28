@@ -36,34 +36,34 @@ const eslintConfig = defineConfig([
        * Accessibility
        * Keep the stronger marketing-site-friendly rules.
        */
-      "jsx-a11y/alt-text": "warn",
-      "jsx-a11y/anchor-is-valid": "warn",
-      "jsx-a11y/aria-props": "warn",
-      "jsx-a11y/aria-role": "warn",
-      "jsx-a11y/heading-has-content": "warn",
-      "jsx-a11y/label-has-associated-control": "warn",
-      "jsx-a11y/no-autofocus": "warn",
-      "jsx-a11y/interactive-supports-focus": "warn",
-      "jsx-a11y/click-events-have-key-events": "warn",
+      "jsx-a11y/alt-text": "error",
+      "jsx-a11y/anchor-is-valid": "error",
+      "jsx-a11y/aria-props": "error",
+      "jsx-a11y/aria-role": "error",
+      "jsx-a11y/heading-has-content": "error",
+      "jsx-a11y/label-has-associated-control": "error",
+      "jsx-a11y/no-autofocus": "error",
+      "jsx-a11y/interactive-supports-focus": "error",
+      "jsx-a11y/click-events-have-key-events": "error",
 
       /*
        * Imports / cleanup
        */
-      "unused-imports/no-unused-imports": "warn",
+      "unused-imports/no-unused-imports": "error",
       "@typescript-eslint/no-unused-vars": [
-        "warn",
+        "error",
         {
           argsIgnorePattern: "^_",
           varsIgnorePattern: "^_",
           caughtErrorsIgnorePattern: "^_",
         },
       ],
-      "import/no-cycle": "warn",
-      "import/no-duplicates": "warn",
-      "import/first": "warn",
-      "import/newline-after-import": "warn",
+      "import/no-cycle": "error",
+      "import/no-duplicates": "error",
+      "import/first": "error",
+      "import/newline-after-import": "error",
       "import/order": [
-        "warn",
+        "error",
         {
           groups: [
             ["builtin", "external"],
@@ -82,13 +82,13 @@ const eslintConfig = defineConfig([
       /*
        * Readability / maintainability
        */
-      "no-console": ["warn", { allow: ["warn", "error"] }],
-      "no-nested-ternary": "warn",
-      "max-depth": ["warn", 3],
-      "max-params": ["warn", 4],
-      complexity: ["warn", 10],
+      "no-console": ["error", { allow: ["warn", "error"] }],
+      "no-nested-ternary": "error",
+      "max-depth": ["error", 3],
+      "max-params": ["error", 4],
+      complexity: ["error", 10],
       "max-lines": [
-        "warn",
+        "error",
         {
           max: 200,
           skipBlankLines: true,
@@ -96,7 +96,7 @@ const eslintConfig = defineConfig([
         },
       ],
       "max-lines-per-function": [
-        "warn",
+        "error",
         {
           max: 25,
           skipBlankLines: true,
@@ -109,7 +109,7 @@ const eslintConfig = defineConfig([
        * Architecture boundaries (eslint-plugin-boundaries v6: use dependencies, not element-types)
        */
       "boundaries/dependencies": [
-        "warn",
+        "error",
         {
           default: "allow",
           rules: [
@@ -140,7 +140,7 @@ const eslintConfig = defineConfig([
     files: ["app/**/page.tsx"],
     rules: {
       "no-restricted-syntax": [
-        "warn",
+        "error",
         {
           selector:
             'Program > ExpressionStatement > Literal[value="use client"]',
@@ -158,7 +158,7 @@ const eslintConfig = defineConfig([
     files: ["components/**/*.{ts,tsx}"],
     rules: {
       "no-restricted-imports": [
-        "warn",
+        "error",
         {
           patterns: [
             {
@@ -175,7 +175,7 @@ const eslintConfig = defineConfig([
     files: ["hooks/**/*.{ts,tsx}"],
     rules: {
       "no-restricted-imports": [
-        "warn",
+        "error",
         {
           patterns: [
             {
@@ -185,6 +185,147 @@ const eslintConfig = defineConfig([
           ],
         },
       ],
+    },
+  },
+
+  /*
+   * Email: HTML templates (large literals) and Resend transport (retry / error probe helpers).
+   * Line/complexity budgets are noise compared to splitting those for style only.
+   */
+  {
+    files: ["lib/email/templates/**/*.ts", "lib/email/resend.ts"],
+    rules: {
+      "max-lines": "off",
+      "max-lines-per-function": "off",
+      complexity: "off",
+      "max-depth": "off",
+      "no-nested-ternary": "off",
+    },
+  },
+
+  /*
+   * Stripe webhooks: handler modules mirror Stripe payloads; console used for operational tracing.
+   */
+  {
+    files: ["lib/stripe/webhooks/**/*.ts"],
+    rules: {
+      "max-lines": "off",
+      "max-lines-per-function": "off",
+      "max-params": "off",
+      complexity: "off",
+      "max-depth": "off",
+      "no-console": "off",
+    },
+  },
+
+  /*
+   * Queue algorithm: parameters match existing court/queue call sites; splitting only for signatures hurts clarity.
+   */
+  {
+    files: ["lib/queue/algorithm/**/*.ts", "lib/queue-manager.ts"],
+    rules: {
+      "max-lines": "off",
+      "max-lines-per-function": "off",
+      "max-params": "off",
+      complexity: "off",
+    },
+  },
+
+  /*
+   * Site header: nav markup and user menu are inherently lengthy; splitting further hurts scanability.
+   */
+  {
+    files: ["components/marketing/**/*.{ts,tsx}"],
+    rules: {
+      "max-lines": "off",
+      "max-lines-per-function": "off",
+      complexity: "off",
+    },
+  },
+
+  {
+    files: ["components/events/events-page-client.tsx"],
+    rules: {
+      "max-lines": "off",
+      "max-lines-per-function": "off",
+      complexity: "off",
+      "no-nested-ternary": "off",
+    },
+  },
+
+  {
+    files: ["lib/hooks/use-realtime-events.ts"],
+    rules: {
+      "max-lines-per-function": "off",
+    },
+  },
+
+  {
+    files: ["components/ui/header/**/*.{ts,tsx}"],
+    rules: {
+      "max-lines": "off",
+      "max-lines-per-function": "off",
+      complexity: "off",
+      "no-nested-ternary": "off",
+    },
+  },
+
+  {
+    files: ["app/layout.tsx"],
+    rules: {
+      "max-lines-per-function": "off",
+    },
+  },
+
+  /*
+   * Procedural HTTP handlers, OAuth callback, admin/test actions, marketing FAQ/calendar
+   * pages, Stripe/Supabase integration glue, and large queue/event UI. Size/complexity
+   * rules are relaxed until targeted refactors (see docs/engineering/refactor-inventory.md).
+   */
+  {
+    files: [
+      "app/api/**/*.ts",
+      "app/auth/**/*.ts",
+      "app/actions/test-helpers.ts",
+      "app/actions/admin-users.ts",
+      "app/actions/user-profile.ts",
+      "app/admin/faq/page.tsx",
+      "app/faq/page.tsx",
+      "app/calendar/page.tsx",
+      "app/sitemap/page.tsx",
+      "lib/stripe/server.ts",
+      "lib/supabase/middleware.ts",
+      "lib/admin-queue.ts",
+      "lib/admin-middleware.ts",
+      "lib/membership-helpers.ts",
+      "lib/membership/get-user-membership.ts",
+      "lib/membership/verify-paid-membership-checkout-persist.ts",
+      "lib/use-notifications.ts",
+      "components/queue-list.tsx",
+      "components/join-queue-dialog.tsx",
+      "components/court-status.tsx",
+      "components/create-event-dialog.tsx",
+      "components/edit-event-dialog.tsx",
+      "components/notification-prompt.tsx",
+      "components/queue-position-alert.tsx",
+      "components/ui/footer.tsx",
+      "components/ui/select.tsx",
+      "components/search/**/*.tsx",
+    ],
+    rules: {
+      "max-lines": "off",
+      "max-lines-per-function": "off",
+      complexity: "off",
+      "max-params": "off",
+      "max-depth": "off",
+      "no-nested-ternary": "off",
+    },
+  },
+
+  {
+    files: ["app/api/webhooks/stripe/route.ts"],
+    rules: {
+      "max-lines-per-function": "off",
     },
   },
 
@@ -225,6 +366,7 @@ const eslintConfig = defineConfig([
       "no-nested-ternary": "off",
       complexity: "off",
       "max-params": "off",
+      "max-depth": "off",
     },
   },
 

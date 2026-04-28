@@ -56,10 +56,6 @@ function isPageFile(filePath) {
   return base === "page.tsx" || base === "page.ts";
 }
 
-function isRouteHandler(filePath) {
-  return path.basename(filePath) === "route.ts";
-}
-
 function bucketOf(rel) {
   const n = rel.replace(/\\/g, "/");
   if (n.startsWith("app/actions/")) return "action";

@@ -124,7 +124,7 @@ export async function createCustomerPortalSession(
   returnUrl: string
 ) {
   try {
-    console.log("Creating billing portal session for customer:", customerId);
+    console.warn("Creating billing portal session for customer:", customerId);
 
     // Verify customer exists in Stripe first
     const customer = await stripe.customers.retrieve(customerId);
@@ -134,7 +134,7 @@ export async function createCustomerPortalSession(
     }
 
     const activeCustomer = customer as Stripe.Customer;
-    console.log("Customer verified in Stripe:", {
+    console.warn("Customer verified in Stripe:", {
       id: customer.id,
       email: activeCustomer.email,
     });
@@ -144,7 +144,7 @@ export async function createCustomerPortalSession(
       return_url: returnUrl,
     });
 
-    console.log("✅ Billing portal session created:", session.id);
+    console.warn("Billing portal session created:", session.id);
     return { session, error: null };
   } catch (error) {
     console.error("❌ Error creating portal session:", error);

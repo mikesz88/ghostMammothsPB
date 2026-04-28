@@ -8,16 +8,16 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Header } from "@/components/ui/header";
+import { SiteHeader } from "@/components/ui/header/site-header";
 
-export default function CalendarPage() {
+export default async function CalendarPage() {
   // Google Calendar embed URL (from Calendar > Settings > Integrate calendar)
   const calendarEmbedUrl =
     "https://calendar.google.com/calendar/embed?height=600&wkst=1&ctz=America/Chicago&showPrint=0&src=Z2hvc3RtYW1tb3RoZGV2QGdtYWlsLmNvbQ&src=ZW4udXNhI2hvbGlkYXlAZ3JvdXAudi5jYWxlbmRhci5nb29nbGUuY29t&color=%23039be5&color=%230b8043";
 
   return (
     <div className="min-h-screen bg-background">
-      <Header />
+      <SiteHeader />
 
       <div className="container mx-auto px-4 py-12">
         <div className="max-w-6xl mx-auto">

@@ -40,4 +40,8 @@ Shared auth UI and behavior: [`lib/auth-context.tsx`](../../lib/auth-context.tsx
 
 ## Next phase pointer
 
-**Phase 7** — action layer split (`queue.ts`, `notifications.ts`, …) per plan.
+**Phase 7** (action layer split) is **complete** — see [`phase-7-action-layer-walkthrough.md`](phase-7-action-layer-walkthrough.md).
+
+**Phase 8** — integration & service cleanup — is **complete**; see [`phase-8-integration-service-cleanup.md`](phase-8-integration-service-cleanup.md).
+
+**Phase 9 (optional)** — public/marketing shell + header — see [`phase-9-public-marketing-shell.md`](phase-9-public-marketing-shell.md).
