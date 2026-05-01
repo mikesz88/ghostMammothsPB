@@ -12,9 +12,11 @@ export type {
 } from "@/lib/hooks/event-detail-queue-handlers-types";
 
 export function useEventDetailQueueHandlers(p: EventDetailQueueHandlersParams) {
+  const join = useEventDetailJoinQueueHandler(p);
   return {
     handleEndGame: useEventDetailEndGameHandler(p.eventId, p.event.rotationType),
-    handleJoinQueue: useEventDetailJoinQueueHandler(p),
+    handleJoinQueue: join.handleJoinQueue,
+    isJoiningQueue: join.isJoiningQueue,
     handleQueueRemove: useEventDetailQueueRemoveHandler({
       eventName: p.event.name,
       userId: p.user?.id,

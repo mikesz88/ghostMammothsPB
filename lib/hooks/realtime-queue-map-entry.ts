@@ -1,3 +1,5 @@
+import { parsePlayerNames } from "@/lib/queue/mappers";
+
 import type {
   GroupSize,
   QueueEntry,
@@ -8,7 +10,10 @@ import type { Database } from "@/supabase/supa-schema";
 
 type QueueEntryRow = Database["public"]["Tables"]["queue_entries"]["Row"];
 type UserRow = Database["public"]["Tables"]["users"]["Row"];
-export type QueueEntryWithUser = QueueEntryRow & { user: UserRow | null };
+export type QueueEntryWithUser = QueueEntryRow & {
+  user: UserRow | null;
+  player_names?: unknown;
+};
 
 function mapQueueEntryUserRow(user: UserRow): NonNullable<QueueEntry["user"]> {
   return {
@@ -29,6 +34,7 @@ export function mapRealtimeQueueEntry(entry: QueueEntryWithUser): QueueEntry {
     userId: entry.user_id,
     groupId: entry.group_id ?? undefined,
     groupSize: entry.group_size as GroupSize,
+    player_names: parsePlayerNames(entry.player_names),
     position: entry.position,
     status: entry.status as QueueStatus,
     joinedAt: new Date(entry.joined_at),

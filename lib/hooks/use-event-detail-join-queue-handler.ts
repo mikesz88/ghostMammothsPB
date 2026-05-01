@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback } from "react";
+import { useCallback, useState } from "react";
 
 import { runJoinQueueHandler } from "@/lib/hooks/event-detail-join-queue-flow";
 
@@ -10,9 +10,19 @@ import type {
 } from "@/lib/hooks/event-detail-queue-handlers-types";
 
 export function useEventDetailJoinQueueHandler(p: EventDetailQueueHandlersParams) {
-  return useCallback(
-    (players: JoinPlayer[], groupSize: number) =>
-      runJoinQueueHandler(p, players, groupSize),
+  const [isJoiningQueue, setIsJoiningQueue] = useState(false);
+
+  const handleJoinQueue = useCallback(
+    async (players: JoinPlayer[], groupSize: number) => {
+      setIsJoiningQueue(true);
+      try {
+        await runJoinQueueHandler(p, players, groupSize);
+      } finally {
+        setIsJoiningQueue(false);
+      }
+    },
     [p],
   );
+
+  return { handleJoinQueue, isJoiningQueue };
 }

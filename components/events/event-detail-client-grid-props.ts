@@ -21,7 +21,7 @@ export function eventDetailClientGridPropsFromView(
     requiresPayment: v.requiresPayment,
     paymentAmount: v.paymentAmount,
     isAdmin: v.isAdmin,
-    onJoinClick: () => v.setShowJoinDialog(true),
+    onJoinClick: () => v.openJoinDialog(),
     onShowQrClick: () => v.setShowQrDialog(true),
     onCompleteGame: v.handleEndGame,
     onQueueRemove: v.handleQueueRemove,

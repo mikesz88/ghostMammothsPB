@@ -1,7 +1,7 @@
 import type { QueueEntryWithUser } from "@/lib/queue/types";
 import type { GroupSize } from "@/lib/types";
 
-function parsePlayerNames(
+export function parsePlayerNames(
   raw: unknown,
 ): Array<{ name: string; skillLevel: string }> {
   if (!raw) return [];

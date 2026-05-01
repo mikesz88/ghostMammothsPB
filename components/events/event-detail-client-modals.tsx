@@ -9,9 +9,11 @@ export function EventDetailClientModals({ v }: { v: View }) {
   return (
     <>
       <JoinQueueDialog
+        key={v.joinDialogMountKey}
         open={v.showJoinDialog}
         onOpenChange={v.setShowJoinDialog}
         onJoin={v.handleJoinQueue}
+        isJoining={v.isJoiningQueue}
         eventTeamSize={v.event.teamSize}
         rotationType={v.event.rotationType}
       />
