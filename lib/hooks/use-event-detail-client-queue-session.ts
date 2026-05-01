@@ -12,6 +12,8 @@ export function useEventDetailClientQueueSession(eventId: string) {
     queue: qr.queue,
     queueLoading: qr.loading,
     refetchQueue: qr.refetch,
+    beginOptimisticQueueLeave: qr.beginOptimisticQueueLeave,
+    clearOptimisticQueueLeave: qr.clearOptimisticQueueLeave,
     sendNotification,
     queueLink,
   };

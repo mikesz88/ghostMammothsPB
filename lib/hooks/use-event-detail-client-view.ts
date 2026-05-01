@@ -68,6 +68,8 @@ function useEventDetailClientQueueHandlersMerged(
     refetchQueue: b.refetchQueue,
     sendNotification: b.sendNotification,
     setShowJoinDialog: b.setShowJoinDialog,
+    beginOptimisticQueueLeave: b.beginOptimisticQueueLeave,
+    clearOptimisticQueueLeave: b.clearOptimisticQueueLeave,
   });
 }
 

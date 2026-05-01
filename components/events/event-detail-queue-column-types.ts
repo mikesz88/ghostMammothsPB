@@ -17,4 +17,5 @@ export type EventDetailQueueColumnProps = {
   onJoinClick: () => void;
   onShowQrClick: () => void;
   onQueueRemove: (entryId: string) => void | Promise<void>;
+  leavingQueueEntryIds?: string[];
 };

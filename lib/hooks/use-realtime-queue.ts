@@ -1,38 +1,32 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 
-import { subscribeRealtimeQueueEntries } from "@/lib/hooks/realtime-queue-channel";
-import { fetchRealtimeQueueRows } from "@/lib/hooks/realtime-queue-fetch";
-import { createClient } from "@/lib/supabase/client";
+import { useRealtimeQueueOptimisticFilter } from "@/lib/hooks/use-realtime-queue-optimistic";
+import { useRealtimeServerQueueSync } from "@/lib/hooks/use-realtime-server-queue-sync";
 
 import type { QueueEntry } from "@/lib/types";
 
 export function useRealtimeQueue(eventId: string) {
-  const [queue, setQueue] = useState<QueueEntry[]>([]);
+  const [serverQueue, setServerQueue] = useState<QueueEntry[]>([]);
   const [loading, setLoading] = useState(true);
-  const fetchRef = useRef<() => Promise<void>>(() => Promise.resolve());
-
-  useEffect(() => {
-    const supabase = createClient();
-    const fetchQueue = async () => {
-      const rows = await fetchRealtimeQueueRows(supabase, eventId);
-      setQueue(rows);
-      setLoading(false);
-    };
-    fetchRef.current = fetchQueue;
-    queueMicrotask(() => fetchQueue());
-    const channel = subscribeRealtimeQueueEntries(
-      supabase,
-      eventId,
-      fetchQueue,
-    );
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [eventId]);
-
+  const fetchRef = useRealtimeServerQueueSync(
+    eventId,
+    setServerQueue,
+    setLoading,
+  );
+  const {
+    queue,
+    beginOptimisticQueueLeave,
+    clearOptimisticQueueLeave,
+  } = useRealtimeQueueOptimisticFilter(serverQueue);
   const refetch = () => fetchRef.current?.();
 
-  return { queue, loading, refetch };
+  return {
+    queue,
+    loading,
+    refetch,
+    beginOptimisticQueueLeave,
+    clearOptimisticQueueLeave,
+  };
 }

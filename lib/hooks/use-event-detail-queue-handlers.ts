@@ -13,17 +13,21 @@ export type {
 
 export function useEventDetailQueueHandlers(p: EventDetailQueueHandlersParams) {
   const join = useEventDetailJoinQueueHandler(p);
+  const remove = useEventDetailQueueRemoveHandler({
+    eventName: p.event.name,
+    userId: p.user?.id,
+    queue: p.queue,
+    isAdmin: p.isAdmin,
+    refetchQueue: p.refetchQueue,
+    sendNotification: p.sendNotification,
+    beginOptimisticQueueLeave: p.beginOptimisticQueueLeave,
+    clearOptimisticQueueLeave: p.clearOptimisticQueueLeave,
+  });
   return {
     handleEndGame: useEventDetailEndGameHandler(p.eventId, p.event.rotationType),
     handleJoinQueue: join.handleJoinQueue,
     isJoiningQueue: join.isJoiningQueue,
-    handleQueueRemove: useEventDetailQueueRemoveHandler({
-      eventName: p.event.name,
-      userId: p.user?.id,
-      queue: p.queue,
-      isAdmin: p.isAdmin,
-      refetchQueue: p.refetchQueue,
-      sendNotification: p.sendNotification,
-    }),
+    handleQueueRemove: remove.handleQueueRemove,
+    leavingQueueEntryIds: remove.leavingQueueEntryIds,
   };
 }

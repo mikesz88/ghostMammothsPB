@@ -21,6 +21,11 @@ export type EventDetailQueueHandlersParams = {
   refetchQueue: () => Promise<void>;
   sendNotification: SendNotification;
   setShowJoinDialog: (open: boolean) => void;
+  beginOptimisticQueueLeave: (
+    entry: QueueEntry,
+    snapshotQueue: QueueEntry[],
+  ) => void;
+  clearOptimisticQueueLeave: () => void;
 };
 
 export function isActiveQueueStatus(status: QueueEntry["status"]): boolean {

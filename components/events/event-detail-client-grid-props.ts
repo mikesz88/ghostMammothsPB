@@ -25,5 +25,6 @@ export function eventDetailClientGridPropsFromView(
     onShowQrClick: () => v.setShowQrDialog(true),
     onCompleteGame: v.handleEndGame,
     onQueueRemove: v.handleQueueRemove,
+    leavingQueueEntryIds: v.leavingQueueEntryIds,
   };
 }

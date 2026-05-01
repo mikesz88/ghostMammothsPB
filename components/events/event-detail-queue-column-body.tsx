@@ -30,6 +30,7 @@ function EventDetailQueueColumnListAdapter(p: EventDetailQueueColumnProps) {
       user={p.user}
       isAdmin={p.isAdmin}
       onQueueRemove={p.onQueueRemove}
+      leavingQueueEntryIds={p.leavingQueueEntryIds}
     />
   );
 }

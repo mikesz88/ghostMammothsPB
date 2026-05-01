@@ -23,6 +23,7 @@ export type EventDetailClientGridProps = {
   onShowQrClick: () => void;
   onCompleteGame: (assignmentId: string, team: "team1" | "team2") => void;
   onQueueRemove: (entryId: string) => void | Promise<void>;
+  leavingQueueEntryIds?: string[];
 };
 
 function EventDetailClientCourtSlot({ p }: { p: EventDetailClientGridProps }) {
@@ -55,6 +56,7 @@ function EventDetailClientQueueSlot({ p }: { p: EventDetailClientGridProps }) {
       onJoinClick={p.onJoinClick}
       onShowQrClick={p.onShowQrClick}
       onQueueRemove={p.onQueueRemove}
+      leavingQueueEntryIds={p.leavingQueueEntryIds}
     />
   );
 }

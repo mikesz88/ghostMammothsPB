@@ -1,6 +1,6 @@
 "use client";
 
-import { Clock, UserX } from "lucide-react";
+import { Clock, Loader2, UserX } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -13,6 +13,8 @@ interface QueueListProps {
   onRemove?: (entryId: string) => void;
   currentUserId?: string;
   isAdmin?: boolean;
+  /** Entry ids currently being removed (disables leave controls + spinner). */
+  leavingQueueEntryIds?: string[];
 }
 
 // Skill level mapping for weighted average calculation
@@ -76,6 +78,15 @@ function getRemoveTargetEntryId(
   );
 }
 
+function removeRowIsLeaving(
+  entries: QueueEntry[],
+  leavingQueueEntryIds: string[] | undefined,
+): boolean {
+  if (!leavingQueueEntryIds?.length) return false;
+  const set = new Set(leavingQueueEntryIds);
+  return entries.some((e) => set.has(e.id));
+}
+
 function removeButtonTitle(isAdmin: boolean, isCurrentUser: boolean): string {
   return isAdmin && !isCurrentUser
     ? "Admin: Remove from queue"
@@ -87,6 +98,7 @@ export function QueueList({
   onRemove,
   currentUserId,
   isAdmin = false,
+  leavingQueueEntryIds,
 }: QueueListProps) {
   /** Single ordered line: assignable + pending solos (same position ordering). */
   const lineQueue = queue
@@ -152,6 +164,7 @@ export function QueueList({
             const showRemove =
               onRemove &&
               (isCurrentUser || isAdmin);
+            const rowLeaving = removeRowIsLeaving(entries, leavingQueueEntryIds);
             return (
               <Card
                 key={isGroup ? firstEntry.groupId : firstEntry.id}
@@ -220,11 +233,28 @@ export function QueueList({
                           variant="ghost"
                           size="icon"
                           onClick={() => onRemove?.(removeTargetId)}
-                          title={removeButtonTitle(isAdmin, isCurrentUser)}
-                          aria-label={removeButtonTitle(isAdmin, isCurrentUser)}
+                          disabled={rowLeaving}
+                          title={
+                            rowLeaving
+                              ? "Leaving queue…"
+                              : removeButtonTitle(isAdmin, isCurrentUser)
+                          }
+                          aria-label={
+                            rowLeaving
+                              ? "Leaving queue"
+                              : removeButtonTitle(isAdmin, isCurrentUser)
+                          }
+                          aria-busy={rowLeaving}
                           className="shrink-0 [&_svg]:size-5"
                         >
-                          <UserX color={"red"} strokeWidth={3} aria-hidden />
+                          {rowLeaving ? (
+                            <Loader2
+                              className="size-5 animate-spin text-muted-foreground"
+                              aria-hidden
+                            />
+                          ) : (
+                            <UserX color={"red"} strokeWidth={3} aria-hidden />
+                          )}
                         </Button>
                       )}
                     </div>
@@ -250,6 +280,7 @@ export function QueueList({
         );
         const showRemove =
           onRemove && (isCurrentUser || isAdmin);
+        const rowLeaving = removeRowIsLeaving(entries, leavingQueueEntryIds);
 
         return (
           <Card
@@ -325,11 +356,28 @@ export function QueueList({
                       variant="ghost"
                       size="icon"
                       onClick={() => onRemove?.(removeTargetId)}
-                      title={removeButtonTitle(isAdmin, isCurrentUser)}
-                      aria-label={removeButtonTitle(isAdmin, isCurrentUser)}
+                      disabled={rowLeaving}
+                      title={
+                        rowLeaving
+                          ? "Leaving queue…"
+                          : removeButtonTitle(isAdmin, isCurrentUser)
+                      }
+                      aria-label={
+                        rowLeaving
+                          ? "Leaving queue"
+                          : removeButtonTitle(isAdmin, isCurrentUser)
+                      }
+                      aria-busy={rowLeaving}
                       className="shrink-0 [&_svg]:size-5"
                     >
-                      <UserX color={"red"} strokeWidth={3} aria-hidden />
+                      {rowLeaving ? (
+                        <Loader2
+                          className="size-5 animate-spin text-muted-foreground"
+                          aria-hidden
+                        />
+                      ) : (
+                        <UserX color={"red"} strokeWidth={3} aria-hidden />
+                      )}
                     </Button>
                   )}
                 </div>
