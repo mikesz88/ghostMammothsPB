@@ -52,6 +52,8 @@ export function mapDbEntryToManagerEntry(entry: QueueEntryWithUser) {
   };
 }
 
+export type ManagerEntry = ReturnType<typeof mapDbEntryToManagerEntry>;
+
 export function countSlotsForEntries(
   entries: Array<{ groupSize?: GroupSize }>,
 ): number {

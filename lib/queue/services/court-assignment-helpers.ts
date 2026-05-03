@@ -1,20 +1,33 @@
-import { countSlotsForEntries, mapDbEntryToManagerEntry } from "@/lib/queue/mappers";
+import {
+  countSlotsForEntries,
+  mapDbEntryToManagerEntry,
+  type ManagerEntry,
+} from "@/lib/queue/mappers";
+import {
+  orderedPlayers2Stay2OffDoubles,
+  partitionMultiSlotEntriesFirstForDoubles,
+} from "@/lib/queue/services/court-assignment-next-players-order";
 import { is2Stay2OffRotation } from "@/lib/rotation-policy";
 
-import type { CourtAssignmentInsert, DbClient, QueueEntryWithUser } from "@/lib/queue/types";
+import type { DbClient, QueueEntryWithUser } from "@/lib/queue/types";
 import type { RotationType } from "@/lib/types";
 import type { Database } from "@/supabase/supa-schema";
 
 export { loadStayingMappedForCourt } from "./load-staying-mapped-for-court";
-
-export type ManagerEntry = ReturnType<typeof mapDbEntryToManagerEntry>;
+export type { ManagerEntry };
+export type { PlayerSlot } from "@/lib/queue/services/court-assignment-expand-slots";
+export {
+  buildCourtAssignmentInsert,
+  expandNextPlayersToPlayerSlots,
+} from "@/lib/queue/services/court-assignment-expand-slots";
 
 export type AssignPlayersFail = { success: false; error: string };
 
 export type EventRow = Database["public"]["Tables"]["events"]["Row"];
 
 export type CourtPendingStayerRow =
-  Database["public"]["Tables"]["court_pending_stayers"]["Row"] | null;
+  | Database["public"]["Tables"]["court_pending_stayers"]["Row"]
+  | null;
 
 export async function fetchEventForCourtAssignment(
   supabase: DbClient,
@@ -71,7 +84,9 @@ export async function deleteStaleEndedAssignmentsOnCourt(
 export async function loadWaitingQueueMapped(
   supabase: DbClient,
   eventId: string,
-): Promise<AssignPlayersFail | { success: true; waitingQueue: ManagerEntry[] }> {
+): Promise<
+  AssignPlayersFail | { success: true; waitingQueue: ManagerEntry[] }
+> {
   const { data: queueData, error: queueError } = await supabase
     .from("queue_entries")
     .select(
@@ -102,26 +117,6 @@ export type ResolveNextPlayersParams = {
   playersPerCourt: number;
 };
 
-function orderedPlayers2Stay2OffDoubles(
-  stayingMapped: ManagerEntry[],
-  newFromQueue: ManagerEntry[],
-): ManagerEntry[] | null {
-  if (
-    stayingMapped.length === 2 &&
-    newFromQueue.length === 2 &&
-    countSlotsForEntries(stayingMapped) === 2 &&
-    countSlotsForEntries(newFromQueue) === 2
-  ) {
-    return [
-      stayingMapped[0],
-      newFromQueue[0],
-      stayingMapped[1],
-      newFromQueue[1],
-    ];
-  }
-  return null;
-}
-
 export function resolveNextPlayersForCourt(
   params: ResolveNextPlayersParams,
 ): AssignPlayersFail | { success: true; nextPlayers: ManagerEntry[] } {
@@ -129,8 +124,15 @@ export function resolveNextPlayersForCourt(
     params;
   let nextPlayers: ManagerEntry[] = [...stayingMapped, ...newFromQueue];
   if (is2Stay2OffRotation(rotationType) && event.team_size === 2) {
-    const reordered = orderedPlayers2Stay2OffDoubles(stayingMapped, newFromQueue);
+    const reordered = orderedPlayers2Stay2OffDoubles(
+      stayingMapped,
+      newFromQueue,
+    );
     if (reordered) nextPlayers = reordered;
+  }
+
+  if (event.team_size === 2) {
+    nextPlayers = partitionMultiSlotEntriesFirstForDoubles(nextPlayers);
   }
 
   const totalSlots = countSlotsForEntries(nextPlayers);
@@ -141,86 +143,4 @@ export function resolveNextPlayersForCourt(
     };
   }
   return { success: true, nextPlayers };
-}
-
-export type PlayerSlot = {
-  userId: string;
-  name: string;
-  skillLevel: string;
-};
-
-function pushNamedPlayerSlots(
-  entry: ManagerEntry,
-  groupSize: number,
-  playerNames: Array<{ name: string; skillLevel: string }>,
-  playerSlots: PlayerSlot[],
-) {
-  for (let i = 0; i < groupSize; i++) {
-    playerSlots.push({
-      userId: entry.userId,
-      name: playerNames[i]?.name || entry.user?.name || "Player",
-      skillLevel:
-        playerNames[i]?.skillLevel ||
-        entry.user?.skillLevel ||
-        "intermediate",
-    });
-  }
-}
-
-function pushAnonymousPlayerSlots(
-  entry: ManagerEntry,
-  groupSize: number,
-  playerSlots: PlayerSlot[],
-) {
-  for (let i = 0; i < groupSize; i++) {
-    playerSlots.push({
-      userId: entry.userId,
-      name: entry.user?.name || "Player",
-      skillLevel: entry.user?.skillLevel || "intermediate",
-    });
-  }
-}
-
-export function expandNextPlayersToPlayerSlots(
-  nextPlayers: ManagerEntry[],
-): PlayerSlot[] {
-  const playerSlots: PlayerSlot[] = [];
-
-  for (const entry of nextPlayers) {
-    const groupSize = entry.groupSize || 1;
-    const playerNames = entry.player_names || [];
-    if (playerNames.length > 0) {
-      pushNamedPlayerSlots(entry, groupSize, playerNames, playerSlots);
-    } else {
-      pushAnonymousPlayerSlots(entry, groupSize, playerSlots);
-    }
-  }
-
-  return playerSlots;
-}
-
-export function buildCourtAssignmentInsert(
-  eventId: string,
-  courtNumber: number,
-  nextPlayers: ManagerEntry[],
-  playerSlots: PlayerSlot[],
-): CourtAssignmentInsert {
-  const assignmentData: CourtAssignmentInsert = {
-    event_id: eventId,
-    court_number: courtNumber,
-    started_at: new Date().toISOString(),
-    player_names: playerSlots.map((p) => p.name),
-    queue_entry_ids: nextPlayers.map((p) => p.id),
-  };
-
-  if (playerSlots[0]) assignmentData.player1_id = playerSlots[0].userId;
-  if (playerSlots[1]) assignmentData.player2_id = playerSlots[1].userId;
-  if (playerSlots[2]) assignmentData.player3_id = playerSlots[2].userId;
-  if (playerSlots[3]) assignmentData.player4_id = playerSlots[3].userId;
-  if (playerSlots[4]) assignmentData.player5_id = playerSlots[4].userId;
-  if (playerSlots[5]) assignmentData.player6_id = playerSlots[5].userId;
-  if (playerSlots[6]) assignmentData.player7_id = playerSlots[6].userId;
-  if (playerSlots[7]) assignmentData.player8_id = playerSlots[7].userId;
-
-  return assignmentData;
 }
