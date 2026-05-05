@@ -40,7 +40,7 @@ Target (achieved): **server-first `page.tsx`**, **no Supabase reads in the page 
 
 Hooks initialized here:
 
-* `useRealtimeQueue(id)` — **must remain under a client subtree** subscribed to `queue_entries` (or whatever the hook uses).
+* `useRealtimeQueue(id)` — **must remain under a client subtree** subscribed to `queue_entries` (or whatever the hook uses). Peers not seeing leaves until refresh is often **Realtime + RLS** — see [`supabase-realtime-queue-rls.md`](supabase-realtime-queue-rls.md).
 * `useAuth()`, `useNotifications()` — client.
 
 ---

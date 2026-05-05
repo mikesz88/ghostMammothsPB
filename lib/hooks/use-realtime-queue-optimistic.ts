@@ -6,7 +6,8 @@ import { collectQueueLeaveTargetIds } from "@/lib/hooks/queue-leave-target-ids";
 
 import type { QueueEntry } from "@/lib/types";
 
-function filterHiddenFromQueue(
+/** Exported for tests; same logic as optimistic queue display. */
+export function filterHiddenFromQueue(
   serverQueue: QueueEntry[],
   hiddenIds: string[],
 ): QueueEntry[] {

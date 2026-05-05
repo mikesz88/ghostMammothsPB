@@ -10,7 +10,7 @@
 | Client island | `components/admin/events/admin-event-detail-client.tsx` | React Query for queue, composition of panels + optional test controls. |
 | Presentational panels | `components/admin/events/admin-event-header-card.tsx`, `admin-event-courts-panel.tsx`, `admin-event-queue-panel.tsx` | Header stats, courts + `CourtStatus`, queue list + actions. |
 | Test UI | `components/admin/events/test-controls.tsx` | Test-event-only card; calls `useTestControls` from `lib/hooks`. |
-| Realtime + actions | `lib/hooks/use-admin-event-detail-realtime.ts`, `use-admin-event-detail-actions.ts` | Supabase channels for `queue_entries` / `court_assignments`; assign next, clear queue, remove entry, end game (toasts + server actions). |
+| Realtime + actions | `lib/hooks/use-admin-event-detail-realtime.ts`, `use-admin-event-detail-actions.ts` | Supabase channels for `queue_entries` / `court_assignments`; assign next, clear queue, remove entry, end game (toasts + server actions). If leaves don’t appear for other viewers, see [`supabase-realtime-queue-rls.md`](supabase-realtime-queue-rls.md). |
 | Test helpers hook | `lib/hooks/use-test-controls.ts` | State + handlers for dummy queue / rotation / team size / court count (test-helpers actions). |
 | Server payload | `lib/admin/admin-event-detail-server.ts` | Auth + load; serializable props for the client. |
 | Hydration / mapping | `lib/admin/hydrate-admin-event-detail.ts`, `lib/admin/map-admin-court-assignments.ts` | Parse server JSON into `Event`, `CourtAssignment[]`, queue rows. |

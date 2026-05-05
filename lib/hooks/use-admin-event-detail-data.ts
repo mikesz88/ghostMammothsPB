@@ -9,6 +9,7 @@ import {
   hydrateAdminSerializedQueue,
 } from "@/lib/admin/hydrate-admin-event-detail";
 import { adminQueueQueryKey, fetchAdminQueueEntries } from "@/lib/admin-queue";
+import { queuePollIntervalMs } from "@/lib/realtime/queue-poll-interval";
 
 import type { AdminEventDetailPagePayload } from "@/lib/admin/admin-event-detail-server";
 import type { CourtAssignment } from "@/lib/types";
@@ -22,12 +23,16 @@ function useAdminEventQueue(
     () => hydrateAdminSerializedQueue(initialQueue),
     [initialQueue],
   );
+  const pollMs = queuePollIntervalMs();
   const { data: queue = hydratedInitialQueue } = useQuery({
     queryKey: adminQueueQueryKey(eventId),
     queryFn: () => fetchAdminQueueEntries(eventId),
     enabled: Boolean(eventId),
     initialData: hydratedInitialQueue,
-    staleTime: 30_000,
+    // Realtime invalidation must refetch immediately; long staleTime can leave
+    // admin UI stale if postgres_changes does not fire (e.g. RLS).
+    staleTime: 0,
+    refetchInterval: pollMs > 0 ? pollMs : false,
   });
   return { queue, queryClient };
 }

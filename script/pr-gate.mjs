@@ -4,6 +4,7 @@ const blockingCommands = [
   "npm run lint",
   "npm run lint:policy",
   "npm run typecheck",
+  "npm run test:unit",
 ];
 const reportingCommands = ["npm run architecture:audit"];
 
