@@ -5,7 +5,7 @@ import { revalidatePath } from "next/cache";
 import {
   is2Stay2OffRotation,
   is2Stay2OffValidTeamSize,
-} from "@/lib/rotation-policy";
+} from "@/lib/queue/rotation-policy";
 import { createClient } from "@/lib/supabase/server";
 
 import type { RotationType, TeamSize } from "@/lib/types";

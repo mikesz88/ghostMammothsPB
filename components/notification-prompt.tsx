@@ -5,7 +5,7 @@ import { useState } from "react"
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
-import { useNotifications } from "@/lib/use-notifications"
+import { useNotifications } from "@/lib/notifications/use-notifications"
 
 export function NotificationPrompt() {
   const { permission, requestPermission, isSupported } = useNotifications()

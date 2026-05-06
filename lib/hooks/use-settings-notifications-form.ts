@@ -3,7 +3,7 @@
 import { useCallback, useState } from "react";
 import { toast } from "sonner";
 
-import { useNotifications } from "@/lib/use-notifications";
+import { useNotifications } from "@/lib/notifications/use-notifications";
 
 import type {
   SettingsNotificationsBooleanKey,

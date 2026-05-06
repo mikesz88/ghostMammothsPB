@@ -4,7 +4,7 @@ import { Toaster } from "sonner";
 import "./globals.css";
 
 import { Footer } from "@/components/ui/footer";
-import { AuthProvider } from "@/lib/auth-context";
+import { AuthProvider } from "@/lib/auth/auth-context";
 
 import type { Metadata } from "next";
 

@@ -51,7 +51,7 @@ Seeded from [`refactor-inventory.snapshot.md`](refactor-inventory.snapshot.md) (
 | app/admin/events/[id]/page.tsx | ~20 | route-page | server component | server-page migration | — | **Done** | Phase 3: server `loadAdminEventDetailPageData`; client `components/admin/events/admin-event-detail-client.tsx`. |
 | components/admin/events/test-controls.tsx | ~235 | component | large | client-island extraction | — | **Done** | Phase 3: test-only; logic in `lib/hooks/use-test-controls.ts`. |
 | app/actions/queue.ts | ~133 | action | — | action split | — | **Done** | Phase 7: thin actions → `lib/queue/services/*`; see [`phase-7-action-layer-walkthrough.md`](phase-7-action-layer-walkthrough.md). |
-| lib/queue-manager.ts | ~99 | lib | — | service split | — | **Done** | Phase 8: thin `QueueManager` facade; logic in `lib/queue/algorithm/*`. |
+| lib/queue/queue-manager.ts | ~99 | lib | — | service split | — | **Done** | Phase 8: thin `QueueManager` facade; logic in `lib/queue/algorithm/*`. |
 | app/actions/notifications.ts | ~35 | action | — | action split | — | **Done** | Phase 7: async wrapper barrel for `"use server"`; implementations in `queue-email-notifications`, `admin-email-stats-actions`. |
 | components/events/event-detail-client.tsx | ~205 | component | large | client-island extraction | P1 | — | Phase 2 island; split further only if touched (handlers/hooks already extracted). Phase 4 covered shared lib loaders/serializers, not this file. |
 | lib/events/event-detail-server.ts | ~50 | lib | — | service split | P1 | **Done** | Phase 2 types + re-exports; Phase 4 shared DTO/serialize/hydrate/fetch modules — see `phase-4-shared-event-admin-extraction.md`. |
@@ -74,8 +74,8 @@ Seeded from [`refactor-inventory.snapshot.md`](refactor-inventory.snapshot.md) (
 | app/signup/page.tsx | ~15 | route-page | server component | form extraction | — | **Done** | Phase 6: `SignupPageClient` + `lib/auth` sign-up flow helpers. |
 | app/forgot-password/page.tsx | ~9 | route-page | server component | form extraction | — | **Done** | Phase 6: `AuthPageShell` + `ForgotPasswordPageClient`. |
 | app/reset-password/page.tsx | ~10 | route-page | server component | form extraction | — | **Done** | Phase 6: `ResetPasswordPageClient`. |
-| lib/membership-helpers.ts | ~162 | lib | — | service split | P1 | — | Barrel: `canUserJoinEvent`, display helpers, re-exports. Core membership row logic: `lib/membership/get-user-membership.ts` (+ helpers). |
-| lib/auth-context.tsx | ~26 | lib | — | service split | — | **Done** | Phase 6: thin provider; logic in `lib/auth/*` (`useAuthSessionState`, sign-in/up factories, password actions). |
+| lib/membership/membership-helpers.ts | ~162 | lib | — | service split | P1 | — | Barrel: `canUserJoinEvent`, display helpers, re-exports. Core membership row logic: `lib/membership/get-user-membership.ts` (+ helpers). |
+| lib/auth/auth-context.tsx | ~26 | lib | — | service split | — | **Done** | Phase 6: thin provider; logic in `lib/auth/*` (`useAuthSessionState`, sign-in/up factories, password actions). |
 | app/api/webhooks/stripe/route.ts | ~49 | api-route | — | action split | — | **Done** | Phase 8: verify + `dispatchStripeWebhookEvent` → `lib/stripe/webhooks/*`. |
 | lib/email/resend.ts | ~170 | lib | — | service split | — | **Done** | Phase 8: transport + retry; templates `lib/email/templates/queue-notifications.ts`. |
 | lib/stripe/webhooks/handlers.ts | 280 | lib | large | service split | P1 | — | Phase 8 follow-up: optional split by event family (`checkout`, `subscription`, `invoice`). |

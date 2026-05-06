@@ -1,6 +1,6 @@
 "use client";
 
-import { canUserJoinEvent } from "@/lib/membership-helpers";
+import { canUserJoinEvent } from "@/lib/membership/membership-helpers";
 import { createClient } from "@/lib/supabase/client";
 
 import type { EventDetailAccessState } from "@/lib/hooks/event-detail-access-sync-logic";

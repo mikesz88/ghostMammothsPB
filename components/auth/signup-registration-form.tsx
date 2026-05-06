@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/card";
 import { useSignupRegistrationForm } from "@/lib/hooks/use-signup-registration-form";
 
-import type { AuthContextType } from "@/lib/auth-context";
+import type { AuthContextType } from "@/lib/auth/auth-context";
 
 type Props = {
   signUp: AuthContextType["signUp"];

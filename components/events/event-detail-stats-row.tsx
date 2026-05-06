@@ -1,7 +1,7 @@
 import { Clock, Trophy, Users } from "lucide-react";
 
 import { EventDetailStatTile } from "@/components/events/event-detail-stat-tile";
-import { QueueManager } from "@/lib/queue-manager";
+import { QueueManager } from "@/lib/queue/queue-manager";
 
 import type { Event } from "@/lib/types";
 

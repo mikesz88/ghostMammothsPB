@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { useCallback, useState } from "react";
 import { toast } from "sonner";
 
-import { useAuth } from "@/lib/auth-context";
+import { useAuth } from "@/lib/auth/auth-context";
 
 async function deleteAccountRequest() {
   const response = await fetch("/api/account", { method: "DELETE" });

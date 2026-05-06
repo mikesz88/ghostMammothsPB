@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 
-import type { AuthContextType } from "@/lib/auth-context";
+import type { AuthContextType } from "@/lib/auth/auth-context";
 
 type ResetPasswordForEmail = AuthContextType["resetPasswordForEmail"];
 

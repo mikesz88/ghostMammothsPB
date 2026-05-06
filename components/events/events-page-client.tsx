@@ -20,7 +20,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { useAuth } from "@/lib/auth-context";
+import { useAuth } from "@/lib/auth/auth-context";
 import { useRealtimeEvents } from "@/lib/hooks/use-realtime-events";
 import { createClient } from "@/lib/supabase/client";
 

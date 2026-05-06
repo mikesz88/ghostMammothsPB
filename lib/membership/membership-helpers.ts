@@ -2,7 +2,7 @@ import { getUserMembership } from "@/lib/membership/get-user-membership";
 import { createClient } from "@/lib/supabase/client";
 
 import type { AppSupabaseClient } from "@/lib/membership/supabase-client-type";
-import type { MembershipStatus } from "@/lib/types-membership";
+import type { MembershipStatus } from "@/lib/membership/types-membership";
 
 export type { UserMembershipInfo } from "@/lib/membership/user-membership-types";
 export { getUserMembership };

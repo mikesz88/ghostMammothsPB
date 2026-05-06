@@ -3,12 +3,12 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 
+import { adminQueueQueryKey, fetchAdminQueueEntries } from "@/lib/admin/admin-queue";
 import {
   hydrateAdminSerializedAssignments,
   hydrateAdminSerializedEvent,
   hydrateAdminSerializedQueue,
 } from "@/lib/admin/hydrate-admin-event-detail";
-import { adminQueueQueryKey, fetchAdminQueueEntries } from "@/lib/admin-queue";
 import { queuePollIntervalMs } from "@/lib/realtime/queue-poll-interval";
 
 import type { AdminEventDetailPagePayload } from "@/lib/admin/admin-event-detail-server";

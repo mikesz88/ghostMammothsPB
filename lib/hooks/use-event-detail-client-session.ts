@@ -1,6 +1,6 @@
 "use client";
 
-import { useAuth } from "@/lib/auth-context";
+import { useAuth } from "@/lib/auth/auth-context";
 import { useEventDetailAccessSync } from "@/lib/hooks/use-event-detail-access-sync";
 import { useEventDetailClientDialogs } from "@/lib/hooks/use-event-detail-client-dialogs";
 import { useEventDetailClientQueueSession } from "@/lib/hooks/use-event-detail-client-queue-session";

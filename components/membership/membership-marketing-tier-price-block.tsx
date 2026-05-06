@@ -1,4 +1,4 @@
-import { formatPrice } from "@/lib/membership-helpers";
+import { formatPrice } from "@/lib/membership/membership-helpers";
 
 import type { MembershipTierRow } from "@/lib/membership/membership-tier-row";
 

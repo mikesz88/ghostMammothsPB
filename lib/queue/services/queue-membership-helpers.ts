@@ -1,4 +1,4 @@
-import { is2Stay2OffRotation } from "@/lib/rotation-policy";
+import { is2Stay2OffRotation } from "@/lib/queue/rotation-policy";
 import { createClient } from "@/lib/supabase/server";
 
 import type { RotationType } from "@/lib/types";

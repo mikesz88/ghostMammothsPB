@@ -7,7 +7,7 @@
  */
 
 import { PENDING_MEMBERSHIP_TIER_STORAGE_KEY } from "@/lib/constants";
-import { getUserMembership } from "@/lib/membership-helpers";
+import { getUserMembership } from "@/lib/membership/membership-helpers";
 import { createClient } from "@/lib/supabase/client";
 
 import type { User } from "@supabase/supabase-js";

@@ -5,7 +5,7 @@ import { ForgotPasswordRequestForm } from "@/components/auth/forgot-password-req
 import { ForgotPasswordSentPanel } from "@/components/auth/forgot-password-sent-panel";
 import { useForgotPasswordForm } from "@/lib/hooks/use-forgot-password-form";
 
-import type { AuthContextType } from "@/lib/auth-context";
+import type { AuthContextType } from "@/lib/auth/auth-context";
 
 type Props = {
   resetPasswordForEmail: AuthContextType["resetPasswordForEmail"];

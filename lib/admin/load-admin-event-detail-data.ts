@@ -1,3 +1,4 @@
+import { fetchAdminQueueEntriesWithClient } from "@/lib/admin/admin-queue";
 import { fetchCourtAssignmentsForAdminEventDetail } from "@/lib/admin/fetch-court-assignments-for-admin-event-detail";
 import {
   serializeAdminCourtAssignments,
@@ -11,7 +12,6 @@ import {
   adminEventNameIsTestEvent,
   mapAdminEventRowToEvent,
 } from "@/lib/admin/map-admin-event-row";
-import { fetchAdminQueueEntriesWithClient } from "@/lib/admin-queue";
 import { fetchEventRowById } from "@/lib/events/fetch-event-row-by-id";
 
 import type { Database } from "@/supabase/supa-schema";

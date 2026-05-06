@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import {
   is2Stay2OffRotation,
   is2Stay2OffValidTeamSize,
-} from "@/lib/rotation-policy";
+} from "@/lib/queue/rotation-policy";
 
 import type { Event } from "@/lib/types";
 

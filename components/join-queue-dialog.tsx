@@ -22,7 +22,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { is2Stay2OffRotation } from "@/lib/rotation-policy";
+import { is2Stay2OffRotation } from "@/lib/queue/rotation-policy";
 
 import type { RotationType } from "@/lib/types";
 import type React from "react";

@@ -4,7 +4,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { getMembershipBadgeVariant } from "@/lib/membership-helpers";
+import { getMembershipBadgeVariant } from "@/lib/membership/membership-helpers";
 
 import type { UserMembershipInfo } from "@/lib/membership/user-membership-types";
 

@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { formatPrice } from "@/lib/membership-helpers";
+import { formatPrice } from "@/lib/membership/membership-helpers";
 
 import type { User as SupabaseAuthUser } from "@supabase/supabase-js";
 

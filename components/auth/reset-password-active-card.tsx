@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/card";
 import { useResetPasswordForm } from "@/lib/hooks/use-reset-password-form";
 
-import type { AuthContextType } from "@/lib/auth-context";
+import type { AuthContextType } from "@/lib/auth/auth-context";
 
 type Props = {
   updatePassword: AuthContextType["updatePassword"];

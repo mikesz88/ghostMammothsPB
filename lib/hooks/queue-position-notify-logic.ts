@@ -1,4 +1,4 @@
-import type { NotificationType } from "@/lib/use-notifications";
+import type { NotificationType } from "@/lib/notifications/use-notifications";
 
 type NotifyPosition = (
   type: NotificationType,

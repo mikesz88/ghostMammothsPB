@@ -1,6 +1,6 @@
 "use client";
 
-import { adminQueueQueryKey } from "@/lib/admin-queue";
+import { adminQueueQueryKey } from "@/lib/admin/admin-queue";
 import { createClient } from "@/lib/supabase/client";
 
 import type { QueryClient } from "@tanstack/react-query";

@@ -1,6 +1,6 @@
 import { validateSignupPasswords } from "@/lib/auth/validate-signup-passwords";
 
-import type { AuthContextType } from "@/lib/auth-context";
+import type { AuthContextType } from "@/lib/auth/auth-context";
 
 type SignUp = AuthContextType["signUp"];
 

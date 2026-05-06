@@ -1,5 +1,5 @@
 import { TestControls } from "@/components/admin/events/test-controls";
-import { adminQueueQueryKey } from "@/lib/admin-queue";
+import { adminQueueQueryKey } from "@/lib/admin/admin-queue";
 
 import type { useAdminEventDetailClient } from "@/lib/hooks/use-admin-event-detail-client";
 

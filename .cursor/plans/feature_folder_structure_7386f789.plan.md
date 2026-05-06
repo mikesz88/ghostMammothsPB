@@ -4,7 +4,7 @@ overview: "Apply consistent feature subfolders repo-wide where layout is confusi
 todos:
   - id: audit-lib-root
     content: "PR slice: Move lib root stragglers into domain folders (auth-context → lib/auth, admin-queue/admin-middleware → lib/admin, queue-manager/rotation-policy/use-queue-polling → lib/queue, use-notifications → lib/notifications, membership-helpers/types-membership → lib/membership); update eslint paths (queue-manager); grep/fix imports"
-    status: pending
+    status: completed
   - id: slice-queue-event-detail
     content: "PR slice: Move lib/hooks queue + event-detail modules into lib/hooks/queue/ and lib/hooks/event-detail/; fix imports and unit test paths; verify import/no-cycle"
     status: pending

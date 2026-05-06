@@ -22,7 +22,7 @@ import {
 import {
   is2Stay2OffRotation,
   is2Stay2OffValidTeamSize,
-} from "@/lib/rotation-policy";
+} from "@/lib/queue/rotation-policy";
 
 import type { Event, RotationType, TeamSize } from "@/lib/types";
 import type React from "react";

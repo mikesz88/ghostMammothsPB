@@ -20,7 +20,7 @@ export type AssembleCtxParams = {
   stayingMapped: ManagerEntry[];
   pendingRow: CourtPendingStayerRow;
   waitingQueue: ManagerEntry[];
-  QueueManager: typeof import("@/lib/queue-manager").QueueManager;
+  QueueManager: typeof import("@/lib/queue/queue-manager").QueueManager;
 };
 
 function successReadyResult(

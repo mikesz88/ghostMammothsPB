@@ -5,8 +5,8 @@ import { useState } from "react";
 import { createSignupRegistrationFormInitial } from "@/lib/auth/signup-registration-form-initial";
 import { submitSignupRegistration } from "@/lib/auth/submit-signup-registration";
 
+import type { AuthContextType } from "@/lib/auth/auth-context";
 import type { SignupRegistrationFields } from "@/lib/auth/submit-signup-registration";
-import type { AuthContextType } from "@/lib/auth-context";
 
 type SignUp = AuthContextType["signUp"];
 

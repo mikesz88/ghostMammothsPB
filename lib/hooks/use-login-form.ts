@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import { runAfterSignInNavigation } from "@/lib/auth/run-after-sign-in-navigation";
 import { submitLoginCredentials } from "@/lib/auth/submit-login-credentials";
 
-import type { AuthContextType } from "@/lib/auth-context";
+import type { AuthContextType } from "@/lib/auth/auth-context";
 
 type SignIn = AuthContextType["signIn"];
 type Resend = AuthContextType["resendVerificationEmail"];

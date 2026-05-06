@@ -5,7 +5,7 @@ import { useState } from "react";
 
 import { validateResetPasswords } from "@/lib/auth/validate-reset-passwords";
 
-import type { AuthContextType } from "@/lib/auth-context";
+import type { AuthContextType } from "@/lib/auth/auth-context";
 
 type UpdatePassword = AuthContextType["updatePassword"];
 type SignOut = AuthContextType["signOut"];

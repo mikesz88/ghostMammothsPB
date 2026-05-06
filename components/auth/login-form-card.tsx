@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/card";
 import { useLoginForm } from "@/lib/hooks/use-login-form";
 
-import type { AuthContextType } from "@/lib/auth-context";
+import type { AuthContextType } from "@/lib/auth/auth-context";
 
 type Props = {
   initialMessage: string | null;

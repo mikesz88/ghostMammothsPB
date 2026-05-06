@@ -1,5 +1,5 @@
+import type { NotificationType } from "@/lib/notifications/use-notifications";
 import type { CourtAssignment, Event, QueueEntry } from "@/lib/types";
-import type { NotificationType } from "@/lib/use-notifications";
 import type { User as SupabaseAuthUser } from "@supabase/supabase-js";
 
 export type JoinPlayer = { name: string; skillLevel: string };

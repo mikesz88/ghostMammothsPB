@@ -1,7 +1,7 @@
 "use client";
 
 import { ForgotPasswordFormCard } from "@/components/auth/forgot-password-form-card";
-import { useAuth } from "@/lib/auth-context";
+import { useAuth } from "@/lib/auth/auth-context";
 
 export function ForgotPasswordPageClient() {
   const { resetPasswordForEmail } = useAuth();

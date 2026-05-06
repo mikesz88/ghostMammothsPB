@@ -2,7 +2,7 @@
 
 import { LoginFormCard } from "@/components/auth/login-form-card";
 import { LoginRedirectWhenAuthed } from "@/components/auth/login-redirect-when-authed";
-import { useAuth } from "@/lib/auth-context";
+import { useAuth } from "@/lib/auth/auth-context";
 
 type Props = {
   initialMessage: string | null;

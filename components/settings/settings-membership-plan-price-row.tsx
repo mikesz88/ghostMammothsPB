@@ -1,4 +1,4 @@
-import { formatPrice } from "@/lib/membership-helpers";
+import { formatPrice } from "@/lib/membership/membership-helpers";
 
 import type { UserMembershipInfo } from "@/lib/membership/user-membership-types";
 
