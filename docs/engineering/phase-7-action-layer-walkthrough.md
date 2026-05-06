@@ -17,7 +17,7 @@ Phased plan: [`.cursor/plans/rules.mdc_phased_refactor_c02ab9c1.plan.md`](../../
 
 Core split under [`lib/queue/services/`](../../lib/queue/services/): membership (`queue-membership-*.ts`), court assignment (`court-assignment*.ts`, `load-staying-mapped-for-court.ts`), end-game (`end-game*.ts`), `queue-ordering.ts`, `maintenance.ts`. Supporting modules: [`lib/queue/pending-solo.ts`](../../lib/queue/pending-solo.ts), [`pending-solo-combinations.ts`](../../lib/queue/pending-solo-combinations.ts), [`pending-stayers.ts`](../../lib/queue/pending-stayers.ts), [`assignment-helpers.ts`](../../lib/queue/assignment-helpers.ts), [`mappers.ts`](../../lib/queue/mappers.ts).
 
-[`lib/queue-manager.ts`](../../lib/queue-manager.ts) was left to **Phase 8**; it is now a thin facade over [`lib/queue/algorithm/*`](../../lib/queue/algorithm/).
+[`lib/queue/queue-manager.ts`](../../lib/queue/queue-manager.ts) was left to **Phase 8**; it is now a thin facade over [`lib/queue/algorithm/*`](../../lib/queue/algorithm/).
 
 ## Exit criteria (checked)
 

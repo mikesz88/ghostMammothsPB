@@ -1,5 +1,5 @@
-import { AuthPageShell } from "@/components/auth/auth-page-shell";
-import { ForgotPasswordPageClient } from "@/components/auth/forgot-password-page-client";
+import { ForgotPasswordPageClient } from "@/components/auth/forgot-password/forgot-password-page-client";
+import { AuthPageShell } from "@/components/auth/shared/auth-page-shell";
 
 export default async function ForgotPasswordPage() {
   return (

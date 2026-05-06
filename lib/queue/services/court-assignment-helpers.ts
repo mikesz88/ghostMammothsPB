@@ -3,11 +3,11 @@ import {
   mapDbEntryToManagerEntry,
   type ManagerEntry,
 } from "@/lib/queue/mappers";
+import { is2Stay2OffRotation } from "@/lib/queue/rotation-policy";
 import {
   orderedPlayers2Stay2OffDoubles,
   partitionMultiSlotEntriesFirstForDoubles,
 } from "@/lib/queue/services/court-assignment-next-players-order";
-import { is2Stay2OffRotation } from "@/lib/rotation-policy";
 
 import type { DbClient, QueueEntryWithUser } from "@/lib/queue/types";
 import type { RotationType } from "@/lib/types";

@@ -5,7 +5,7 @@ import {
 import { fetchEventRowById } from "@/lib/events/fetch-event-row-by-id";
 import { fetchOpenCourtAssignmentsForEventDetail } from "@/lib/events/fetch-open-court-assignments-for-event-detail";
 import { mapEventRowToEvent } from "@/lib/events/map-event-row";
-import { canUserJoinEvent } from "@/lib/membership-helpers";
+import { canUserJoinEvent } from "@/lib/membership/membership-helpers";
 import { createClient } from "@/lib/supabase/server";
 
 import type {

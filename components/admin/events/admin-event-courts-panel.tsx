@@ -1,4 +1,4 @@
-import { CourtStatus } from "@/components/court-status";
+import { CourtStatus } from "@/components/queue/court-status";
 
 import type { CourtAssignment, Event } from "@/lib/types";
 

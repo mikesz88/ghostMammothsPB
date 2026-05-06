@@ -73,7 +73,7 @@ export async function loadCourtAssignmentReady(
   const resolved = await resolveEventRowAndCourtPick(supabase, eventId);
   if (!("event" in resolved)) return resolved;
   const { event, availableCourt, playersPerCourt } = resolved;
-  const { QueueManager } = await import("@/lib/queue-manager");
+  const { QueueManager } = await import("@/lib/queue/queue-manager");
   const slices = await loadQueueSlicesForCourtAssignment(
     supabase,
     eventId,

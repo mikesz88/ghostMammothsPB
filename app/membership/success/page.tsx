@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 
-import { MembershipSuccessPageClient } from "@/components/membership/membership-success-page-client";
+import { MembershipSuccessPageClient } from "@/components/membership/success/membership-success-page-client";
 import { loadMembershipSuccessPageData } from "@/lib/membership/load-membership-success-page-data";
 
 export default async function MembershipSuccessPage({

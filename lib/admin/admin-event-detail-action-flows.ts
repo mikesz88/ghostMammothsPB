@@ -9,7 +9,7 @@ import {
 } from "@/app/actions/queue";
 import { adminAssignNextTeamSizeLabel } from "@/lib/admin/admin-assign-next-copy";
 import { adminEndGameSuccessToast } from "@/lib/admin/admin-end-game-toast-copy";
-import { adminQueueQueryKey } from "@/lib/admin-queue";
+import { adminQueueQueryKey } from "@/lib/admin/admin-queue";
 import { createClient } from "@/lib/supabase/client";
 
 import type { Event, TeamSize } from "@/lib/types";

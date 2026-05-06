@@ -2,7 +2,7 @@
 
 import { AdminDashboardCreateModal } from "@/components/admin/dashboard/admin-dashboard-create-modal";
 import { AdminDashboardEditModal } from "@/components/admin/dashboard/admin-dashboard-edit-modal";
-import { useAdminDashboardPageClientState } from "@/lib/hooks/use-admin-dashboard-page-client-state";
+import { useAdminDashboardPageClientState } from "@/lib/hooks/admin/dashboard/use-admin-dashboard-page-client-state";
 
 type ModalsSlice = Pick<
   ReturnType<typeof useAdminDashboardPageClientState>,

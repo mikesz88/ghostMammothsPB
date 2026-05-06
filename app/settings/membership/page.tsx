@@ -1,4 +1,4 @@
-import { SettingsMembershipPageClient } from "@/components/settings/settings-membership-page-client";
+import { SettingsMembershipPageClient } from "@/components/settings/membership/settings-membership-page-client";
 import { loadSettingsMembershipPageData } from "@/lib/settings/load-settings-membership-page-data";
 
 export default async function MembershipSettingsPage() {

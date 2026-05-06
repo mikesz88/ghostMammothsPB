@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 
-import { MembershipCheckoutPageClient } from "@/components/membership/membership-checkout-page-client";
+import { MembershipCheckoutPageClient } from "@/components/membership/checkout/membership-checkout-page-client";
 import { loadMembershipCheckoutPageData } from "@/lib/membership/load-membership-checkout-page-data";
 
 export default async function CheckoutPage({

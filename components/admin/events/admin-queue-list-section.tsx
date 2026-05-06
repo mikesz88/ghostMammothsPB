@@ -1,5 +1,5 @@
 import { AdminQueueEmptyCard } from "@/components/admin/events/admin-queue-empty-card";
-import { QueueList } from "@/components/queue-list";
+import { QueueList } from "@/components/queue/queue-list";
 
 import type { QueueEntry } from "@/lib/types";
 

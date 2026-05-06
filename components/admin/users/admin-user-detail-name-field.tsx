@@ -1,7 +1,7 @@
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
-import type { AdminUserDetailFormData } from "@/lib/hooks/admin-user-detail-form-types";
+import type { AdminUserDetailFormData } from "@/lib/hooks/admin/users/admin-user-detail-form-types";
 import type { Dispatch, SetStateAction } from "react";
 
 type SetForm = Dispatch<SetStateAction<AdminUserDetailFormData>>;

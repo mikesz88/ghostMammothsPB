@@ -11,7 +11,7 @@ import { HeaderUserMenu } from "@/components/ui/header/header-user-menu";
 import { HeaderLogo } from "@/components/ui/header/parts/header-logo";
 import { HeaderAdminNav } from "@/components/ui/header/parts/header-nav-admin";
 import { HeaderDefaultNav } from "@/components/ui/header/parts/header-nav-default";
-import { useAuth } from "@/lib/auth-context";
+import { useAuth } from "@/lib/auth/auth-context";
 import { createClient } from "@/lib/supabase/client";
 
 export type HeaderServerSnapshot = {

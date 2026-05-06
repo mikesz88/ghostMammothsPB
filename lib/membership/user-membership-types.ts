@@ -1,4 +1,4 @@
-import type { MembershipStatus } from "@/lib/types-membership";
+import type { MembershipStatus } from "@/lib/membership/types-membership";
 
 export interface UserMembershipInfo {
   status: MembershipStatus;
