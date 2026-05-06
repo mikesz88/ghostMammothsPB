@@ -6,8 +6,8 @@ import { eventRowToEvent } from "@/lib/events/event-row-to-domain";
 import { hydrateSerializedEvent } from "@/lib/events/hydrate-event-detail";
 import { createClient } from "@/lib/supabase/client";
 
-import type { Event } from "../types";
 import type { EventDetailSerializedEvent } from "@/lib/events/event-detail-server";
+import type { Event } from "@/lib/types";
 
 export function useRealtimeEvents(
   initialSerializedEvents?: EventDetailSerializedEvent[],

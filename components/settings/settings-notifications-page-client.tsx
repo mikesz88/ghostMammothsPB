@@ -2,7 +2,7 @@
 
 import { SettingsNotificationsPageMain } from "@/components/settings/settings-notifications-page-main";
 import { SettingsNotificationsPageShell } from "@/components/settings/settings-notifications-page-shell";
-import { useSettingsNotificationsForm } from "@/lib/hooks/use-settings-notifications-form";
+import { useSettingsNotificationsForm } from "@/lib/hooks/settings/use-settings-notifications-form";
 
 import type { SettingsNotificationsPageClientProps } from "@/lib/settings/settings-notifications-page-types";
 

@@ -5,7 +5,7 @@ import { useState } from "react";
 import { SignupRegistrationForm } from "@/components/auth/signup-registration-form";
 import { SignupVerifyEmailCard } from "@/components/auth/signup-verify-email-card";
 import { useAuth } from "@/lib/auth/auth-context";
-import { useSyncSignupPendingTier } from "@/lib/hooks/use-sync-signup-pending-tier";
+import { useSyncSignupPendingTier } from "@/lib/hooks/auth/use-sync-signup-pending-tier";
 
 type Props = {
   flow: string | null;

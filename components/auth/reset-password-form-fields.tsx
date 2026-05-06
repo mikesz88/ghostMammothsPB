@@ -3,7 +3,7 @@ import { ResetPasswordConfirmField } from "@/components/auth/reset-password-conf
 import { ResetPasswordNewField } from "@/components/auth/reset-password-new-field";
 import { Button } from "@/components/ui/button";
 
-import type { UseResetPasswordFormReturn } from "@/lib/hooks/use-reset-password-form";
+import type { UseResetPasswordFormReturn } from "@/lib/hooks/auth/use-reset-password-form";
 
 type Props = {
   f: UseResetPasswordFormReturn;

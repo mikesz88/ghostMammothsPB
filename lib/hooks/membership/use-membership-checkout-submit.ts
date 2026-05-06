@@ -2,7 +2,7 @@
 
 import { useCallback, useState } from "react";
 
-import { runMembershipCheckoutSubmitFlow } from "@/lib/hooks/membership-checkout-submit-flow";
+import { runMembershipCheckoutSubmitFlow } from "@/lib/hooks/membership/membership-checkout-submit-flow";
 
 import type { MembershipTierRow } from "@/lib/membership/membership-tier-row";
 

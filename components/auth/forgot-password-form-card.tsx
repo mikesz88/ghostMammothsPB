@@ -3,7 +3,7 @@
 import { ForgotPasswordCardShell } from "@/components/auth/forgot-password-card-shell";
 import { ForgotPasswordRequestForm } from "@/components/auth/forgot-password-request-form";
 import { ForgotPasswordSentPanel } from "@/components/auth/forgot-password-sent-panel";
-import { useForgotPasswordForm } from "@/lib/hooks/use-forgot-password-form";
+import { useForgotPasswordForm } from "@/lib/hooks/auth/use-forgot-password-form";
 
 import type { AuthContextType } from "@/lib/auth/auth-context";
 

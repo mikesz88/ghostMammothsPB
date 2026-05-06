@@ -1,7 +1,7 @@
 import { LoginFormPrimaryFields } from "@/components/auth/login-form-primary-fields";
 import { Button } from "@/components/ui/button";
 
-import type { UseLoginFormReturn } from "@/lib/hooks/use-login-form";
+import type { UseLoginFormReturn } from "@/lib/hooks/auth/use-login-form";
 
 type Props = {
   f: UseLoginFormReturn;

@@ -3,7 +3,7 @@ import { SignupBasicFields } from "@/components/auth/signup-basic-fields";
 import { SignupPasswordFields } from "@/components/auth/signup-password-fields";
 import { Button } from "@/components/ui/button";
 
-import type { UseSignupRegistrationFormReturn } from "@/lib/hooks/use-signup-registration-form";
+import type { UseSignupRegistrationFormReturn } from "@/lib/hooks/auth/use-signup-registration-form";
 
 type Props = {
   f: UseSignupRegistrationFormReturn;

@@ -10,7 +10,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { useLoginForm } from "@/lib/hooks/use-login-form";
+import { useLoginForm } from "@/lib/hooks/auth/use-login-form";
 
 import type { AuthContextType } from "@/lib/auth/auth-context";
 

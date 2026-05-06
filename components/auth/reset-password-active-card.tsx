@@ -9,7 +9,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { useResetPasswordForm } from "@/lib/hooks/use-reset-password-form";
+import { useResetPasswordForm } from "@/lib/hooks/auth/use-reset-password-form";
 
 import type { AuthContextType } from "@/lib/auth/auth-context";
 

@@ -2,7 +2,7 @@ import { LoginEmailField } from "@/components/auth/login-email-field";
 import { LoginFormAlerts } from "@/components/auth/login-form-alerts";
 import { LoginPasswordField } from "@/components/auth/login-password-field";
 
-import type { UseLoginFormReturn } from "@/lib/hooks/use-login-form";
+import type { UseLoginFormReturn } from "@/lib/hooks/auth/use-login-form";
 
 type Props = {
   f: UseLoginFormReturn;

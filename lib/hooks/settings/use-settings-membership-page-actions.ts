@@ -8,7 +8,7 @@ import {
   runManageBillingFlow,
   runReactivateWithUiLoading,
   showCancelMembershipConfirmationToast,
-} from "@/lib/hooks/settings-membership-page-flows";
+} from "@/lib/hooks/settings/settings-membership-page-flows";
 
 export function useSettingsMembershipPageActions() {
   const router = useRouter();

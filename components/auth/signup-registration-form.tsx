@@ -10,7 +10,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { useSignupRegistrationForm } from "@/lib/hooks/use-signup-registration-form";
+import { useSignupRegistrationForm } from "@/lib/hooks/auth/use-signup-registration-form";
 
 import type { AuthContextType } from "@/lib/auth/auth-context";
 

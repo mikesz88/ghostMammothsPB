@@ -254,7 +254,7 @@ const eslintConfig = defineConfig([
   },
 
   {
-    files: ["lib/hooks/use-realtime-events.ts"],
+    files: ["lib/hooks/events/use-realtime-events.ts"],
     rules: {
       "max-lines-per-function": "off",
     },

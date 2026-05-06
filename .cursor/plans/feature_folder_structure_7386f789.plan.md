@@ -13,7 +13,7 @@ todos:
     status: completed
   - id: slice-auth-settings-events
     content: "PR slice: Move auth, settings, use-realtime-events (+ optional membership hook) into lib/hooks feature subfolders"
-    status: pending
+    status: completed
   - id: components-queue
     content: "PR slice: Move root queue/admin dialog components into components/queue/ (or admin/dashboard/); update eslint.config.mjs path overrides and all imports"
     status: pending
