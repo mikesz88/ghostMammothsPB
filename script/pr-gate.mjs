@@ -1,6 +1,11 @@
 import { execSync } from "node:child_process";
 
-const blockingCommands = ["npm run lint", "npm run typecheck"];
+const blockingCommands = [
+  "npm run lint",
+  "npm run lint:policy",
+  "npm run typecheck",
+  "npm run test:unit",
+];
 const reportingCommands = ["npm run architecture:audit"];
 
 try {

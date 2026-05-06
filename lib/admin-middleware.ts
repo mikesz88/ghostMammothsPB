@@ -56,7 +56,7 @@ export class AdminActivityLogger {
       this.activities = this.activities.slice(0, 100)
     }
 
-    console.log("[v0] Admin activity logged:", activity)
+    console.warn("[v0] Admin activity logged:", activity)
 
     // In a real app, this would save to database
     return activity

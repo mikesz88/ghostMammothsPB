@@ -1,101 +1,94 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
-
 import {
-  is2Stay2OffRotation,
-  is2Stay2OffValidTeamSize,
-} from "@/lib/rotation-policy";
-import { createClient } from "@/lib/supabase/server";
+  adminDbInsertDashboardEvent,
+  adminDbUpdateDashboardEvent,
+} from "@/lib/admin/admin-dashboard-upsert-event-db";
+import { requireAdminServiceDb } from "@/lib/admin/require-admin-service-db";
+import {
+  revalidateAfterAdminEventListChange,
+  revalidateAfterEndOrDeleteEvent,
+  revalidateAfterUpdateAdminEvent,
+} from "@/lib/admin/revalidate-admin-event-paths";
+import { runDeleteAdminDashboardEvent } from "@/lib/admin/run-delete-admin-dashboard-event";
+import { runEndAdminDashboardEvent } from "@/lib/admin/run-end-admin-dashboard-event";
+import { runCreateEventFromFormData } from "@/lib/events/create-event-from-form-data";
+import {
+  fetchActiveEventsWithCounts,
+  fetchEventRowById,
+} from "@/lib/events/fetch-events-for-actions";
 
-import type { RotationType, TeamSize } from "@/lib/types";
+import type { AdminDashboardEventUpsertPayload } from "@/lib/admin/admin-dashboard-event-upsert";
 
+export async function endAdminDashboardEvent(eventId: string) {
+  const gate = await requireAdminServiceDb();
+  if (gate.error || !gate.db) {
+    return {
+      success: false as const,
+      error: gate.error ?? "Server configuration error",
+    };
+  }
+  const err = await runEndAdminDashboardEvent(gate.db, eventId);
+  if (err) return { success: false as const, error: err };
+  revalidateAfterEndOrDeleteEvent(eventId);
+  return { success: true as const, error: null as null };
+}
+
+export async function deleteAdminDashboardEvent(eventId: string) {
+  const gate = await requireAdminServiceDb();
+  if (gate.error || !gate.db) {
+    return {
+      success: false as const,
+      error: gate.error ?? "Server configuration error",
+    };
+  }
+  const err = await runDeleteAdminDashboardEvent(gate.db, eventId);
+  if (err) return { success: false as const, error: err };
+  revalidateAfterEndOrDeleteEvent(eventId);
+  return { success: true as const, error: null as null };
+}
+
+export async function createAdminDashboardEvent(
+  payload: AdminDashboardEventUpsertPayload,
+) {
+  const gate = await requireAdminServiceDb();
+  if (gate.error || !gate.db) {
+    return {
+      success: false as const,
+      error: gate.error ?? "Server configuration error",
+    };
+  }
+  const err = await adminDbInsertDashboardEvent(gate.db, payload);
+  if (err) return { success: false as const, error: err };
+  revalidateAfterAdminEventListChange();
+  return { success: true as const, error: null as null };
+}
+
+export async function updateAdminDashboardEvent(
+  eventId: string,
+  payload: AdminDashboardEventUpsertPayload,
+) {
+  const gate = await requireAdminServiceDb();
+  if (gate.error || !gate.db) {
+    return {
+      success: false as const,
+      error: gate.error ?? "Server configuration error",
+    };
+  }
+  const err = await adminDbUpdateDashboardEvent(gate.db, eventId, payload);
+  if (err) return { success: false as const, error: err };
+  revalidateAfterUpdateAdminEvent(eventId);
+  return { success: true as const, error: null as null };
+}
 
 export async function getEvents() {
-  const supabase = await createClient();
-
-  const { data: events, error } = await supabase
-    .from("events")
-    .select(
-      `
-      *,
-      queue_entries!inner(count),
-      court_assignments!inner(count)
-    `
-    )
-    .eq("status", "active")
-    .order("date", { ascending: true });
-
-  if (error) {
-    console.error("Error fetching events:", error);
-    return { events: [], error };
-  }
-
-  return { events: events || [], error: null };
+  return fetchActiveEventsWithCounts();
 }
 
 export async function getEvent(id: string) {
-  const supabase = await createClient();
-
-  const { data: event, error } = await supabase
-    .from("events")
-    .select("*")
-    .eq("id", id)
-    .single();
-
-  if (error) {
-    console.error("Error fetching event:", error);
-    return { event: null, error };
-  }
-
-  return { event, error: null };
+  return fetchEventRowById(id);
 }
 
 export async function createEvent(formData: FormData) {
-  const supabase = await createClient();
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    return { error: "Not authenticated" };
-  }
-
-  const teamSize = parseInt(formData.get("team_size") as string, 10);
-  const rotationType = formData.get("rotation_type") as string;
-
-  if (
-    is2Stay2OffRotation(rotationType as RotationType) &&
-    !is2Stay2OffValidTeamSize(teamSize as TeamSize)
-  ) {
-    return {
-      error: "2 Stay 2 Off requires doubles (team size 2).",
-    };
-  }
-
-  const eventData = {
-    name: formData.get("name") as string,
-    location: formData.get("location") as string,
-    date: formData.get("date") as string,
-    court_count: parseInt(formData.get("court_count") as string, 10),
-    team_size: teamSize,
-    rotation_type: rotationType,
-    status: "active",
-  };
-
-  const { data, error } = await supabase
-    .from("events")
-    .insert(eventData)
-    .select()
-    .single();
-
-  if (error) {
-    console.error("Error creating event:", error);
-    return { error: error.message };
-  }
-
-  revalidatePath("/admin");
-  revalidatePath("/events");
-  return { data, error: null };
+  return runCreateEventFromFormData(formData);
 }

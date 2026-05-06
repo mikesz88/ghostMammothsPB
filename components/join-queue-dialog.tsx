@@ -32,8 +32,10 @@ interface JoinQueueDialogProps {
   onOpenChange: (open: boolean) => void;
   onJoin: (
     players: Array<{ name: string; skillLevel: string }>,
-    groupSize: number
-  ) => void;
+    groupSize: number,
+  ) => void | Promise<void>;
+  /** While true, form is disabled and submit shows joining state. */
+  isJoining?: boolean;
   eventTeamSize: number;
   rotationType: RotationType;
 }
@@ -42,6 +44,7 @@ export function JoinQueueDialog({
   open,
   onOpenChange,
   onJoin,
+  isJoining = false,
   eventTeamSize,
   rotationType,
 }: JoinQueueDialogProps) {
@@ -53,10 +56,7 @@ export function JoinQueueDialog({
   ]);
 
   const handleOpenChange = (next: boolean) => {
-    if (next && soloOnlyMode) {
-      setGroupSize("1");
-      setPlayers([{ name: "", skillLevel: "intermediate" }]);
-    }
+    if (!next && isJoining) return;
     onOpenChange(next);
   };
 
@@ -95,14 +95,12 @@ export function JoinQueueDialog({
     setPlayers(newPlayers);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isJoining) return;
     const allNamesValid = players.every((p) => p.name.trim());
     if (allNamesValid) {
-      onJoin(players, Number.parseInt(groupSize));
-      // Reset form
-      setGroupSize("1");
-      setPlayers([{ name: "", skillLevel: "intermediate" }]);
+      await Promise.resolve(onJoin(players, Number.parseInt(groupSize)));
     }
   };
 
@@ -121,8 +119,12 @@ export function JoinQueueDialog({
           {!soloOnlyMode ? (
             <div className="space-y-2">
               <Label htmlFor="group">Group Size</Label>
-              <Select value={groupSize} onValueChange={handleGroupSizeChange}>
-                <SelectTrigger id="group">
+              <Select
+                value={groupSize}
+                onValueChange={handleGroupSizeChange}
+                disabled={isJoining}
+              >
+                <SelectTrigger id="group" disabled={isJoining}>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -214,6 +216,7 @@ export function JoinQueueDialog({
                       }
                       placeholder="Enter name"
                       required
+                      disabled={isJoining}
                     />
                   </div>
                   <div className="space-y-2">
@@ -223,8 +226,9 @@ export function JoinQueueDialog({
                       onValueChange={(value) =>
                         handlePlayerChange(index, "skillLevel", value)
                       }
+                      disabled={isJoining}
                     >
-                      <SelectTrigger id={`skill-${index}`}>
+                      <SelectTrigger id={`skill-${index}`} disabled={isJoining}>
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -247,12 +251,13 @@ export function JoinQueueDialog({
               type="button"
               variant="outline"
               onClick={() => onOpenChange(false)}
+              disabled={isJoining}
               className="flex-1"
             >
               Cancel
             </Button>
-            <Button type="submit" className="flex-1">
-              Join Queue
+            <Button type="submit" className="flex-1" disabled={isJoining}>
+              {isJoining ? "Joining…" : "Join Queue"}
             </Button>
           </div>
         </form>

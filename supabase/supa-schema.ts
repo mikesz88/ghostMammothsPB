@@ -158,6 +158,54 @@ export type Database = {
           },
         ]
       }
+      email_logs: {
+        Row: {
+          id: string
+          user_id: string | null
+          event_id: string | null
+          notification_type: string
+          sent_at: string
+          success: boolean
+          error_message: string | null
+          resend_message_id: string | null
+        }
+        Insert: {
+          id?: string
+          user_id?: string | null
+          event_id?: string | null
+          notification_type: string
+          sent_at?: string
+          success: boolean
+          error_message?: string | null
+          resend_message_id?: string | null
+        }
+        Update: {
+          id?: string
+          user_id?: string | null
+          event_id?: string | null
+          notification_type?: string
+          sent_at?: string
+          success?: boolean
+          error_message?: string | null
+          resend_message_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_logs_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "email_logs_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       event_registrations: {
         Row: {
           checked_in_at: string | null

@@ -1,72 +1,32 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 
-import { createClient } from "@/lib/supabase/client";
+import { useRealtimeQueueOptimisticFilter } from "@/lib/hooks/use-realtime-queue-optimistic";
+import { useRealtimeServerQueueSync } from "@/lib/hooks/use-realtime-server-queue-sync";
 
-import type { QueueEntry } from "../types";
+import type { QueueEntry } from "@/lib/types";
 
 export function useRealtimeQueue(eventId: string) {
-  const [queue, setQueue] = useState<QueueEntry[]>([]);
+  const [serverQueue, setServerQueue] = useState<QueueEntry[]>([]);
   const [loading, setLoading] = useState(true);
-  const fetchRef = useRef<() => Promise<void>>(() => Promise.resolve());
-
-  useEffect(() => {
-    const supabase = createClient();
-
-    const fetchQueue = async () => {
-      const { data, error } = await supabase
-        .from("queue_entries")
-        .select(
-          `
-          *,
-          user:users(*)
-        `
-        )
-        .eq("event_id", eventId)
-        .in("status", ["waiting", "pending_solo", "pending_stay"])
-        .order("position");
-
-      if (error) {
-        console.error("Error fetching queue:", error);
-      } else {
-        const queueWithDates = (data || []).map((entry: any) => ({
-          ...entry,
-          eventId: entry.event_id,
-          userId: entry.user_id,
-          groupId: entry.group_id,
-          groupSize: entry.group_size,
-          status: entry.status,
-          joinedAt: new Date(entry.joined_at),
-        }));
-        setQueue(queueWithDates);
-      }
-      setLoading(false);
-    };
-
-    fetchRef.current = fetchQueue;
-    queueMicrotask(() => fetchQueue());
-
-    const channel = supabase
-      .channel(`queue:${eventId}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "queue_entries",
-          filter: `event_id=eq.${eventId}`,
-        },
-        () => fetchQueue()
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [eventId]);
-
+  const fetchRef = useRealtimeServerQueueSync(
+    eventId,
+    setServerQueue,
+    setLoading,
+  );
+  const {
+    queue,
+    beginOptimisticQueueLeave,
+    clearOptimisticQueueLeave,
+  } = useRealtimeQueueOptimisticFilter(serverQueue);
   const refetch = () => fetchRef.current?.();
 
-  return { queue, loading, refetch };
+  return {
+    queue,
+    loading,
+    refetch,
+    beginOptimisticQueueLeave,
+    clearOptimisticQueueLeave,
+  };
 }

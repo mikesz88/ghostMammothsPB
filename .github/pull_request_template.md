@@ -1,92 +1,122 @@
-# Pull Request Checklist
+# Pull Request
 
 ## Summary
 
-* What does this change do?
-* Why is it needed?
+What changed?
+
+```text
+<!-- 1–3 sentences. Be specific. -->
+```
+
+Why is it needed?
+
+```text
+<!-- Bug fix, feature, cleanup, refactor, etc. -->
+```
 
 ---
 
-## Architecture & Placement
+## Type of Change
 
-* [ ] Logic is placed in the correct layer (UI / hook / service / DB)
-* [ ] Business logic is NOT inside UI components
-* [ ] Routes / server actions are thin (validate → call service → return)
-* [ ] No direct DB access from UI
+Check one:
 
----
-
-## Data Flow & State Ownership
-
-* [ ] Data flow is clear and traceable (Server → Client → UI)
-* [ ] State has a single source of truth
-* [ ] No duplication of business state across layers
-* [ ] External data follows pattern: Webhook → DB → App reads DB
+* [ ] Bug fix
+* [ ] Feature
+* [ ] Refactor / cleanup
+* [ ] Docs / config / tooling
+* [ ] Other:
 
 ---
 
-## Security / RLS / Token Flows (if applicable)
+## Behavior
 
-* [ ] Queries are properly scoped (user / org / token context)
-* [ ] No trust in client-provided identifiers
-* [ ] Token routes only access token-scoped data
-* [ ] No owner-level DB usage in user-facing flows
+* [ ] Behavior-preserving
+* [ ] Intentional behavior change
 
----
+If behavior changed, explain:
 
-## Components & Structure
-
-* [ ] Components are single-purpose and small (<100 lines)
-* [ ] No deeply nested JSX
-* [ ] Client components are minimal and isolated
-* [ ] Server components used by default where possible
+```text
+<!-- What changed for users/admins/devs? -->
+```
 
 ---
 
-## Functions & Logic
+## Architecture Notes
 
-* [ ] Functions are small and focused (single responsibility)
-* [ ] No large multi-purpose handlers
-* [ ] Naming clearly reflects intent
+Briefly explain where the main logic lives now.
 
----
+```text
+<!-- Example: Server page fetches initial data → client island handles form state → server action persists changes. -->
+```
 
-## Reuse & Abstraction
+Call out any important boundaries:
 
-* [ ] No duplicated logic (extracted if reused)
-* [ ] No unnecessary abstractions
-* [ ] Existing patterns were reused where appropriate
-
----
-
-## Complexity Check
-
-* [ ] Change reduces or maintains system complexity
-* [ ] No hidden side effects
-* [ ] No “magic” or implicit behavior
-* [ ] Easy to understand in <30 seconds
+```text
+<!-- Server/client split, service layer, DB access, token/auth scope, webhook flow, etc. -->
+```
 
 ---
 
-## Refactoring
+## Risk Areas
 
-* [ ] Touched code was improved where necessary
-* [ ] No new code layered on top of poor structure
+Check any that apply:
+
+* [ ] Queue / matchmaking logic
+* [ ] Notifications / email
+* [ ] Stripe / billing / webhooks
+* [ ] Auth / permissions
+* [ ] RLS / token-scoped access
+* [ ] Database schema / migrations
+* [ ] Large component or route file
+* [ ] None
+
+Notes:
+
+```text
+<!-- Anything reviewers should pay extra attention to? -->
+```
 
 ---
 
-## Error Handling & Reliability
+## Verification
 
-* [ ] Errors are handled explicitly
-* [ ] No silent failures
-* [ ] Behavior is deterministic and debuggable
+Commands run:
+
+```text
+<!-- Example:
+npm run lint
+npm run typecheck
+npm run test
+npm run pr
+-->
+```
+
+Manual testing:
+
+```text
+<!-- Example:
+- joined event queue
+- ended game as admin
+- verified notification send path
+-->
+```
 
 ---
 
-## Final Gate
+## Debt / Follow-up
 
-* [ ] Would a staff engineer approve this without major comments?
-* [ ] Is ownership of logic and data clear?
-* [ ] Does this follow `rules.mdc`?
+```text
+<!-- List known follow-up work, or write "None". -->
+```
 
-If any answer is "no" → refactor before merging.
+---
+
+## Reviewer Checklist
+
+Reviewer only:
+
+* [ ] Change matches the summary
+* [ ] Behavior change is intentional or absent
+* [ ] Logic is in the right layer
+* [ ] No obvious new debt added
+* [ ] Risk areas were tested or explained

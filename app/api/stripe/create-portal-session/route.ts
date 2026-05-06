@@ -25,7 +25,7 @@ export async function POST(request: NextRequest) {
 
     // If not in user_memberships, try to sync from users table
     if (!membership?.stripe_customer_id) {
-      console.log(
+      console.warn(
         "Stripe customer ID not in user_memberships, checking users table..."
       );
 
@@ -36,7 +36,7 @@ export async function POST(request: NextRequest) {
         .single();
 
       if (userData?.stripe_customer_id) {
-        console.log("Found in users table, syncing to user_memberships...");
+        console.warn("Found in users table, syncing to user_memberships...");
 
         // Sync it to user_memberships
         await supabase
@@ -60,7 +60,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.log(
+    console.warn(
       "Opening billing portal for customer:",
       membership.stripe_customer_id
     );
@@ -84,7 +84,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.log("Creating portal session with:", {
+    console.warn("Creating portal session with:", {
       customerId: membership.stripe_customer_id,
       returnUrl: `${baseUrl}/settings/membership`,
     });
@@ -107,7 +107,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.log("✅ Portal session created successfully:", session.id);
+    console.warn("✅ Portal session created successfully:", session.id);
     return NextResponse.json({ url: session.url });
   } catch (error) {
     console.error("Error in create-portal-session:", error);

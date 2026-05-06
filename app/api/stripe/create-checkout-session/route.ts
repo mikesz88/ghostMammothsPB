@@ -82,7 +82,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.log("Creating checkout session for:", {
+    console.warn("Creating checkout session for:", {
       userId: user.id,
       email: user.email,
       priceId,
@@ -111,7 +111,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.log("Checkout session created successfully:", session.id);
+    console.warn("Checkout session created successfully:", session.id);
     return NextResponse.json({ url: session.url });
   } catch (error) {
     console.error("Error in create-checkout-session:", error);

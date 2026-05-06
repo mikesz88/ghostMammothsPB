@@ -2,13 +2,26 @@
 
 import { useEffect, useState } from "react";
 
+import { eventRowToEvent } from "@/lib/events/event-row-to-domain";
+import { hydrateSerializedEvent } from "@/lib/events/hydrate-event-detail";
 import { createClient } from "@/lib/supabase/client";
 
 import type { Event } from "../types";
+import type { EventDetailSerializedEvent } from "@/lib/events/event-detail-server";
 
-export function useRealtimeEvents() {
-  const [events, setEvents] = useState<Event[]>([]);
-  const [loading, setLoading] = useState(true);
+export function useRealtimeEvents(
+  initialSerializedEvents?: EventDetailSerializedEvent[],
+) {
+  const seededFromServer = initialSerializedEvents !== undefined;
+
+  const [events, setEvents] = useState<Event[]>(() =>
+    initialSerializedEvents === undefined
+      ? []
+      : initialSerializedEvents.map(hydrateSerializedEvent),
+  );
+  const [loading, setLoading] = useState(
+    () => initialSerializedEvents === undefined,
+  );
 
   useEffect(() => {
     const supabase = createClient();
@@ -23,25 +36,14 @@ export function useRealtimeEvents() {
       if (error) {
         console.error("Error fetching events:", error);
       } else {
-        const eventsWithDates = (data || []).map((event: any) => ({
-          ...event,
-          date:
-            event.date && event.time
-              ? new Date(`${event.date}T${event.time}`)
-              : new Date(event.date),
-          courtCount:
-            parseInt(event.court_count) || parseInt(event.num_courts) || 0,
-          teamSize: event.team_size || 2,
-          rotationType: event.rotation_type,
-          createdAt: new Date(event.created_at),
-          updatedAt: event.updated_at ? new Date(event.updated_at) : new Date(),
-        }));
-        setEvents(eventsWithDates);
+        setEvents((data ?? []).map(eventRowToEvent));
       }
       setLoading(false);
     };
 
-    fetchEvents();
+    if (!seededFromServer) {
+      void fetchEvents();
+    }
 
     const channel = supabase
       .channel("events")
@@ -53,15 +55,15 @@ export function useRealtimeEvents() {
           table: "events",
         },
         () => {
-          fetchEvents();
-        }
+          void fetchEvents();
+        },
       )
       .subscribe();
 
     return () => {
       supabase.removeChannel(channel);
     };
-  }, []);
+  }, [seededFromServer]);
 
   return { events, loading };
 }
