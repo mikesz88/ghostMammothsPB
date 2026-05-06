@@ -116,7 +116,7 @@ Start with **one** client root to avoid prop drilling explosion; split further i
 
 1. **Server loader(s)** — Add `lib/` or `app/events/[id]/` helpers: `getEventById`, `getCourtAssignmentsForEvent` using **server** Supabase (no behavior change in data shape).
 2. **New server `page.tsx`** — Async page: fetch event + assignments + membership/admin flags; render `<EventDetailClient initialData={...} />`.
-3. **Move client body** — Cut/paste current component into `components/events/event-detail-client.tsx`, delete duplicate fetches (replace with props), **keep** Realtime subscription effect in client.
+3. **Move client body** — Cut/paste current component into `components/events/event-detail/event-detail-client.tsx`, delete duplicate fetches (replace with props), **keep** Realtime subscription effect in client.
 4. **Verify** — Join queue, leave, admin remove, end game, QR, notifications, membership gate.
 5. **Lint** — Fix `unused-imports` on touched files; run `npm run pr`.
 
@@ -151,4 +151,4 @@ Do **not** in this PR: change queue ordering algorithm, split `app/actions/queue
 
 ---
 
-*See also:* [`phase-1-rsc-conventions.md`](phase-1-rsc-conventions.md), phased plan Phase 2 §, [`refactor-inventory.md`](refactor-inventory.md) (member event detail marked done; follow-up hotspots like `components/events/event-detail-client.tsx`, `lib/events/event-detail-server.ts`).
+*See also:* [`phase-1-rsc-conventions.md`](phase-1-rsc-conventions.md), phased plan Phase 2 §, [`refactor-inventory.md`](refactor-inventory.md) (member event detail marked done; follow-up hotspots like `components/events/event-detail/event-detail-client.tsx`, `lib/events/event-detail-server.ts`).

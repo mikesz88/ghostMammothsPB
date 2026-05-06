@@ -47,13 +47,13 @@ Seeded from [`refactor-inventory.snapshot.md`](refactor-inventory.snapshot.md) (
 
 | Path | Lines | Bucket | Auto flags | Primary tag | Priority | Target phase | Notes |
 | --- | ---: | --- | --- | --- | --- | --- | --- |
-| app/events/[id]/page.tsx | ~26 | route-page | server component | server-page migration | — | **Done** | Phase 2 complete: server `loadEventDetailPageData`; client island `components/events/event-detail-client.tsx` (~205 lines). |
+| app/events/[id]/page.tsx | ~26 | route-page | server component | server-page migration | — | **Done** | Phase 2 complete: server `loadEventDetailPageData`; client island `components/events/event-detail/event-detail-client.tsx` (~205 lines). |
 | app/admin/events/[id]/page.tsx | ~20 | route-page | server component | server-page migration | — | **Done** | Phase 3: server `loadAdminEventDetailPageData`; client `components/admin/events/admin-event-detail-client.tsx`. |
 | components/admin/events/test-controls.tsx | ~235 | component | large | client-island extraction | — | **Done** | Phase 3: test-only; logic in `lib/hooks/admin/use-test-controls.ts`. |
 | app/actions/queue.ts | ~133 | action | — | action split | — | **Done** | Phase 7: thin actions → `lib/queue/services/*`; see [`phase-7-action-layer-walkthrough.md`](phase-7-action-layer-walkthrough.md). |
 | lib/queue/queue-manager.ts | ~99 | lib | — | service split | — | **Done** | Phase 8: thin `QueueManager` facade; logic in `lib/queue/algorithm/*`. |
 | app/actions/notifications.ts | ~35 | action | — | action split | — | **Done** | Phase 7: async wrapper barrel for `"use server"`; implementations in `queue-email-notifications`, `admin-email-stats-actions`. |
-| components/events/event-detail-client.tsx | ~205 | component | large | client-island extraction | P1 | — | Phase 2 island; split further only if touched (handlers/hooks already extracted). Phase 4 covered shared lib loaders/serializers, not this file. |
+| components/events/event-detail/event-detail-client.tsx | ~205 | component | large | client-island extraction | P1 | — | Phase 2 island; split further only if touched (handlers/hooks already extracted). Phase 4 covered shared lib loaders/serializers, not this file. |
 | lib/events/event-detail-server.ts | ~50 | lib | — | service split | P1 | **Done** | Phase 2 types + re-exports; Phase 4 shared DTO/serialize/hydrate/fetch modules — see `phase-4-shared-event-admin-extraction.md`. |
 | components/queue/queue-list.tsx | 344 | component | very large | client-island extraction | P1 | 4 | Event queue UI; shared event components. |
 | components/queue/join-queue-dialog.tsx | 263 | component | large; persistence-like patterns | client-island extraction | P1 | 4 | Queue UX; keep actions on server boundary. |
@@ -83,7 +83,7 @@ Seeded from [`refactor-inventory.snapshot.md`](refactor-inventory.snapshot.md) (
 | components/admin/dashboard/edit-event-dialog.tsx | 213 | component | large; persistence-like patterns | shared UI split | P2 | 4–5 | Admin dashboard edit event dialog. |
 | components/ui/dropdown-menu.tsx | 202 | component | large; persistence-like patterns | shared UI split | P2 | 1–4 | Radix wrapper; often low ROI unless touched. |
 | components/ui/header/ | — | component | — | shared UI split | — | **Done** | Phase 9: `site-header.tsx`, `header-client.tsx`, `header-user-menu.tsx`, `parts/*`; barrel exports `Header` only (not `SiteHeader`). See [`phase-9-public-marketing-shell.md`](phase-9-public-marketing-shell.md). |
-| components/events/events-page-client.tsx | 212 | component | large (200+) | client-island extraction | — | **Done** | Phase 9: public events list; `useRealtimeEvents(initial)` + server `loadActiveEventsListData`. |
+| components/events/list/events-page-client.tsx | 212 | component | large (200+) | client-island extraction | — | **Done** | Phase 9: public events list; `useRealtimeEvents(initial)` + server `loadActiveEventsListData`. |
 | app/page.tsx | 25 | route-page | — | server-page migration | — | **Done** | Phase 9: `SiteHeader`, `HomeHeroClient`, `HomePageBody`, `loadHomeAuthSnapshot`. |
 | app/events/page.tsx | 21 | route-page | — | server-page migration | — | **Done** | Phase 9: server shell + `EventsPageClient` (see row above). |
 | app/about/page.tsx | 14 | route-page | — | server-page migration | — | **Done** | Phase 9: `AboutPageBody`, `AboutPageCtaClient`. |

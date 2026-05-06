@@ -27,7 +27,7 @@ Rows include files with **≥200 lines** or **route `page.tsx`/`page.ts` with `"
 | lib/queue/services/court-assignment-helpers.ts | 227 | lib | large (200+) |  |  |  |  |
 | app/actions/queue-email-notifications.ts | 213 | action | large (200+) |  |  |  |  |
 | components/admin/dashboard/edit-event-dialog.tsx | 213 | component | large (200+); persistence-like patterns in component |  |  |  |  |
-| components/events/events-page-client.tsx | 213 | component | large (200+); persistence-like patterns in component |  |  |  |  |
+| components/events/list/events-page-client.tsx | 213 | component | large (200+); persistence-like patterns in component |  |  |  |  |
 | components/queue/court-status.tsx | 205 | component | large (200+) |  |  |  |  |
 | components/ui/dropdown-menu.tsx | 202 | component | large (200+); persistence-like patterns in component |  |  |  |  |
 | app/search/page.tsx | 57 | route-page | "use client" page |  |  |  |  |

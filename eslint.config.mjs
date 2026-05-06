@@ -244,7 +244,7 @@ const eslintConfig = defineConfig([
   },
 
   {
-    files: ["components/events/events-page-client.tsx"],
+    files: ["components/events/list/events-page-client.tsx"],
     rules: {
       "max-lines": "off",
       "max-lines-per-function": "off",

@@ -7,7 +7,7 @@ todos:
     status: completed
   - id: pr-events-membership
     content: Split components/events (event-detail/, queue/, list/) and membership (marketing/, checkout/, cancel/, success/); fix eslint events-page-client path
-    status: pending
+    status: completed
   - id: pr-hooks-admin-nested
     content: Nest lib/hooks/admin into dashboard/, users/, events/, test-controls/, email-stats/; update all imports; pr gate
     status: pending
@@ -31,8 +31,8 @@ isProject: false
 |------|------------|--------|
 | [`components/admin/`](components/admin/) | 138 | Already split: [`users/`](components/admin/users/), [`events/`](components/admin/events/), [`email-stats/`](components/admin/email-stats/), [`dashboard/`](components/admin/dashboard/). |
 | [`components/settings/`](components/settings/) | ~62 | **Grouped** under `hub/`, `membership/`, `notifications/` by filename prefix. |
-| [`components/membership/`](components/membership/) | ~56 | **All flat**; prefixes: `membership-marketing-*`, `membership-checkout-*`, `membership-cancel-*`, `membership-success-*`. |
-| [`components/events/`](components/events/) | ~45 | **All flat**; ~32 `event-detail-*`, 8 `event-queue-*`, 4 `queue-join-*`, 1 `events-page-client.tsx`. |
+| [`components/membership/`](components/membership/) | ~56 | **Grouped** under `marketing/`, `checkout/`, `cancel/`, `success/`. |
+| [`components/events/`](components/events/) | ~45 | **Grouped** under `event-detail/`, `queue/`, `list/` (`events-page-client`). |
 | [`lib/hooks/admin/`](lib/hooks/admin/) | 33 (~1121 LOC) | Single flat folder; names group into dashboard, users, admin event console, test controls, email stats. |
 | [`lib/hooks/event-detail/`](lib/hooks/event-detail/) | 21 (~908 LOC) | Single flat folder; names group into access, queue ops, client shell. |
 | [`lib/hooks/queue/`](lib/hooks/queue/) | 18 (~538 LOC) | Single flat folder; optional second level (realtime vs assignments vs notify). |
