@@ -3,7 +3,7 @@ import "server-only";
 import {
   is2Stay2OffRotation,
   is2Stay2OffValidTeamSize,
-} from "@/lib/rotation-policy";
+} from "@/lib/queue/rotation-policy";
 
 import type { AdminDashboardEventUpsertPayload } from "@/lib/admin/admin-dashboard-event-upsert";
 import type { AdminServiceDb } from "@/lib/admin/require-admin-service-db";

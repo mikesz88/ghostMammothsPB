@@ -1,6 +1,6 @@
 "use client";
 
-import { EditEventDialog } from "@/components/edit-event-dialog";
+import { EditEventDialog } from "@/components/admin/dashboard/edit-event-dialog";
 
 import type { Event } from "@/lib/types";
 

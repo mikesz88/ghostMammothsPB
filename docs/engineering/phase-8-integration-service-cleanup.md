@@ -12,7 +12,7 @@ Phased plan: [`.cursor/plans/rules.mdc_phased_refactor_c02ab9c1.plan.md`](../../
 | --- | --- |
 | Stripe webhooks | Thin route [`app/api/webhooks/stripe/route.ts`](../../app/api/webhooks/stripe/route.ts); [`lib/stripe/webhooks/*`](../../lib/stripe/webhooks/) (`dispatch`, `handlers`, `stripe-narrow`, `db-client`). |
 | Email | Transport [`lib/email/resend.ts`](../../lib/email/resend.ts); templates [`lib/email/templates/queue-notifications.ts`](../../lib/email/templates/queue-notifications.ts); shared data [`lib/email/queue-email-data.ts`](../../lib/email/queue-email-data.ts). |
-| Queue algorithm | Facade [`lib/queue-manager.ts`](../../lib/queue-manager.ts); modules [`lib/queue/algorithm/*`](../../lib/queue/algorithm/). |
+| Queue algorithm | Facade [`lib/queue/queue-manager.ts`](../../lib/queue/queue-manager.ts); modules [`lib/queue/algorithm/*`](../../lib/queue/algorithm/). |
 
 ## Original targets (from plan)
 
@@ -20,7 +20,7 @@ Phased plan: [`.cursor/plans/rules.mdc_phased_refactor_c02ab9c1.plan.md`](../../
 | --- | --- |
 | Stripe webhooks | [`app/api/webhooks/stripe/route.ts`](../../app/api/webhooks/stripe/route.ts) |
 | Email / Resend | [`lib/email/resend.ts`](../../lib/email/resend.ts) |
-| Queue algorithm | [`lib/queue-manager.ts`](../../lib/queue-manager.ts) |
+| Queue algorithm | [`lib/queue/queue-manager.ts`](../../lib/queue/queue-manager.ts) |
 
 ## Goals
 

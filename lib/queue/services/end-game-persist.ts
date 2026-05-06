@@ -1,4 +1,4 @@
-import { isWinnersStayStyleRotation } from "@/lib/rotation-policy";
+import { isWinnersStayStyleRotation } from "@/lib/queue/rotation-policy";
 
 import type { RotationType } from "@/lib/types";
 import type { SupabaseClient } from "@supabase/supabase-js";

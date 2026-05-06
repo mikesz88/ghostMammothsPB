@@ -9,7 +9,7 @@
 | Area | Primary paths |
 | --- | --- |
 | Home | [`app/page.tsx`](../../app/page.tsx) — server shell; [`HomeHeroClient`](../../components/marketing/home-hero-client.tsx), [`HomePageBody`](../../components/marketing/home-page-body.tsx) |
-| Events list | [`app/events/page.tsx`](../../app/events/page.tsx) — server shell; [`EventsPageClient`](../../components/events/events-page-client.tsx) |
+| Events list | [`app/events/page.tsx`](../../app/events/page.tsx) — server shell; [`EventsPageClient`](../../components/events/list/events-page-client.tsx) |
 | About | [`app/about/page.tsx`](../../app/about/page.tsx) — server shell; [`AboutPageBody`](../../components/marketing/about-page-body.tsx), [`AboutPageCtaClient`](../../components/marketing/about-page-cta-client.tsx) |
 | Search | [`app/search/page.tsx`](../../app/search/page.tsx) — server shell; [`SearchPageClient`](../../components/search/search-page-client.tsx) |
 | Site chrome | [`components/ui/header/`](../../components/ui/header/) — `SiteHeader` + `Header` + parts (replaces monolithic `header.tsx`) |
@@ -42,7 +42,7 @@ Related backlog: [`refactor-inventory.md`](refactor-inventory.md) (Phase 9 rows 
 | [`app/layout.tsx`](../../app/layout.tsx) | No header; pages render `<Header />` themselves | Optional later: single `SiteHeader` in layout to dedupe (coordinate with all routes that currently self-wrap). |
 | [`components/ui/header/`](../../components/ui/header/) | `SiteHeader` + split modules (`parts/*`, `header-user-menu`, `header-client`) | Optional: hoist header into `app/layout.tsx`; migrate remaining client-only pages to server shells in steps 2–4. |
 | [`app/page.tsx`](../../app/page.tsx) | Server home + `HomeHeroClient` + `HomePageBody`; `SiteHeader` with `authFromParent` | **Done** (Phase 9 step 2). |
-| [`app/events/page.tsx`](../../app/events/page.tsx) | Server shell + [`EventsPageClient`](../../components/events/events-page-client.tsx): [`useRealtimeEvents(initial)`](../../lib/hooks/use-realtime-events.ts), `loadActiveEventsListData` | **Done:** hybrid initial list from server, realtime via Supabase channel; admin empty-state CTA uses `serverSnapshot` + client fallback like home hero. |
+| [`app/events/page.tsx`](../../app/events/page.tsx) | Server shell + [`EventsPageClient`](../../components/events/list/events-page-client.tsx): [`useRealtimeEvents(initial)`](../../lib/hooks/events/use-realtime-events.ts), `loadActiveEventsListData` | **Done:** hybrid initial list from server, realtime via Supabase channel; admin empty-state CTA uses `serverSnapshot` + client fallback like home hero. |
 | [`app/about/page.tsx`](../../app/about/page.tsx) | Server shell + static [`AboutPageBody`](../../components/marketing/about-page-body.tsx); [`AboutPageCtaClient`](../../components/marketing/about-page-cta-client.tsx) for admin organizer link | **Done:** same `serverSnapshot` + client `is_admin` fallback pattern as home hero / events. |
 
 Repeated pattern to remove: `useEffect` + `createClient()` + `users.is_admin` on home, events, about—replace with one server read or props from a server header shell.
@@ -82,4 +82,4 @@ Repeated pattern to remove: `useEffect` + `createClient()` + `users.is_admin` on
 
 ## Next steps after Phase 9
 
-* Remaining **P1** backlog: queue UI components (`components/queue-list.tsx`, etc.), `app/actions/test-helpers.ts` — unrelated to public shell unless touched for layout.
+* Remaining **P1** backlog: queue UI components (`components/queue/queue-list.tsx`, etc.), `app/actions/test-helpers.ts` — unrelated to public shell unless touched for layout.

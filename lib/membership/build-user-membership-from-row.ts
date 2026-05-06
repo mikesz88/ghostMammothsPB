@@ -1,5 +1,5 @@
+import type { MembershipStatus } from "@/lib/membership/types-membership";
 import type { UserMembershipInfo } from "@/lib/membership/user-membership-types";
-import type { MembershipStatus } from "@/lib/types-membership";
 
 
 type TierFields = {

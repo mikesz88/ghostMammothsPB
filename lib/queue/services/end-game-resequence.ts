@@ -5,7 +5,7 @@ import {
 import {
   isRotateAllStyleRotation,
   isWinnersStayStyleRotation,
-} from "@/lib/rotation-policy";
+} from "@/lib/queue/rotation-policy";
 
 import type { GameEntryRow } from "@/lib/queue/types";
 import type { RotationType, TeamSize } from "@/lib/types";

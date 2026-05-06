@@ -7,7 +7,7 @@ export type ComputeNewFromQueueParams = {
   playersNeeded: number;
   stayingCount: number;
   playersPerCourt: number;
-  QueueManager: typeof import("@/lib/queue-manager").QueueManager;
+  QueueManager: typeof import("@/lib/queue/queue-manager").QueueManager;
 };
 
 function validatePlayersNeededCounts(

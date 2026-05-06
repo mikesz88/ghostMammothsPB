@@ -1,4 +1,4 @@
-import { EventsPageClient } from "@/components/events/events-page-client";
+import { EventsPageClient } from "@/components/events/list/events-page-client";
 import { SiteHeader } from "@/components/ui/header/site-header";
 import { loadActiveEventsListData } from "@/lib/events/load-active-events-list-data";
 import { loadHomeAuthSnapshot } from "@/lib/marketing/load-home-auth-snapshot";

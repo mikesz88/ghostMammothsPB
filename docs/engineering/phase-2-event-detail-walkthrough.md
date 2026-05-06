@@ -7,8 +7,8 @@
 * `app/events/[id]/page.tsx` — async Server Component: `loadEventDetailPageData`, `notFound()`, passes serialized props to the client island.
 * `components/events/*` — `event-detail-client.tsx` (Realtime, queue, dialogs), `event-detail-hero.tsx`, `event-detail-stats-row.tsx`, `event-queue-header-row.tsx`, `event-detail-qr-dialog.tsx`.
 * `lib/events/*` — `event-detail-server.ts`, `hydrate-event-detail.ts`, `map-event-row.ts`, `map-court-assignments.ts`, and small helpers. **Phase 4** added shared fetch/serialize/hydrate modules and DTOs — see [`phase-4-shared-event-admin-extraction.md`](phase-4-shared-event-admin-extraction.md).
-* `lib/hooks/*` — court assignments Realtime, access sync, queue handlers, queue derived state, etc.
-* `lib/membership/*` + `lib/membership-helpers.ts` — `getUserMembership` split into `lib/membership/` for lint/size; barrel re-exports unchanged for imports.
+* `lib/hooks/*` — court assignments Realtime, access sync, queue handlers, queue derived state, etc. (queue infra under `lib/hooks/queue/`, event detail orchestration under `lib/hooks/event-detail/`).
+* `lib/membership/*` + `lib/membership/membership-helpers.ts` — `getUserMembership` split into `lib/membership/` for lint/size; barrel re-exports unchanged for imports.
 
 Target (achieved): **server-first `page.tsx`**, **no Supabase reads in the page file**, **Realtime + interactivity in `components/events/*` client leaves**. Behavior-neutral unless a bugfix is explicitly in scope.
 
@@ -61,7 +61,7 @@ Hooks initialized here:
 
 ### C. Membership gate (lines 268–281)
 
-* `canUserJoinEvent(user.id, id)` — can run **on server** if it doesn’t need browser-only APIs (inspect `lib/membership-helpers.ts`). If it uses Supabase with user session, server page with `createClient()` + `getUser()` can compute **`canJoin`, `joinReason`, `requiresPayment`, `paymentAmount`** and pass as props.
+* `canUserJoinEvent(user.id, id)` — can run **on server** if it doesn’t need browser-only APIs (inspect `lib/membership/membership-helpers.ts`). If it uses Supabase with user session, server page with `createClient()` + `getUser()` can compute **`canJoin`, `joinReason`, `requiresPayment`, `paymentAmount`** and pass as props.
 
 ### D. Admin flag (lines 283–297)
 
@@ -116,11 +116,11 @@ Start with **one** client root to avoid prop drilling explosion; split further i
 
 1. **Server loader(s)** — Add `lib/` or `app/events/[id]/` helpers: `getEventById`, `getCourtAssignmentsForEvent` using **server** Supabase (no behavior change in data shape).
 2. **New server `page.tsx`** — Async page: fetch event + assignments + membership/admin flags; render `<EventDetailClient initialData={...} />`.
-3. **Move client body** — Cut/paste current component into `components/events/event-detail-client.tsx`, delete duplicate fetches (replace with props), **keep** Realtime subscription effect in client.
+3. **Move client body** — Cut/paste current component into `components/events/event-detail/event-detail-client.tsx`, delete duplicate fetches (replace with props), **keep** Realtime subscription effect in client.
 4. **Verify** — Join queue, leave, admin remove, end game, QR, notifications, membership gate.
 5. **Lint** — Fix `unused-imports` on touched files; run `npm run pr`.
 
-Do **not** in this PR: change queue ordering algorithm, split `app/actions/queue.ts` broadly, or refactor `lib/queue-manager` internals.
+Do **not** in this PR: change queue ordering algorithm, split `app/actions/queue.ts` broadly, or refactor `lib/queue/queue-manager` internals.
 
 ---
 
@@ -151,4 +151,4 @@ Do **not** in this PR: change queue ordering algorithm, split `app/actions/queue
 
 ---
 
-*See also:* [`phase-1-rsc-conventions.md`](phase-1-rsc-conventions.md), phased plan Phase 2 §, [`refactor-inventory.md`](refactor-inventory.md) (member event detail marked done; follow-up hotspots like `components/events/event-detail-client.tsx`, `lib/events/event-detail-server.ts`).
+*See also:* [`phase-1-rsc-conventions.md`](phase-1-rsc-conventions.md), phased plan Phase 2 §, [`refactor-inventory.md`](refactor-inventory.md) (member event detail marked done; follow-up hotspots like `components/events/event-detail/event-detail-client.tsx`, `lib/events/event-detail-server.ts`).

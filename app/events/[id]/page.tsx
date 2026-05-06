@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 
-import { EventDetailClient } from "@/components/events/event-detail-client";
+import { EventDetailClient } from "@/components/events/event-detail/event-detail-client";
 import { SiteHeader } from "@/components/ui/header/site-header";
 import { loadEventDetailPageData } from "@/lib/events/event-detail-server";
 

@@ -8,9 +8,9 @@ Phased plan: [`.cursor/plans/rules.mdc_phased_refactor_c02ab9c1.plan.md`](../../
 
 | Route | Server entry | Client island |
 | --- | --- | --- |
-| [`app/settings/page.tsx`](../../app/settings/page.tsx) | [`loadSettingsHubPageData`](../../lib/settings/load-settings-hub-page-data.ts) | [`SettingsHubPageClient`](../../components/settings/settings-hub-page-client.tsx) |
-| [`app/settings/membership/page.tsx`](../../app/settings/membership/page.tsx) | [`loadSettingsMembershipPageData`](../../lib/settings/load-settings-membership-page-data.ts) | [`SettingsMembershipPageClient`](../../components/settings/settings-membership-page-client.tsx) |
-| [`app/settings/notifications/page.tsx`](../../app/settings/notifications/page.tsx) | [`loadSettingsNotificationsPageData`](../../lib/settings/load-settings-notifications-page-data.ts) | [`SettingsNotificationsPageClient`](../../components/settings/settings-notifications-page-client.tsx) |
+| [`app/settings/page.tsx`](../../app/settings/page.tsx) | [`loadSettingsHubPageData`](../../lib/settings/load-settings-hub-page-data.ts) | [`SettingsHubPageClient`](../../components/settings/hub/settings-hub-page-client.tsx) |
+| [`app/settings/membership/page.tsx`](../../app/settings/membership/page.tsx) | [`loadSettingsMembershipPageData`](../../lib/settings/load-settings-membership-page-data.ts) | [`SettingsMembershipPageClient`](../../components/settings/membership/settings-membership-page-client.tsx) |
+| [`app/settings/notifications/page.tsx`](../../app/settings/notifications/page.tsx) | [`loadSettingsNotificationsPageData`](../../lib/settings/load-settings-notifications-page-data.ts) | [`SettingsNotificationsPageClient`](../../components/settings/notifications/settings-notifications-page-client.tsx) |
 
 ## Membership
 
@@ -25,12 +25,12 @@ Phased plan: [`.cursor/plans/rules.mdc_phased_refactor_c02ab9c1.plan.md`](../../
 
 | Route | Server entry | Client island |
 | --- | --- | --- |
-| [`app/login/page.tsx`](../../app/login/page.tsx) | `searchParams` for optional flash `message` | [`AuthPageShell`](../../components/auth/auth-page-shell.tsx) + [`LoginPageClient`](../../components/auth/login-page-client.tsx) |
-| [`app/signup/page.tsx`](../../app/signup/page.tsx) | `searchParams` for `tier` / `flow` | [`SignupPageClient`](../../components/auth/signup-page-client.tsx) (and related signup components) |
-| [`app/forgot-password/page.tsx`](../../app/forgot-password/page.tsx) | — | [`AuthPageShell`](../../components/auth/auth-page-shell.tsx) + [`ForgotPasswordPageClient`](../../components/auth/forgot-password-page-client.tsx) |
-| [`app/reset-password/page.tsx`](../../app/reset-password/page.tsx) | — | [`ResetPasswordPageClient`](../../components/auth/reset-password-page-client.tsx) |
+| [`app/login/page.tsx`](../../app/login/page.tsx) | `searchParams` for optional flash `message` | [`AuthPageShell`](../../components/auth/shared/auth-page-shell.tsx) + [`LoginPageClient`](../../components/auth/login/login-page-client.tsx) |
+| [`app/signup/page.tsx`](../../app/signup/page.tsx) | `searchParams` for `tier` / `flow` | [`SignupPageClient`](../../components/auth/signup/signup-page-client.tsx) (and related signup components) |
+| [`app/forgot-password/page.tsx`](../../app/forgot-password/page.tsx) | — | [`AuthPageShell`](../../components/auth/shared/auth-page-shell.tsx) + [`ForgotPasswordPageClient`](../../components/auth/forgot-password/forgot-password-page-client.tsx) |
+| [`app/reset-password/page.tsx`](../../app/reset-password/page.tsx) | — | [`ResetPasswordPageClient`](../../components/auth/reset-password/reset-password-page-client.tsx) |
 
-Shared auth UI and behavior: [`lib/auth-context.tsx`](../../lib/auth-context.tsx) (provider + `useAuth`), typed surface in [`lib/auth/auth-context-types.ts`](../../lib/auth/auth-context-types.ts), session sync and action factories under [`lib/auth/`](../../lib/auth/) (sign-in/up, password flows, post-login navigation via [`runAfterSignInNavigation`](../../lib/auth/run-after-sign-in-navigation.ts), validation helpers, submit helpers used by hooks).
+Shared auth UI and behavior: [`lib/auth/auth-context.tsx`](../../lib/auth/auth-context.tsx) (provider + `useAuth`), typed surface in [`lib/auth/auth-context-types.ts`](../../lib/auth/auth-context-types.ts), session sync and action factories under [`lib/auth/`](../../lib/auth/) (sign-in/up, password flows, post-login navigation via [`runAfterSignInNavigation`](../../lib/auth/run-after-sign-in-navigation.ts), validation helpers, submit helpers used by hooks).
 
 ## Exit criteria (checked)
 

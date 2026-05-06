@@ -222,7 +222,7 @@ const eslintConfig = defineConfig([
    * Queue algorithm: parameters match existing court/queue call sites; splitting only for signatures hurts clarity.
    */
   {
-    files: ["lib/queue/algorithm/**/*.ts", "lib/queue-manager.ts"],
+    files: ["lib/queue/algorithm/**/*.ts", "lib/queue/queue-manager.ts"],
     rules: {
       "max-lines": "off",
       "max-lines-per-function": "off",
@@ -244,7 +244,7 @@ const eslintConfig = defineConfig([
   },
 
   {
-    files: ["components/events/events-page-client.tsx"],
+    files: ["components/events/list/events-page-client.tsx"],
     rules: {
       "max-lines": "off",
       "max-lines-per-function": "off",
@@ -254,7 +254,7 @@ const eslintConfig = defineConfig([
   },
 
   {
-    files: ["lib/hooks/use-realtime-events.ts"],
+    files: ["lib/hooks/events/use-realtime-events.ts"],
     rules: {
       "max-lines-per-function": "off",
     },
@@ -295,19 +295,19 @@ const eslintConfig = defineConfig([
       "app/sitemap/page.tsx",
       "lib/stripe/server.ts",
       "lib/supabase/middleware.ts",
-      "lib/admin-queue.ts",
-      "lib/admin-middleware.ts",
-      "lib/membership-helpers.ts",
+      "lib/admin/admin-queue.ts",
+      "lib/admin/admin-middleware.ts",
+      "lib/membership/membership-helpers.ts",
       "lib/membership/get-user-membership.ts",
       "lib/membership/verify-paid-membership-checkout-persist.ts",
-      "lib/use-notifications.ts",
-      "components/queue-list.tsx",
-      "components/join-queue-dialog.tsx",
-      "components/court-status.tsx",
-      "components/create-event-dialog.tsx",
-      "components/edit-event-dialog.tsx",
-      "components/notification-prompt.tsx",
-      "components/queue-position-alert.tsx",
+      "lib/notifications/use-notifications.ts",
+      "components/queue/queue-list.tsx",
+      "components/queue/join-queue-dialog.tsx",
+      "components/queue/court-status.tsx",
+      "components/admin/dashboard/create-event-dialog.tsx",
+      "components/admin/dashboard/edit-event-dialog.tsx",
+      "components/queue/notification-prompt.tsx",
+      "components/queue/queue-position-alert.tsx",
       "components/ui/footer.tsx",
       "components/ui/select.tsx",
       "components/search/**/*.tsx",

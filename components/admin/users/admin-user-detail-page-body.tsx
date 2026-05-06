@@ -4,7 +4,7 @@ import { AdminUserDetailRecentActivityCard } from "@/components/admin/users/admi
 import { AdminUserDetailSidebar } from "@/components/admin/users/admin-user-detail-sidebar";
 
 import type { AdminUserDetailRecord } from "@/lib/admin/fetch-admin-user-by-id";
-import type { AdminUserDetailFormData } from "@/lib/hooks/use-admin-user-detail-actions";
+import type { AdminUserDetailFormData } from "@/lib/hooks/admin/users/use-admin-user-detail-actions";
 
 type AdminUserDetailPageBodyProps = {
   user: AdminUserDetailRecord;
