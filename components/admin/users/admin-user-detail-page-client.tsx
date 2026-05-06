@@ -1,7 +1,7 @@
 "use client";
 
 import { AdminUserDetailPageShell } from "@/components/admin/users/admin-user-detail-page-shell";
-import { useAdminUserDetailActions } from "@/lib/hooks/admin/use-admin-user-detail-actions";
+import { useAdminUserDetailActions } from "@/lib/hooks/admin/users/use-admin-user-detail-actions";
 
 import type { AdminUserDetailRecord } from "@/lib/admin/fetch-admin-user-by-id";
 

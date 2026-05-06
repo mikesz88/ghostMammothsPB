@@ -7,7 +7,7 @@ import type { AdminUserDetailRecord } from "@/lib/admin/fetch-admin-user-by-id";
 import type {
   AdminUserDetailActionsReturn,
   AdminUserDetailFormData,
-} from "@/lib/hooks/admin/use-admin-user-detail-actions";
+} from "@/lib/hooks/admin/users/use-admin-user-detail-actions";
 
 
 type AdminUserDetailPageShellProps = {

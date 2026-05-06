@@ -4,7 +4,7 @@
 import { EmailStatsFailedSendsHeader } from "@/components/admin/email-stats/email-stats-failed-sends-header";
 import { EmailStatsFailedSendsTable } from "@/components/admin/email-stats/email-stats-failed-sends-table";
 import { Card, CardContent } from "@/components/ui/card";
-import { useEmailStatsResend } from "@/lib/hooks/admin/use-email-stats-resend";
+import { useEmailStatsResend } from "@/lib/hooks/admin/email-stats/use-email-stats-resend";
 
 import type { EmailStatsSuccess } from "@/lib/admin/email-stats-types";
 

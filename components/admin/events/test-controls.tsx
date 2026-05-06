@@ -8,7 +8,7 @@ import { TestControlRotationField } from "@/components/admin/events/test-control
 import { TestControlTeamSizeField } from "@/components/admin/events/test-control-team-size-field";
 import { TestControlsCardShell } from "@/components/admin/events/test-controls-card-shell";
 import { TestControlsResetRow } from "@/components/admin/events/test-controls-reset-row";
-import { useTestControls } from "@/lib/hooks/admin/use-test-controls";
+import { useTestControls } from "@/lib/hooks/admin/test-controls/use-test-controls";
 
 import type { RotationType } from "@/lib/types";
 

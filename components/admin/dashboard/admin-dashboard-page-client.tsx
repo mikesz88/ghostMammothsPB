@@ -1,7 +1,7 @@
 "use client";
 
 import { AdminDashboardPageClientView } from "@/components/admin/dashboard/admin-dashboard-page-client-view";
-import { useAdminDashboardPageClientState } from "@/lib/hooks/admin/use-admin-dashboard-page-client-state";
+import { useAdminDashboardPageClientState } from "@/lib/hooks/admin/dashboard/use-admin-dashboard-page-client-state";
 
 import type { AdminDashboardInitialEvent } from "@/lib/admin/admin-dashboard-event-dto";
 

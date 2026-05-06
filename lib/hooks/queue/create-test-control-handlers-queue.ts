@@ -4,10 +4,10 @@ import {
   flowAddDummyToQueue,
   flowClearTestEvent,
   flowFillAllCourts,
-} from "@/lib/hooks/admin/test-control-flows";
+} from "@/lib/hooks/admin/test-controls/test-control-flows";
 
-import type { UseTestControlsArgs } from "@/lib/hooks/admin/test-controls-types";
-import type { useTestControlFields } from "@/lib/hooks/admin/use-test-control-fields";
+import type { UseTestControlsArgs } from "@/lib/hooks/admin/test-controls/test-controls-types";
+import type { useTestControlFields } from "@/lib/hooks/admin/test-controls/use-test-control-fields";
 
 type Fields = ReturnType<typeof useTestControlFields>;
 type RunFn = (

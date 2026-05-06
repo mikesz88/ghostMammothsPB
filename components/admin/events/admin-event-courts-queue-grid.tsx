@@ -1,7 +1,7 @@
 import { AdminEventCourtsPanel } from "@/components/admin/events/admin-event-courts-panel";
 import { AdminEventQueuePanel } from "@/components/admin/events/admin-event-queue-panel";
 
-import type { useAdminEventDetailClient } from "@/lib/hooks/admin/use-admin-event-detail-client";
+import type { useAdminEventDetailClient } from "@/lib/hooks/admin/events/use-admin-event-detail-client";
 
 export function AdminEventCourtsQueueGrid({
   v,

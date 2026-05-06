@@ -10,7 +10,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 
-import type { AdminUserDetailFormData } from "@/lib/hooks/admin/use-admin-user-detail-actions";
+import type { AdminUserDetailFormData } from "@/lib/hooks/admin/users/use-admin-user-detail-actions";
 
 type AdminUserDetailEditFormProps = {
   defaultForm: AdminUserDetailFormData;

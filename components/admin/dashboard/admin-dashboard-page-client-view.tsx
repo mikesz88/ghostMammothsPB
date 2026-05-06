@@ -3,7 +3,7 @@
 import { AdminDashboardPageClientChrome } from "@/components/admin/dashboard/admin-dashboard-page-client-chrome";
 import { AdminDashboardPageClientModalsStack } from "@/components/admin/dashboard/admin-dashboard-page-client-modals-stack";
 import { AdminDashboardPageContent } from "@/components/admin/dashboard/admin-dashboard-page-content";
-import { useAdminDashboardPageClientState } from "@/lib/hooks/admin/use-admin-dashboard-page-client-state";
+import { useAdminDashboardPageClientState } from "@/lib/hooks/admin/dashboard/use-admin-dashboard-page-client-state";
 
 type ClientState = ReturnType<typeof useAdminDashboardPageClientState>;
 

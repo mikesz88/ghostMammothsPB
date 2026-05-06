@@ -2,7 +2,7 @@
 
 import { AdminUsersPageBody } from "@/components/admin/users/admin-users-page-body";
 import { Header } from "@/components/ui/header";
-import { useAdminUsersPage } from "@/lib/hooks/admin/use-admin-users-page";
+import { useAdminUsersPage } from "@/lib/hooks/admin/users/use-admin-users-page";
 
 import type { AdminUsersListRow } from "@/lib/admin/fetch-admin-users-list";
 

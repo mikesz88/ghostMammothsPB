@@ -25,10 +25,10 @@ Phased plan: [`.cursor/plans/rules.mdc_phased_refactor_c02ab9c1.plan.md`](../../
 
 | Route | Server entry | Client island |
 | --- | --- | --- |
-| [`app/login/page.tsx`](../../app/login/page.tsx) | `searchParams` for optional flash `message` | [`AuthPageShell`](../../components/auth/auth-page-shell.tsx) + [`LoginPageClient`](../../components/auth/login-page-client.tsx) |
-| [`app/signup/page.tsx`](../../app/signup/page.tsx) | `searchParams` for `tier` / `flow` | [`SignupPageClient`](../../components/auth/signup-page-client.tsx) (and related signup components) |
-| [`app/forgot-password/page.tsx`](../../app/forgot-password/page.tsx) | — | [`AuthPageShell`](../../components/auth/auth-page-shell.tsx) + [`ForgotPasswordPageClient`](../../components/auth/forgot-password-page-client.tsx) |
-| [`app/reset-password/page.tsx`](../../app/reset-password/page.tsx) | — | [`ResetPasswordPageClient`](../../components/auth/reset-password-page-client.tsx) |
+| [`app/login/page.tsx`](../../app/login/page.tsx) | `searchParams` for optional flash `message` | [`AuthPageShell`](../../components/auth/shared/auth-page-shell.tsx) + [`LoginPageClient`](../../components/auth/login/login-page-client.tsx) |
+| [`app/signup/page.tsx`](../../app/signup/page.tsx) | `searchParams` for `tier` / `flow` | [`SignupPageClient`](../../components/auth/signup/signup-page-client.tsx) (and related signup components) |
+| [`app/forgot-password/page.tsx`](../../app/forgot-password/page.tsx) | — | [`AuthPageShell`](../../components/auth/shared/auth-page-shell.tsx) + [`ForgotPasswordPageClient`](../../components/auth/forgot-password/forgot-password-page-client.tsx) |
+| [`app/reset-password/page.tsx`](../../app/reset-password/page.tsx) | — | [`ResetPasswordPageClient`](../../components/auth/reset-password/reset-password-page-client.tsx) |
 
 Shared auth UI and behavior: [`lib/auth/auth-context.tsx`](../../lib/auth/auth-context.tsx) (provider + `useAuth`), typed surface in [`lib/auth/auth-context-types.ts`](../../lib/auth/auth-context-types.ts), session sync and action factories under [`lib/auth/`](../../lib/auth/) (sign-in/up, password flows, post-login navigation via [`runAfterSignInNavigation`](../../lib/auth/run-after-sign-in-navigation.ts), validation helpers, submit helpers used by hooks).
 

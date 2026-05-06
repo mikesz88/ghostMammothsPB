@@ -1,7 +1,7 @@
 import { AdminEventCourtsQueueGrid } from "@/components/admin/events/admin-event-courts-queue-grid";
 import { AdminEventHeaderCard } from "@/components/admin/events/admin-event-header-card";
 
-import type { useAdminEventDetailClient } from "@/lib/hooks/admin/use-admin-event-detail-client";
+import type { useAdminEventDetailClient } from "@/lib/hooks/admin/events/use-admin-event-detail-client";
 
 export function AdminEventDetailColumns({
   v,

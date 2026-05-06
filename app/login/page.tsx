@@ -1,5 +1,5 @@
-import { AuthPageShell } from "@/components/auth/auth-page-shell";
-import { LoginPageClient } from "@/components/auth/login-page-client";
+import { LoginPageClient } from "@/components/auth/login/login-page-client";
+import { AuthPageShell } from "@/components/auth/shared/auth-page-shell";
 
 export default async function LoginPage({
   searchParams,
