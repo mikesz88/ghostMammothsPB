@@ -16,7 +16,7 @@ todos:
     status: completed
   - id: components-queue
     content: "PR slice: Move root queue/admin dialog components into components/queue/ (or admin/dashboard/); update eslint.config.mjs path overrides and all imports"
-    status: pending
+    status: completed
   - id: actions-nested
     content: "Optional PR: Nest app/actions by domain (e.g. app/actions/admin/, queue/, auth/) if team wants parity with lib; update all server action imports"
     status: pending
@@ -25,7 +25,7 @@ todos:
     status: pending
   - id: docs-links
     content: Update docs/engineering markdown links that reference moved paths (lib/hooks, lib root files, components)
-    status: pending
+    status: completed
 isProject: false
 ---
 

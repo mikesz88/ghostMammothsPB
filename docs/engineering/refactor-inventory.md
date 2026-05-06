@@ -55,9 +55,9 @@ Seeded from [`refactor-inventory.snapshot.md`](refactor-inventory.snapshot.md) (
 | app/actions/notifications.ts | ~35 | action | — | action split | — | **Done** | Phase 7: async wrapper barrel for `"use server"`; implementations in `queue-email-notifications`, `admin-email-stats-actions`. |
 | components/events/event-detail-client.tsx | ~205 | component | large | client-island extraction | P1 | — | Phase 2 island; split further only if touched (handlers/hooks already extracted). Phase 4 covered shared lib loaders/serializers, not this file. |
 | lib/events/event-detail-server.ts | ~50 | lib | — | service split | P1 | **Done** | Phase 2 types + re-exports; Phase 4 shared DTO/serialize/hydrate/fetch modules — see `phase-4-shared-event-admin-extraction.md`. |
-| components/queue-list.tsx | 344 | component | very large | client-island extraction | P1 | 4 | Event queue UI; shared event components. |
-| components/join-queue-dialog.tsx | 263 | component | large; persistence-like patterns | client-island extraction | P1 | 4 | Queue UX; keep actions on server boundary. |
-| components/court-status.tsx | 205 | component | large | client-island extraction | P1 | 4 | Court / live state; likely stays client-heavy but smaller leaves. |
+| components/queue/queue-list.tsx | 344 | component | very large | client-island extraction | P1 | 4 | Event queue UI; shared event components. |
+| components/queue/join-queue-dialog.tsx | 263 | component | large; persistence-like patterns | client-island extraction | P1 | 4 | Queue UX; keep actions on server boundary. |
+| components/queue/court-status.tsx | 205 | component | large | client-island extraction | P1 | 4 | Court / live state; likely stays client-heavy but smaller leaves. |
 | app/admin/page.tsx | ~7 | route-page | server component | server-page migration | — | **Done** | Phase 5: `loadAdminDashboardPageData` → `AdminDashboardPageClient`. |
 | app/admin/users/page.tsx | ~7 | route-page | server component | server-page migration | — | **Done** | Phase 5: `loadAdminUsersPageData` → `AdminUsersPageClient`. |
 | app/admin/users/[id]/page.tsx | ~17 | route-page | server component | server-page migration | — | **Done** | Phase 5: `loadAdminUserDetailPageData`, `notFound()` → `AdminUserDetailPageClient`. |
@@ -79,8 +79,8 @@ Seeded from [`refactor-inventory.snapshot.md`](refactor-inventory.snapshot.md) (
 | app/api/webhooks/stripe/route.ts | ~49 | api-route | — | action split | — | **Done** | Phase 8: verify + `dispatchStripeWebhookEvent` → `lib/stripe/webhooks/*`. |
 | lib/email/resend.ts | ~170 | lib | — | service split | — | **Done** | Phase 8: transport + retry; templates `lib/email/templates/queue-notifications.ts`. |
 | lib/stripe/webhooks/handlers.ts | 280 | lib | large | service split | P1 | — | Phase 8 follow-up: optional split by event family (`checkout`, `subscription`, `invoice`). |
-| components/create-event-dialog.tsx | 255 | component | large; persistence-like patterns | shared UI split | P2 | 4–5 | Admin/event dialogs — candidate for `components/admin/events/`. |
-| components/edit-event-dialog.tsx | 213 | component | large; persistence-like patterns | shared UI split | P2 | 4–5 | |
+| components/admin/dashboard/create-event-dialog.tsx | 255 | component | large; persistence-like patterns | shared UI split | P2 | 4–5 | Admin dashboard create event dialog. |
+| components/admin/dashboard/edit-event-dialog.tsx | 213 | component | large; persistence-like patterns | shared UI split | P2 | 4–5 | Admin dashboard edit event dialog. |
 | components/ui/dropdown-menu.tsx | 202 | component | large; persistence-like patterns | shared UI split | P2 | 1–4 | Radix wrapper; often low ROI unless touched. |
 | components/ui/header/ | — | component | — | shared UI split | — | **Done** | Phase 9: `site-header.tsx`, `header-client.tsx`, `header-user-menu.tsx`, `parts/*`; barrel exports `Header` only (not `SiteHeader`). See [`phase-9-public-marketing-shell.md`](phase-9-public-marketing-shell.md). |
 | components/events/events-page-client.tsx | 212 | component | large (200+) | client-island extraction | — | **Done** | Phase 9: public events list; `useRealtimeEvents(initial)` + server `loadActiveEventsListData`. |

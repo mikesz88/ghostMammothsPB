@@ -1,5 +1,5 @@
 import { EventDetailQueueLoading } from "@/components/events/event-detail-queue-loading";
-import { QueueList } from "@/components/queue-list";
+import { QueueList } from "@/components/queue/queue-list";
 
 import type { QueueEntry } from "@/lib/types";
 import type { User as SupabaseAuthUser } from "@supabase/supabase-js";

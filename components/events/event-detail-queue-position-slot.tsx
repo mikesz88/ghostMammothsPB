@@ -1,4 +1,4 @@
-import { QueuePositionAlert } from "@/components/queue-position-alert";
+import { QueuePositionAlert } from "@/components/queue/queue-position-alert";
 
 export function EventDetailQueuePositionSlot({
   userPosition,

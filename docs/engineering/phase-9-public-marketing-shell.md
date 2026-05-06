@@ -82,4 +82,4 @@ Repeated pattern to remove: `useEffect` + `createClient()` + `users.is_admin` on
 
 ## Next steps after Phase 9
 
-* Remaining **P1** backlog: queue UI components (`components/queue-list.tsx`, etc.), `app/actions/test-helpers.ts` — unrelated to public shell unless touched for layout.
+* Remaining **P1** backlog: queue UI components (`components/queue/queue-list.tsx`, etc.), `app/actions/test-helpers.ts` — unrelated to public shell unless touched for layout.

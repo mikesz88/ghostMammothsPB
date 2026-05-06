@@ -1,4 +1,4 @@
-import { NotificationPrompt } from "@/components/notification-prompt";
+import { NotificationPrompt } from "@/components/queue/notification-prompt";
 
 export function EventDetailNotificationSlot() {
   return (
