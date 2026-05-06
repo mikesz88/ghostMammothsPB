@@ -2,10 +2,10 @@
 
 import { useCallback, useState } from "react";
 
-import { runAdminUserDetailSave } from "@/lib/hooks/admin-user-detail-save";
+import { runAdminUserDetailSave } from "@/lib/hooks/admin/admin-user-detail-save";
 
 import type { AdminUserDetailRecord } from "@/lib/admin/fetch-admin-user-by-id";
-import type { AdminUserDetailFormData } from "@/lib/hooks/admin-user-detail-form-types";
+import type { AdminUserDetailFormData } from "@/lib/hooks/admin/admin-user-detail-form-types";
 
 export function useAdminUserDetailSaveAction(
   user: AdminUserDetailRecord,

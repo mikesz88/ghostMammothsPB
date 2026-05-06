@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 
-import { useAdminDashboardPageActions } from "@/lib/hooks/use-admin-dashboard-page-actions";
+import { useAdminDashboardPageActions } from "@/lib/hooks/admin/use-admin-dashboard-page-actions";
 
 import type { AdminDashboardInitialEvent } from "@/lib/admin/admin-dashboard-event-dto";
 import type { Event } from "@/lib/types";

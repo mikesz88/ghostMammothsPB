@@ -4,7 +4,7 @@ import { toast } from "sonner";
 
 import { createAdminDashboardEvent } from "@/app/actions/events";
 import { adminDashboardUpsertPayloadFromEventForm } from "@/lib/admin/admin-dashboard-event-upsert";
-import { toastIfInvalid2Stay2Off } from "@/lib/hooks/admin-dashboard-event-form-guard";
+import { toastIfInvalid2Stay2Off } from "@/lib/hooks/admin/admin-dashboard-event-form-guard";
 
 import type { Event } from "@/lib/types";
 

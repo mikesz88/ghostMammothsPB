@@ -1,8 +1,8 @@
 "use client";
 
-import { useAdminEventDetailActions } from "@/lib/hooks/use-admin-event-detail-actions";
-import { useAdminEventDetailData } from "@/lib/hooks/use-admin-event-detail-data";
-import { useAdminEventDetailRealtime } from "@/lib/hooks/use-admin-event-detail-realtime";
+import { useAdminEventDetailActions } from "@/lib/hooks/admin/use-admin-event-detail-actions";
+import { useAdminEventDetailData } from "@/lib/hooks/admin/use-admin-event-detail-data";
+import { useAdminEventDetailRealtime } from "@/lib/hooks/admin/use-admin-event-detail-realtime";
 
 import type { AdminEventDetailPagePayload } from "@/lib/admin/admin-event-detail-server";
 

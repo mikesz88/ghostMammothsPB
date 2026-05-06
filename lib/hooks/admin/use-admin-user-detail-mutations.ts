@@ -6,7 +6,7 @@ import { useCallback } from "react";
 import {
   toastConfirmDeleteUser,
   toastConfirmToggleAdmin,
-} from "@/lib/hooks/admin-users-confirm-toasts";
+} from "@/lib/hooks/admin/admin-users-confirm-toasts";
 
 import type { AdminUserDetailRecord } from "@/lib/admin/fetch-admin-user-by-id";
 

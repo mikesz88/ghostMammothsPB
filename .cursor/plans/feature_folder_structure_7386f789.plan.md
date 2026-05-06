@@ -10,7 +10,7 @@ todos:
     status: completed
   - id: slice-admin
     content: "PR slice: Move admin + test-control hooks into lib/hooks/admin/; fix imports"
-    status: pending
+    status: completed
   - id: slice-auth-settings-events
     content: "PR slice: Move auth, settings, use-realtime-events (+ optional membership hook) into lib/hooks feature subfolders"
     status: pending

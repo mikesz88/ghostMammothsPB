@@ -5,7 +5,7 @@ import { useCallback } from "react";
 import {
   toastConfirmDeleteAdminEvent,
   toastConfirmEndAdminEvent,
-} from "@/lib/hooks/admin-dashboard-event-toasts";
+} from "@/lib/hooks/admin/admin-dashboard-event-toasts";
 
 export function useAdminDashboardConfirmHandlers(refresh: () => void) {
   const handleEndEvent = useCallback(

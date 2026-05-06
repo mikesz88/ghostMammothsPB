@@ -5,7 +5,7 @@ import { useCallback } from "react";
 import {
   toastConfirmDeleteUser,
   toastConfirmToggleAdmin,
-} from "@/lib/hooks/admin-users-confirm-toasts";
+} from "@/lib/hooks/admin/admin-users-confirm-toasts";
 
 export function useAdminUsersMutations(refreshFromServer: () => void) {
   const handleToggleAdmin = useCallback(

@@ -3,8 +3,8 @@
 import { useRouter } from "next/navigation";
 import { useCallback } from "react";
 
-import { useAdminUsersListFilter } from "@/lib/hooks/use-admin-users-list-filter";
-import { useAdminUsersMutations } from "@/lib/hooks/use-admin-users-mutations";
+import { useAdminUsersListFilter } from "@/lib/hooks/admin/use-admin-users-list-filter";
+import { useAdminUsersMutations } from "@/lib/hooks/admin/use-admin-users-mutations";
 
 import type { AdminUsersListRow } from "@/lib/admin/fetch-admin-users-list";
 

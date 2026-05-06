@@ -5,10 +5,10 @@ import {
   flowResetTestEvent,
   flowRotationTypeChange,
   flowTeamSizeChange,
-} from "@/lib/hooks/test-control-flows";
+} from "@/lib/hooks/admin/test-control-flows";
 
-import type { UseTestControlsArgs } from "@/lib/hooks/test-controls-types";
-import type { useTestControlFields } from "@/lib/hooks/use-test-control-fields";
+import type { UseTestControlsArgs } from "@/lib/hooks/admin/test-controls-types";
+import type { useTestControlFields } from "@/lib/hooks/admin/use-test-control-fields";
 import type { RotationType } from "@/lib/types";
 
 type Fields = ReturnType<typeof useTestControlFields>;

@@ -1,7 +1,7 @@
 import { AdminUserDetailPhoneField } from "@/components/admin/users/admin-user-detail-phone-field";
 import { AdminUserDetailSkillSelect } from "@/components/admin/users/admin-user-detail-skill-select";
 
-import type { AdminUserDetailFormData } from "@/lib/hooks/admin-user-detail-form-types";
+import type { AdminUserDetailFormData } from "@/lib/hooks/admin/admin-user-detail-form-types";
 import type { Dispatch, SetStateAction } from "react";
 
 type SetForm = Dispatch<SetStateAction<AdminUserDetailFormData>>;

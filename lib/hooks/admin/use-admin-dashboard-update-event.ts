@@ -2,7 +2,7 @@
 
 import { useCallback } from "react";
 
-import { runAdminDashboardUpdateEvent } from "@/lib/hooks/admin-dashboard-run-update-event";
+import { runAdminDashboardUpdateEvent } from "@/lib/hooks/admin/admin-dashboard-run-update-event";
 
 import type { Event } from "@/lib/types";
 

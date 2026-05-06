@@ -1,10 +1,10 @@
 "use client";
 
-import { createTestControlSetupHandlers } from "@/lib/hooks/create-test-control-handlers-setup";
+import { createTestControlSetupHandlers } from "@/lib/hooks/admin/create-test-control-handlers-setup";
 import { createTestControlQueueHandlers } from "@/lib/hooks/queue/create-test-control-handlers-queue";
 
-import type { UseTestControlsArgs } from "@/lib/hooks/test-controls-types";
-import type { useTestControlFields } from "@/lib/hooks/use-test-control-fields";
+import type { UseTestControlsArgs } from "@/lib/hooks/admin/test-controls-types";
+import type { useTestControlFields } from "@/lib/hooks/admin/use-test-control-fields";
 
 type Fields = ReturnType<typeof useTestControlFields>;
 type RunFn = (

@@ -49,7 +49,7 @@ Seeded from [`refactor-inventory.snapshot.md`](refactor-inventory.snapshot.md) (
 | --- | ---: | --- | --- | --- | --- | --- | --- |
 | app/events/[id]/page.tsx | ~26 | route-page | server component | server-page migration | — | **Done** | Phase 2 complete: server `loadEventDetailPageData`; client island `components/events/event-detail-client.tsx` (~205 lines). |
 | app/admin/events/[id]/page.tsx | ~20 | route-page | server component | server-page migration | — | **Done** | Phase 3: server `loadAdminEventDetailPageData`; client `components/admin/events/admin-event-detail-client.tsx`. |
-| components/admin/events/test-controls.tsx | ~235 | component | large | client-island extraction | — | **Done** | Phase 3: test-only; logic in `lib/hooks/use-test-controls.ts`. |
+| components/admin/events/test-controls.tsx | ~235 | component | large | client-island extraction | — | **Done** | Phase 3: test-only; logic in `lib/hooks/admin/use-test-controls.ts`. |
 | app/actions/queue.ts | ~133 | action | — | action split | — | **Done** | Phase 7: thin actions → `lib/queue/services/*`; see [`phase-7-action-layer-walkthrough.md`](phase-7-action-layer-walkthrough.md). |
 | lib/queue/queue-manager.ts | ~99 | lib | — | service split | — | **Done** | Phase 8: thin `QueueManager` facade; logic in `lib/queue/algorithm/*`. |
 | app/actions/notifications.ts | ~35 | action | — | action split | — | **Done** | Phase 7: async wrapper barrel for `"use server"`; implementations in `queue-email-notifications`, `admin-email-stats-actions`. |

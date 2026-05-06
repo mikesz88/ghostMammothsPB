@@ -4,7 +4,7 @@ import { toast } from "sonner";
 
 import { updateUser } from "@/app/actions/admin-users";
 
-import type { AdminUserDetailFormData } from "@/lib/hooks/admin-user-detail-form-types";
+import type { AdminUserDetailFormData } from "@/lib/hooks/admin/admin-user-detail-form-types";
 
 export async function runAdminUserDetailSave(
   userId: string,

@@ -3,11 +3,11 @@
 import { useRouter } from "next/navigation";
 import { useCallback } from "react";
 
-import { useAdminUserDetailMutations } from "@/lib/hooks/use-admin-user-detail-mutations";
-import { useAdminUserDetailSaveAction } from "@/lib/hooks/use-admin-user-detail-save-action";
+import { useAdminUserDetailMutations } from "@/lib/hooks/admin/use-admin-user-detail-mutations";
+import { useAdminUserDetailSaveAction } from "@/lib/hooks/admin/use-admin-user-detail-save-action";
 
 import type { AdminUserDetailRecord } from "@/lib/admin/fetch-admin-user-by-id";
-import type { AdminUserDetailFormData } from "@/lib/hooks/admin-user-detail-form-types";
+import type { AdminUserDetailFormData } from "@/lib/hooks/admin/admin-user-detail-form-types";
 
 export type { AdminUserDetailFormData };
 
