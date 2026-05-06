@@ -1,7 +1,7 @@
 "use client";
 
-import { createTestControlQueueHandlers } from "@/lib/hooks/create-test-control-handlers-queue";
 import { createTestControlSetupHandlers } from "@/lib/hooks/create-test-control-handlers-setup";
+import { createTestControlQueueHandlers } from "@/lib/hooks/queue/create-test-control-handlers-queue";
 
 import type { UseTestControlsArgs } from "@/lib/hooks/test-controls-types";
 import type { useTestControlFields } from "@/lib/hooks/use-test-control-fields";

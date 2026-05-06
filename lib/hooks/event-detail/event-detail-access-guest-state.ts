@@ -1,6 +1,6 @@
 "use client";
 
-import type { EventDetailAccessState } from "@/lib/hooks/event-detail-access-sync-logic";
+import type { EventDetailAccessState } from "@/lib/hooks/event-detail/event-detail-access-sync-logic";
 
 export function applyGuestAccessState(
   setState: (next: EventDetailAccessState) => void,

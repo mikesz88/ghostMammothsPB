@@ -1,15 +1,15 @@
 "use client";
 
-import { useEventDetailEndGameHandler } from "@/lib/hooks/use-event-detail-end-game-handler";
-import { useEventDetailJoinQueueHandler } from "@/lib/hooks/use-event-detail-join-queue-handler";
-import { useEventDetailQueueRemoveHandler } from "@/lib/hooks/use-event-detail-queue-remove-handler";
+import { useEventDetailEndGameHandler } from "@/lib/hooks/event-detail/use-event-detail-end-game-handler";
+import { useEventDetailJoinQueueHandler } from "@/lib/hooks/event-detail/use-event-detail-join-queue-handler";
+import { useEventDetailQueueRemoveHandler } from "@/lib/hooks/event-detail/use-event-detail-queue-remove-handler";
 
-import type { EventDetailQueueHandlersParams } from "@/lib/hooks/event-detail-queue-handlers-types";
+import type { EventDetailQueueHandlersParams } from "@/lib/hooks/event-detail/event-detail-queue-handlers-types";
 
 export type {
   EventDetailQueueHandlersParams,
   JoinPlayer,
-} from "@/lib/hooks/event-detail-queue-handlers-types";
+} from "@/lib/hooks/event-detail/event-detail-queue-handlers-types";
 
 export function useEventDetailQueueHandlers(p: EventDetailQueueHandlersParams) {
   const join = useEventDetailJoinQueueHandler(p);

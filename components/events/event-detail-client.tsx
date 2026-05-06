@@ -2,7 +2,7 @@
 
 import { EventDetailClientMain } from "@/components/events/event-detail-client-main";
 import { EventDetailClientModals } from "@/components/events/event-detail-client-modals";
-import { useEventDetailClientView } from "@/lib/hooks/use-event-detail-client-view";
+import { useEventDetailClientView } from "@/lib/hooks/event-detail/use-event-detail-client-view";
 
 import type {
   EventDetailAccess,

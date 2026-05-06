@@ -1,7 +1,7 @@
 import {
   mapRealtimeQueueEntry,
   type QueueEntryWithUser,
-} from "@/lib/hooks/realtime-queue-map-entry";
+} from "@/lib/hooks/queue/realtime-queue-map-entry";
 
 import type { QueueEntry } from "@/lib/types";
 import type { Database } from "@/supabase/supa-schema";

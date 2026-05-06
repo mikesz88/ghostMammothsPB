@@ -1,4 +1,4 @@
-import type { RotationType, TeamSize } from "./types";
+import type { RotationType, TeamSize } from "@/lib/types";
 
 export function isRotateAllStyleRotation(rt: RotationType): boolean {
   return rt === "rotate-all";

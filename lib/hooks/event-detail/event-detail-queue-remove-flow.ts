@@ -4,7 +4,7 @@ import { toast } from "sonner";
 
 import { adminRemoveFromQueue, leaveQueue } from "@/app/actions/queue";
 
-import type { SendNotification } from "@/lib/hooks/event-detail-queue-handlers-types";
+import type { SendNotification } from "@/lib/hooks/event-detail/event-detail-queue-handlers-types";
 
 export type DispatchQueueEntryRemovalResult =
   | { ok: true }

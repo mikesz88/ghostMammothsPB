@@ -1,10 +1,10 @@
 "use client";
 
-import { useEventDetailClientHydration } from "@/lib/hooks/use-event-detail-client-hydration";
-import { useEventDetailClientSession } from "@/lib/hooks/use-event-detail-client-session";
-import { useEventDetailQueueDerived } from "@/lib/hooks/use-event-detail-queue-derived";
-import { useEventDetailQueueHandlers } from "@/lib/hooks/use-event-detail-queue-handlers";
-import { useQueuePositionNotify } from "@/lib/hooks/use-queue-position-notify";
+import { useEventDetailClientHydration } from "@/lib/hooks/event-detail/use-event-detail-client-hydration";
+import { useEventDetailClientSession } from "@/lib/hooks/event-detail/use-event-detail-client-session";
+import { useEventDetailQueueDerived } from "@/lib/hooks/event-detail/use-event-detail-queue-derived";
+import { useEventDetailQueueHandlers } from "@/lib/hooks/event-detail/use-event-detail-queue-handlers";
+import { useQueuePositionNotify } from "@/lib/hooks/queue/use-queue-position-notify";
 
 import type {
   EventDetailAccess,

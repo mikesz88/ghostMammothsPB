@@ -2,8 +2,8 @@
 
 import {
   applyGuestAccessState,
-} from "@/lib/hooks/event-detail-access-guest-state";
-import { applyUserAccessState } from "@/lib/hooks/event-detail-access-user-fetch";
+} from "@/lib/hooks/event-detail/event-detail-access-guest-state";
+import { applyUserAccessState } from "@/lib/hooks/event-detail/event-detail-access-user-fetch";
 
 import type { EventDetailAccess } from "@/lib/events/event-detail-server";
 import type { User as SupabaseAuthUser } from "@supabase/supabase-js";

@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 
-import { useRealtimeQueueOptimisticFilter } from "@/lib/hooks/use-realtime-queue-optimistic";
-import { useRealtimeServerQueueSync } from "@/lib/hooks/use-realtime-server-queue-sync";
+import { useRealtimeQueueOptimisticFilter } from "@/lib/hooks/queue/use-realtime-queue-optimistic";
+import { useRealtimeServerQueueSync } from "@/lib/hooks/queue/use-realtime-server-queue-sync";
 
 import type { QueueEntry } from "@/lib/types";
 

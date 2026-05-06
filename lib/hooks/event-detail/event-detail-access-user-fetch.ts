@@ -3,7 +3,7 @@
 import { canUserJoinEvent } from "@/lib/membership/membership-helpers";
 import { createClient } from "@/lib/supabase/client";
 
-import type { EventDetailAccessState } from "@/lib/hooks/event-detail-access-sync-logic";
+import type { EventDetailAccessState } from "@/lib/hooks/event-detail/event-detail-access-sync-logic";
 import type { User as SupabaseAuthUser } from "@supabase/supabase-js";
 
 export async function applyUserAccessState(

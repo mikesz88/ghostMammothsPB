@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 
-import { sendQueuePositionBumpNotification } from "@/lib/hooks/queue-position-notify-logic";
+import { sendQueuePositionBumpNotification } from "@/lib/hooks/queue/queue-position-notify-logic";
 
 import type { NotificationType } from "@/lib/notifications/use-notifications";
 

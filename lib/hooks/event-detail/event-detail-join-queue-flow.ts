@@ -4,12 +4,12 @@ import { toast } from "sonner";
 
 import { joinQueue } from "@/app/actions/queue";
 import { courtAssignmentIncludesUser } from "@/lib/events/court-assignment-utils";
-import { isActiveQueueStatus } from "@/lib/hooks/event-detail-queue-handlers-types";
+import { isActiveQueueStatus } from "@/lib/hooks/event-detail/event-detail-queue-handlers-types";
 
 import type {
   JoinPlayer,
   SendNotification,
-} from "@/lib/hooks/event-detail-queue-handlers-types";
+} from "@/lib/hooks/event-detail/event-detail-queue-handlers-types";
 import type { CourtAssignment, QueueEntry } from "@/lib/types";
 import type { User as SupabaseAuthUser } from "@supabase/supabase-js";
 
@@ -131,7 +131,7 @@ export async function submitJoinQueueAndNotify(p: SubmitJoinParams) {
 }
 
 export async function runJoinQueueHandler(
-  p: import("@/lib/hooks/event-detail-queue-handlers-types").EventDetailQueueHandlersParams,
+  p: import("@/lib/hooks/event-detail/event-detail-queue-handlers-types").EventDetailQueueHandlersParams,
   players: JoinPlayer[],
   groupSize: number,
 ) {

@@ -1,8 +1,8 @@
 "use client";
 
 
-import { useAdminAssignmentsRealtime } from "@/lib/hooks/use-admin-assignments-realtime";
-import { useAdminQueueInvalidateRealtime } from "@/lib/hooks/use-admin-queue-invalidate-realtime";
+import { useAdminAssignmentsRealtime } from "@/lib/hooks/queue/use-admin-assignments-realtime";
+import { useAdminQueueInvalidateRealtime } from "@/lib/hooks/queue/use-admin-queue-invalidate-realtime";
 
 import type { CourtAssignment } from "@/lib/types";
 import type { QueryClient } from "@tanstack/react-query";

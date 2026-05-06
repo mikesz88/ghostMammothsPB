@@ -1,7 +1,7 @@
 import { EventDetailQrDialog } from "@/components/events/event-detail-qr-dialog";
 import { JoinQueueDialog } from "@/components/join-queue-dialog";
 
-import type { useEventDetailClientView } from "@/lib/hooks/use-event-detail-client-view";
+import type { useEventDetailClientView } from "@/lib/hooks/event-detail/use-event-detail-client-view";
 
 type View = ReturnType<typeof useEventDetailClientView>;
 

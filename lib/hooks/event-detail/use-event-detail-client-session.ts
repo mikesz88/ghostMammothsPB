@@ -1,9 +1,9 @@
 "use client";
 
 import { useAuth } from "@/lib/auth/auth-context";
-import { useEventDetailAccessSync } from "@/lib/hooks/use-event-detail-access-sync";
-import { useEventDetailClientDialogs } from "@/lib/hooks/use-event-detail-client-dialogs";
-import { useEventDetailClientQueueSession } from "@/lib/hooks/use-event-detail-client-queue-session";
+import { useEventDetailAccessSync } from "@/lib/hooks/event-detail/use-event-detail-access-sync";
+import { useEventDetailClientDialogs } from "@/lib/hooks/event-detail/use-event-detail-client-dialogs";
+import { useEventDetailClientQueueSession } from "@/lib/hooks/event-detail/use-event-detail-client-queue-session";
 
 import type { EventDetailAccess } from "@/lib/events/event-detail-server";
 

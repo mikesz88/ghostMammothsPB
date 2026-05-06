@@ -3,8 +3,8 @@
 import { useEffect, useState } from "react";
 
 import { hydrateSerializedAssignments } from "@/lib/events/hydrate-event-detail";
-import { fetchActiveCourtAssignmentsClient } from "@/lib/hooks/court-assignments-client-fetch";
-import { subscribeCourtAssignmentsChanges } from "@/lib/hooks/court-assignments-realtime-channel";
+import { fetchActiveCourtAssignmentsClient } from "@/lib/hooks/queue/court-assignments-client-fetch";
+import { subscribeCourtAssignmentsChanges } from "@/lib/hooks/queue/court-assignments-realtime-channel";
 import { createClient } from "@/lib/supabase/client";
 
 import type { EventDetailSerializedAssignment } from "@/lib/events/event-detail-server";

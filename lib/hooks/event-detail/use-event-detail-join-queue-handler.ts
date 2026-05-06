@@ -2,12 +2,12 @@
 
 import { useCallback, useState } from "react";
 
-import { runJoinQueueHandler } from "@/lib/hooks/event-detail-join-queue-flow";
+import { runJoinQueueHandler } from "@/lib/hooks/event-detail/event-detail-join-queue-flow";
 
 import type {
   EventDetailQueueHandlersParams,
   JoinPlayer,
-} from "@/lib/hooks/event-detail-queue-handlers-types";
+} from "@/lib/hooks/event-detail/event-detail-queue-handlers-types";
 
 export function useEventDetailJoinQueueHandler(p: EventDetailQueueHandlersParams) {
   const [isJoiningQueue, setIsJoiningQueue] = useState(false);

@@ -3,7 +3,7 @@
 import { useMemo } from "react";
 
 import { hydrateSerializedEvent } from "@/lib/events/hydrate-event-detail";
-import { useCourtAssignmentsRealtime } from "@/lib/hooks/use-court-assignments-realtime";
+import { useCourtAssignmentsRealtime } from "@/lib/hooks/queue/use-court-assignments-realtime";
 
 import type { EventDetailSerializedAssignment, EventDetailSerializedEvent } from "@/lib/events/event-detail-server";
 

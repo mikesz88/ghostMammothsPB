@@ -1,7 +1,7 @@
-import { dispatchQueueEntryRemoval } from "@/lib/hooks/event-detail-queue-remove-flow";
-import { collectQueueLeaveTargetIds } from "@/lib/hooks/queue-leave-target-ids";
+import { dispatchQueueEntryRemoval } from "@/lib/hooks/event-detail/event-detail-queue-remove-flow";
+import { collectQueueLeaveTargetIds } from "@/lib/hooks/queue/queue-leave-target-ids";
 
-import type { SendNotification } from "@/lib/hooks/event-detail-queue-handlers-types";
+import type { SendNotification } from "@/lib/hooks/event-detail/event-detail-queue-handlers-types";
 import type { QueueEntry } from "@/lib/types";
 
 export type QueueRemoveFlowCommon = {

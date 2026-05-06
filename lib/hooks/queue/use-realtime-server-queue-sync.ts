@@ -2,9 +2,9 @@
 
 import { useEffect, useRef, type MutableRefObject } from "react";
 
-import { subscribeRealtimeQueueEntries } from "@/lib/hooks/realtime-queue-channel";
-import { fetchRealtimeQueueRows } from "@/lib/hooks/realtime-queue-fetch";
-import { scheduleRealtimeQueuePoll } from "@/lib/hooks/realtime-server-queue-poll";
+import { subscribeRealtimeQueueEntries } from "@/lib/hooks/queue/realtime-queue-channel";
+import { fetchRealtimeQueueRows } from "@/lib/hooks/queue/realtime-queue-fetch";
+import { scheduleRealtimeQueuePoll } from "@/lib/hooks/queue/realtime-server-queue-poll";
 import { queuePollIntervalMs } from "@/lib/realtime/queue-poll-interval";
 import { createClient } from "@/lib/supabase/client";
 

@@ -2,7 +2,7 @@
 
 import { useCallback, useMemo, useState } from "react";
 
-import { collectQueueLeaveTargetIds } from "@/lib/hooks/queue-leave-target-ids";
+import { collectQueueLeaveTargetIds } from "@/lib/hooks/queue/queue-leave-target-ids";
 
 import type { QueueEntry } from "@/lib/types";
 

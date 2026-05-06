@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
-import { collectQueueLeaveTargetIds } from "@/lib/hooks/queue-leave-target-ids";
-import { filterHiddenFromQueue } from "@/lib/hooks/use-realtime-queue-optimistic";
+import { collectQueueLeaveTargetIds } from "@/lib/hooks/queue/queue-leave-target-ids";
+import { filterHiddenFromQueue } from "@/lib/hooks/queue/use-realtime-queue-optimistic";
 
 import type { QueueEntry } from "@/lib/types";
 

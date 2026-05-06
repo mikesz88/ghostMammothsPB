@@ -1,6 +1,6 @@
-import { runClientQueueRemoveFlow } from "@/lib/hooks/event-detail-queue-remove-client";
+import { runClientQueueRemoveFlow } from "@/lib/hooks/event-detail/event-detail-queue-remove-client";
 
-import type { SendNotification } from "@/lib/hooks/event-detail-queue-handlers-types";
+import type { SendNotification } from "@/lib/hooks/event-detail/event-detail-queue-handlers-types";
 import type { QueueEntry } from "@/lib/types";
 
 export type QueueRemoveHandlerParams = {

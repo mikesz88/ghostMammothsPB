@@ -7,7 +7,7 @@
 * `app/events/[id]/page.tsx` — async Server Component: `loadEventDetailPageData`, `notFound()`, passes serialized props to the client island.
 * `components/events/*` — `event-detail-client.tsx` (Realtime, queue, dialogs), `event-detail-hero.tsx`, `event-detail-stats-row.tsx`, `event-queue-header-row.tsx`, `event-detail-qr-dialog.tsx`.
 * `lib/events/*` — `event-detail-server.ts`, `hydrate-event-detail.ts`, `map-event-row.ts`, `map-court-assignments.ts`, and small helpers. **Phase 4** added shared fetch/serialize/hydrate modules and DTOs — see [`phase-4-shared-event-admin-extraction.md`](phase-4-shared-event-admin-extraction.md).
-* `lib/hooks/*` — court assignments Realtime, access sync, queue handlers, queue derived state, etc.
+* `lib/hooks/*` — court assignments Realtime, access sync, queue handlers, queue derived state, etc. (queue infra under `lib/hooks/queue/`, event detail orchestration under `lib/hooks/event-detail/`).
 * `lib/membership/*` + `lib/membership/membership-helpers.ts` — `getUserMembership` split into `lib/membership/` for lint/size; barrel re-exports unchanged for imports.
 
 Target (achieved): **server-first `page.tsx`**, **no Supabase reads in the page file**, **Realtime + interactivity in `components/events/*` client leaves**. Behavior-neutral unless a bugfix is explicitly in scope.

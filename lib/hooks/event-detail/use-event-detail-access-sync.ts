@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import {
   initialAccessState,
   syncEventDetailAccessState,
-} from "@/lib/hooks/event-detail-access-sync-logic";
+} from "@/lib/hooks/event-detail/event-detail-access-sync-logic";
 
 import type { EventDetailAccess } from "@/lib/events/event-detail-server";
 import type { User as SupabaseAuthUser } from "@supabase/supabase-js";

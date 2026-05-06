@@ -7,7 +7,7 @@ todos:
     status: completed
   - id: slice-queue-event-detail
     content: "PR slice: Move lib/hooks queue + event-detail modules into lib/hooks/queue/ and lib/hooks/event-detail/; fix imports and unit test paths; verify import/no-cycle"
-    status: pending
+    status: completed
   - id: slice-admin
     content: "PR slice: Move admin + test-control hooks into lib/hooks/admin/; fix imports"
     status: pending

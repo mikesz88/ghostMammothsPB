@@ -1,5 +1,5 @@
 import type { EventDetailClientGridProps } from "@/components/events/event-detail-client-grid";
-import type { useEventDetailClientView } from "@/lib/hooks/use-event-detail-client-view";
+import type { useEventDetailClientView } from "@/lib/hooks/event-detail/use-event-detail-client-view";
 
 type View = ReturnType<typeof useEventDetailClientView>;
 

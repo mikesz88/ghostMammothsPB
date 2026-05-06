@@ -1,6 +1,6 @@
 import { EventDetailClientTop } from "@/components/events/event-detail-client-top";
 
-import type { useEventDetailClientView } from "@/lib/hooks/use-event-detail-client-view";
+import type { useEventDetailClientView } from "@/lib/hooks/event-detail/use-event-detail-client-view";
 
 type View = ReturnType<typeof useEventDetailClientView>;
 

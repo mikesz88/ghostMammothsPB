@@ -2,7 +2,7 @@
 
 import { useCallback } from "react";
 
-import { showEndGameConfirmToast } from "@/lib/hooks/event-detail-end-game-flow";
+import { showEndGameConfirmToast } from "@/lib/hooks/event-detail/event-detail-end-game-flow";
 
 import type { RotationType } from "@/lib/types";
 
