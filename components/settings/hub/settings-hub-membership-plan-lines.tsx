@@ -1,5 +1,5 @@
-import { SettingsHubMembershipRenewalNote } from "@/components/settings/settings-hub-membership-renewal-note";
-import { SettingsHubMembershipTierPriceLine } from "@/components/settings/settings-hub-membership-tier-price-line";
+import { SettingsHubMembershipRenewalNote } from "@/components/settings/hub/settings-hub-membership-renewal-note";
+import { SettingsHubMembershipTierPriceLine } from "@/components/settings/hub/settings-hub-membership-tier-price-line";
 
 import type { UserMembershipInfo } from "@/lib/membership/user-membership-types";
 

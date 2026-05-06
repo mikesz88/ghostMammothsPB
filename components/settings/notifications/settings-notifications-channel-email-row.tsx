@@ -1,6 +1,6 @@
 import { Mail } from "lucide-react";
 
-import { SettingsNotificationsChannelLead } from "@/components/settings/settings-notifications-channel-lead";
+import { SettingsNotificationsChannelLead } from "@/components/settings/notifications/settings-notifications-channel-lead";
 import { Switch } from "@/components/ui/switch";
 
 type Props = {

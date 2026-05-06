@@ -1,4 +1,4 @@
-import { SettingsHubAccountInformationBody } from "@/components/settings/settings-hub-account-information-body";
+import { SettingsHubAccountInformationBody } from "@/components/settings/hub/settings-hub-account-information-body";
 import {
   Card,
   CardContent,

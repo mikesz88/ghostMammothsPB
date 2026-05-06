@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-import { SettingsHubPrefNavigationCardInner } from "@/components/settings/settings-hub-pref-navigation-card-inner";
+import { SettingsHubPrefNavigationCardInner } from "@/components/settings/hub/settings-hub-pref-navigation-card-inner";
 
 import type { ReactNode } from "react";
 

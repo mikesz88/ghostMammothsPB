@@ -1,5 +1,5 @@
-import { SettingsMembershipCancelOrReactivateButtons } from "@/components/settings/settings-membership-cancel-or-reactivate-buttons";
-import { SettingsMembershipManageBillingButton } from "@/components/settings/settings-membership-manage-billing-button";
+import { SettingsMembershipCancelOrReactivateButtons } from "@/components/settings/membership/settings-membership-cancel-or-reactivate-buttons";
+import { SettingsMembershipManageBillingButton } from "@/components/settings/membership/settings-membership-manage-billing-button";
 
 import type { UserMembershipInfo } from "@/lib/membership/user-membership-types";
 

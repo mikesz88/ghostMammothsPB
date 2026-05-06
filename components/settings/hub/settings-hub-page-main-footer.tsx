@@ -1,6 +1,6 @@
-import { SettingsHubAccountControlsCard } from "@/components/settings/settings-hub-account-controls-card";
-import { SettingsHubQuickActionsCard } from "@/components/settings/settings-hub-quick-actions-card";
-import { SettingsHubSettingsLinksSection } from "@/components/settings/settings-hub-settings-links-section";
+import { SettingsHubAccountControlsCard } from "@/components/settings/hub/settings-hub-account-controls-card";
+import { SettingsHubQuickActionsCard } from "@/components/settings/hub/settings-hub-quick-actions-card";
+import { SettingsHubSettingsLinksSection } from "@/components/settings/hub/settings-hub-settings-links-section";
 
 import type { SettingsHubPageClientProps } from "@/lib/settings/settings-hub-page-types";
 

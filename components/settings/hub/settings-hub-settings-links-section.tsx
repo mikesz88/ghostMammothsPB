@@ -1,6 +1,6 @@
 import { Bell, CreditCard } from "lucide-react";
 
-import { SettingsHubPrefNavigationCard } from "@/components/settings/settings-hub-pref-navigation-card";
+import { SettingsHubPrefNavigationCard } from "@/components/settings/hub/settings-hub-pref-navigation-card";
 
 export function SettingsHubSettingsLinksSection() {
   return (

@@ -1,6 +1,6 @@
-import { SettingsHubAccountInformationCard } from "@/components/settings/settings-hub-account-information-card";
-import { SettingsHubMembershipStatusCard } from "@/components/settings/settings-hub-membership-status-card";
-import { SettingsHubPageHeader } from "@/components/settings/settings-hub-page-header";
+import { SettingsHubAccountInformationCard } from "@/components/settings/hub/settings-hub-account-information-card";
+import { SettingsHubMembershipStatusCard } from "@/components/settings/hub/settings-hub-membership-status-card";
+import { SettingsHubPageHeader } from "@/components/settings/hub/settings-hub-page-header";
 
 import type { SettingsHubPageClientProps } from "@/lib/settings/settings-hub-page-types";
 

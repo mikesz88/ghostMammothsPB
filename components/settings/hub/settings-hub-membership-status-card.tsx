@@ -1,5 +1,5 @@
-import { SettingsHubMembershipStatusBody } from "@/components/settings/settings-hub-membership-status-body";
-import { SettingsHubMembershipStatusHeader } from "@/components/settings/settings-hub-membership-status-header";
+import { SettingsHubMembershipStatusBody } from "@/components/settings/hub/settings-hub-membership-status-body";
+import { SettingsHubMembershipStatusHeader } from "@/components/settings/hub/settings-hub-membership-status-header";
 import { Card } from "@/components/ui/card";
 
 import type { UserMembershipInfo } from "@/lib/membership/user-membership-types";

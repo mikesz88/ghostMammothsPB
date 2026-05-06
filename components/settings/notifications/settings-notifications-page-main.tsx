@@ -1,7 +1,7 @@
-import { SettingsNotificationsChannelsCard } from "@/components/settings/settings-notifications-channels-card";
-import { SettingsNotificationsPageIntro } from "@/components/settings/settings-notifications-page-intro";
-import { SettingsNotificationsSaveButton } from "@/components/settings/settings-notifications-save-button";
-import { SettingsNotificationsTypesCard } from "@/components/settings/settings-notifications-types-card";
+import { SettingsNotificationsChannelsCard } from "@/components/settings/notifications/settings-notifications-channels-card";
+import { SettingsNotificationsPageIntro } from "@/components/settings/notifications/settings-notifications-page-intro";
+import { SettingsNotificationsSaveButton } from "@/components/settings/notifications/settings-notifications-save-button";
+import { SettingsNotificationsTypesCard } from "@/components/settings/notifications/settings-notifications-types-card";
 
 import type { SettingsNotificationsBooleanKey , SettingsNotificationsFormState } from "@/lib/settings/settings-notifications-form-types";
 

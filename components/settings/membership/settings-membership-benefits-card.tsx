@@ -1,4 +1,4 @@
-import { SettingsMembershipBenefitLines } from "@/components/settings/settings-membership-benefit-lines";
+import { SettingsMembershipBenefitLines } from "@/components/settings/membership/settings-membership-benefit-lines";
 import {
   Card,
   CardContent,

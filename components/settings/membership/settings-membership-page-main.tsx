@@ -1,7 +1,7 @@
-import { SettingsMembershipBenefitsCard } from "@/components/settings/settings-membership-benefits-card";
-import { SettingsMembershipCurrentCard } from "@/components/settings/settings-membership-current-card";
-import { SettingsMembershipPageHeader } from "@/components/settings/settings-membership-page-header";
-import { SettingsMembershipPaymentHistoryCard } from "@/components/settings/settings-membership-payment-history-card";
+import { SettingsMembershipBenefitsCard } from "@/components/settings/membership/settings-membership-benefits-card";
+import { SettingsMembershipCurrentCard } from "@/components/settings/membership/settings-membership-current-card";
+import { SettingsMembershipPageHeader } from "@/components/settings/membership/settings-membership-page-header";
+import { SettingsMembershipPaymentHistoryCard } from "@/components/settings/membership/settings-membership-payment-history-card";
 
 import type { SettingsMembershipPageClientProps } from "@/lib/settings/settings-membership-page-types";
 

@@ -1,6 +1,6 @@
-import { SettingsHubQuickActionAdmin } from "@/components/settings/settings-hub-quick-action-admin";
-import { SettingsHubQuickActionBrowseEvents } from "@/components/settings/settings-hub-quick-action-browse-events";
-import { SettingsHubQuickActionUpgrade } from "@/components/settings/settings-hub-quick-action-upgrade";
+import { SettingsHubQuickActionAdmin } from "@/components/settings/hub/settings-hub-quick-action-admin";
+import { SettingsHubQuickActionBrowseEvents } from "@/components/settings/hub/settings-hub-quick-action-browse-events";
+import { SettingsHubQuickActionUpgrade } from "@/components/settings/hub/settings-hub-quick-action-upgrade";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 import type { UserMembershipInfo } from "@/lib/membership/user-membership-types";

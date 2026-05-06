@@ -1,5 +1,5 @@
-import { SettingsMembershipCurrentCardBody } from "@/components/settings/settings-membership-current-card-body";
-import { SettingsMembershipCurrentCardHeader } from "@/components/settings/settings-membership-current-card-header";
+import { SettingsMembershipCurrentCardBody } from "@/components/settings/membership/settings-membership-current-card-body";
+import { SettingsMembershipCurrentCardHeader } from "@/components/settings/membership/settings-membership-current-card-header";
 import { Card } from "@/components/ui/card";
 
 import type { UserMembershipInfo } from "@/lib/membership/user-membership-types";

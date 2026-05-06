@@ -1,4 +1,4 @@
-import { SettingsNotificationsTypeSwitchRow } from "@/components/settings/settings-notifications-type-switch-row";
+import { SettingsNotificationsTypeSwitchRow } from "@/components/settings/notifications/settings-notifications-type-switch-row";
 import { SETTINGS_NOTIFICATION_TYPE_ROWS } from "@/lib/settings/settings-notifications-type-rows";
 
 import type {

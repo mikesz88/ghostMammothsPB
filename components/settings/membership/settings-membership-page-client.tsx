@@ -1,7 +1,7 @@
 "use client";
 
-import { SettingsMembershipPageMain } from "@/components/settings/settings-membership-page-main";
-import { SettingsMembershipPageShell } from "@/components/settings/settings-membership-page-shell";
+import { SettingsMembershipPageMain } from "@/components/settings/membership/settings-membership-page-main";
+import { SettingsMembershipPageShell } from "@/components/settings/membership/settings-membership-page-shell";
 import { useSettingsMembershipPageActions } from "@/lib/hooks/settings/use-settings-membership-page-actions";
 
 import type { SettingsMembershipPageClientProps } from "@/lib/settings/settings-membership-page-types";

@@ -1,5 +1,5 @@
-import { SettingsNotificationsChannelBrowserRow } from "@/components/settings/settings-notifications-channel-browser-row";
-import { SettingsNotificationsChannelEmailRow } from "@/components/settings/settings-notifications-channel-email-row";
+import { SettingsNotificationsChannelBrowserRow } from "@/components/settings/notifications/settings-notifications-channel-browser-row";
+import { SettingsNotificationsChannelEmailRow } from "@/components/settings/notifications/settings-notifications-channel-email-row";
 import {
   Card,
   CardContent,

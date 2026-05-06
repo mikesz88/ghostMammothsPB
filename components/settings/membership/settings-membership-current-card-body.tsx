@@ -1,7 +1,7 @@
-import { SettingsMembershipPaidActionButtons } from "@/components/settings/settings-membership-paid-action-buttons";
-import { SettingsMembershipPlanPriceRow } from "@/components/settings/settings-membership-plan-price-row";
-import { SettingsMembershipRenewalBlock } from "@/components/settings/settings-membership-renewal-block";
-import { SettingsMembershipUpgradeButton } from "@/components/settings/settings-membership-upgrade-button";
+import { SettingsMembershipPaidActionButtons } from "@/components/settings/membership/settings-membership-paid-action-buttons";
+import { SettingsMembershipPlanPriceRow } from "@/components/settings/membership/settings-membership-plan-price-row";
+import { SettingsMembershipRenewalBlock } from "@/components/settings/membership/settings-membership-renewal-block";
+import { SettingsMembershipUpgradeButton } from "@/components/settings/membership/settings-membership-upgrade-button";
 import { CardContent } from "@/components/ui/card";
 
 import type { UserMembershipInfo } from "@/lib/membership/user-membership-types";

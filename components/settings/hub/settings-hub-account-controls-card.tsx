@@ -1,4 +1,4 @@
-import { SettingsHubDeleteAccountButton } from "@/components/settings/settings-hub-delete-account-button";
+import { SettingsHubDeleteAccountButton } from "@/components/settings/hub/settings-hub-delete-account-button";
 import {
   Card,
   CardContent,

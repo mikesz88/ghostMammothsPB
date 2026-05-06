@@ -1,8 +1,8 @@
-import { SettingsHubAccountAdminBadge } from "@/components/settings/settings-hub-account-admin-badge";
-import { SettingsHubAccountInfoAvatar } from "@/components/settings/settings-hub-account-info-avatar";
-import { SettingsHubAccountInfoMemberSince } from "@/components/settings/settings-hub-account-info-member-since";
-import { SettingsHubAccountInfoNameEmail } from "@/components/settings/settings-hub-account-info-name-email";
-import { SettingsHubAccountSkillLevel } from "@/components/settings/settings-hub-account-skill-level";
+import { SettingsHubAccountAdminBadge } from "@/components/settings/hub/settings-hub-account-admin-badge";
+import { SettingsHubAccountInfoAvatar } from "@/components/settings/hub/settings-hub-account-info-avatar";
+import { SettingsHubAccountInfoMemberSince } from "@/components/settings/hub/settings-hub-account-info-member-since";
+import { SettingsHubAccountInfoNameEmail } from "@/components/settings/hub/settings-hub-account-info-name-email";
+import { SettingsHubAccountSkillLevel } from "@/components/settings/hub/settings-hub-account-skill-level";
 
 import type { SettingsHubPageClientProps } from "@/lib/settings/settings-hub-page-types";
 

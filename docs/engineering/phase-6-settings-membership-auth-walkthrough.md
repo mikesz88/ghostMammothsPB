@@ -8,9 +8,9 @@ Phased plan: [`.cursor/plans/rules.mdc_phased_refactor_c02ab9c1.plan.md`](../../
 
 | Route | Server entry | Client island |
 | --- | --- | --- |
-| [`app/settings/page.tsx`](../../app/settings/page.tsx) | [`loadSettingsHubPageData`](../../lib/settings/load-settings-hub-page-data.ts) | [`SettingsHubPageClient`](../../components/settings/settings-hub-page-client.tsx) |
-| [`app/settings/membership/page.tsx`](../../app/settings/membership/page.tsx) | [`loadSettingsMembershipPageData`](../../lib/settings/load-settings-membership-page-data.ts) | [`SettingsMembershipPageClient`](../../components/settings/settings-membership-page-client.tsx) |
-| [`app/settings/notifications/page.tsx`](../../app/settings/notifications/page.tsx) | [`loadSettingsNotificationsPageData`](../../lib/settings/load-settings-notifications-page-data.ts) | [`SettingsNotificationsPageClient`](../../components/settings/settings-notifications-page-client.tsx) |
+| [`app/settings/page.tsx`](../../app/settings/page.tsx) | [`loadSettingsHubPageData`](../../lib/settings/load-settings-hub-page-data.ts) | [`SettingsHubPageClient`](../../components/settings/hub/settings-hub-page-client.tsx) |
+| [`app/settings/membership/page.tsx`](../../app/settings/membership/page.tsx) | [`loadSettingsMembershipPageData`](../../lib/settings/load-settings-membership-page-data.ts) | [`SettingsMembershipPageClient`](../../components/settings/membership/settings-membership-page-client.tsx) |
+| [`app/settings/notifications/page.tsx`](../../app/settings/notifications/page.tsx) | [`loadSettingsNotificationsPageData`](../../lib/settings/load-settings-notifications-page-data.ts) | [`SettingsNotificationsPageClient`](../../components/settings/notifications/settings-notifications-page-client.tsx) |
 
 ## Membership
 

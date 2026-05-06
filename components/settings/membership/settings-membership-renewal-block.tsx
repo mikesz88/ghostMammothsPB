@@ -1,5 +1,5 @@
-import { SettingsMembershipCancelPendingAlert } from "@/components/settings/settings-membership-cancel-pending-alert";
-import { SettingsMembershipRenewalDateRow } from "@/components/settings/settings-membership-renewal-date-row";
+import { SettingsMembershipCancelPendingAlert } from "@/components/settings/membership/settings-membership-cancel-pending-alert";
+import { SettingsMembershipRenewalDateRow } from "@/components/settings/membership/settings-membership-renewal-date-row";
 
 import type { UserMembershipInfo } from "@/lib/membership/user-membership-types";
 

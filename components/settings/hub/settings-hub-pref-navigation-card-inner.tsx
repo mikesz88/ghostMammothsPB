@@ -1,6 +1,6 @@
 import { ChevronRight } from "lucide-react";
 
-import { SettingsHubPrefNavigationCardLead } from "@/components/settings/settings-hub-pref-navigation-card-lead";
+import { SettingsHubPrefNavigationCardLead } from "@/components/settings/hub/settings-hub-pref-navigation-card-lead";
 import { Card, CardContent } from "@/components/ui/card";
 
 import type { ReactNode } from "react";

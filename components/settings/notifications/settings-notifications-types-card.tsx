@@ -1,4 +1,4 @@
-import { SettingsNotificationsTypesList } from "@/components/settings/settings-notifications-types-list";
+import { SettingsNotificationsTypesList } from "@/components/settings/notifications/settings-notifications-types-list";
 import {
   Card,
   CardContent,

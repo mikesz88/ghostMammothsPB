@@ -1,5 +1,5 @@
-import { SettingsHubPageMainFooter } from "@/components/settings/settings-hub-page-main-footer";
-import { SettingsHubPageMainOverview } from "@/components/settings/settings-hub-page-main-overview";
+import { SettingsHubPageMainFooter } from "@/components/settings/hub/settings-hub-page-main-footer";
+import { SettingsHubPageMainOverview } from "@/components/settings/hub/settings-hub-page-main-overview";
 
 import type { SettingsHubPageClientProps } from "@/lib/settings/settings-hub-page-types";
 
