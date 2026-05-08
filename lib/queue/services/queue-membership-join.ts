@@ -45,7 +45,11 @@ async function assertJoinAllowed(
   const auth = await assertJoinUserMatches(supabase, input.userId);
   if (!auth.ok) return { ok: false as const, error: auth.error };
   const { eventRow, eventRotation } = await loadEventRotationRow(supabase, input.eventId);
-  const sizeErr = joinGroupSizeValidationError(eventRow?.team_size, input.groupSize);
+  const sizeErr = joinGroupSizeValidationError(
+    eventRow?.team_size,
+    input.groupSize,
+    eventRotation,
+  );
   if (sizeErr) return { ok: false as const, error: sizeErr };
   const ruleErr = twoStayTwoOffValidationError(
     eventRotation,

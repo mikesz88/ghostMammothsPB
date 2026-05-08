@@ -9,7 +9,7 @@ import { TestControlTeamSizeField } from "@/components/admin/events/test-control
 import { TestControlsCardShell } from "@/components/admin/events/test-controls-card-shell";
 import { TestControlsResetRow } from "@/components/admin/events/test-controls-reset-row";
 import { useTestControls } from "@/lib/hooks/admin/test-controls/use-test-controls";
-import { maxJoinGroupSizeForEventTeamSize } from "@/lib/queue/max-join-group-size";
+import { maxJoinGroupSizeForEvent } from "@/lib/queue/max-join-group-size";
 
 import type { RotationType } from "@/lib/types";
 
@@ -41,7 +41,7 @@ function TestControlsResetCourtTeam({ h }: { h: TestControlsHandle }) {
 }
 
 function TestControlsRotationGroup({ h }: { h: TestControlsHandle }) {
-  const maxJoinGroup = maxJoinGroupSizeForEventTeamSize(h.teamSize);
+  const maxJoinGroup = maxJoinGroupSizeForEvent(h.teamSize, h.rotationType);
   return (
     <>
       <TestControlRotationField
@@ -59,7 +59,7 @@ function TestControlsRotationGroup({ h }: { h: TestControlsHandle }) {
 }
 
 function TestControlsActionFields({ h }: { h: TestControlsHandle }) {
-  const maxJoinGroup = maxJoinGroupSizeForEventTeamSize(h.teamSize);
+  const maxJoinGroup = maxJoinGroupSizeForEvent(h.teamSize, h.rotationType);
   return (
     <>
       <TestControlQuickAddGrid

@@ -22,7 +22,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { maxJoinGroupSizeForEventTeamSize } from "@/lib/queue/max-join-group-size";
+import { maxJoinGroupSizeForEvent } from "@/lib/queue/max-join-group-size";
 import { is2Stay2OffRotation } from "@/lib/queue/rotation-policy";
 
 import type { RotationType } from "@/lib/types";
@@ -50,7 +50,7 @@ export function JoinQueueDialog({
   rotationType,
 }: JoinQueueDialogProps) {
   const soloOnlyMode = is2Stay2OffRotation(rotationType);
-  const maxGroupForEvent = maxJoinGroupSizeForEventTeamSize(eventTeamSize);
+  const maxGroupForEvent = maxJoinGroupSizeForEvent(eventTeamSize, rotationType);
 
   const [groupSize, setGroupSize] = useState("1");
   const [players, setPlayers] = useState([
@@ -172,7 +172,9 @@ export function JoinQueueDialog({
                   You&apos;re joining as a pre-formed group of {groupSize}. The group
                   stays one unit in line and won&apos;t be split across different picks.
                 </span>
-                {eventTeamSize === 2 && Number.parseInt(groupSize) < 4 ? (
+                {rotationType !== "winners-stay" &&
+                eventTeamSize === 2 &&
+                Number.parseInt(groupSize) < 4 ? (
                   <span className="block text-muted-foreground">
                     Doubles needs four players on court. Your group will go up when the
                     host assigns a full court (for example, you may wait for one or more

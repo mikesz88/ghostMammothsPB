@@ -12,7 +12,7 @@ import {
   updateEventCourtCount,
 } from "@/app/actions/test-helpers";
 import { teamSizeDisplayLabel } from "@/lib/events/event-display-labels";
-import { maxJoinGroupSizeForEventTeamSize } from "@/lib/queue/max-join-group-size";
+import { maxJoinGroupSizeForEvent } from "@/lib/queue/max-join-group-size";
 
 import type { RotationType } from "@/lib/types";
 
@@ -87,13 +87,18 @@ function toastGroupExceedsMaxJoin(addGroupSize: number, maxJoinSize: number) {
   );
 }
 
-export async function flowAddDummyToQueue(
-  eventId: string,
-  addGroupSize: number,
-  currentTeamSize: number,
-  onQueueUpdated?: () => void | Promise<void>,
-) {
-  const maxJoin = maxJoinGroupSizeForEventTeamSize(currentTeamSize);
+export type FlowAddDummyToQueueParams = {
+  eventId: string;
+  addGroupSize: number;
+  currentTeamSize: number;
+  currentRotationType: RotationType;
+  onQueueUpdated?: () => void | Promise<void>;
+};
+
+export async function flowAddDummyToQueue(p: FlowAddDummyToQueueParams) {
+  const { eventId, addGroupSize, currentTeamSize, currentRotationType, onQueueUpdated } =
+    p;
+  const maxJoin = maxJoinGroupSizeForEvent(currentTeamSize, currentRotationType);
   if (addGroupSize > maxJoin) {
     toastGroupExceedsMaxJoin(addGroupSize, maxJoin);
     return;
