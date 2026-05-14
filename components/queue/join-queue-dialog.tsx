@@ -22,6 +22,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { maxJoinGroupSizeForEvent } from "@/lib/queue/max-join-group-size";
 import { is2Stay2OffRotation } from "@/lib/queue/rotation-policy";
 
 import type { RotationType } from "@/lib/types";
@@ -49,6 +50,7 @@ export function JoinQueueDialog({
   rotationType,
 }: JoinQueueDialogProps) {
   const soloOnlyMode = is2Stay2OffRotation(rotationType);
+  const maxGroupForEvent = maxJoinGroupSizeForEvent(eventTeamSize, rotationType);
 
   const [groupSize, setGroupSize] = useState("1");
   const [players, setPlayers] = useState([
@@ -76,13 +78,9 @@ export function JoinQueueDialog({
     }
   };
 
-  // Get available group sizes based on event team size
   const getAvailableGroupSizes = () => {
-    const sizes = [];
-    for (let i = 1; i <= eventTeamSize; i++) {
-      sizes.push(i);
-    }
-    return sizes;
+    const max = soloOnlyMode ? 1 : maxGroupForEvent;
+    return Array.from({ length: max }, (_, i) => i + 1);
   };
 
   const handlePlayerChange = (
@@ -169,9 +167,20 @@ export function JoinQueueDialog({
           {!soloOnlyMode && Number.parseInt(groupSize) > 1 && (
             <Alert>
               <Users className="w-4 h-4" />
-              <AlertDescription>
-                You&apos;re joining as a pre-formed team of {groupSize}. Your team
-                will stay together and not be split up.
+              <AlertDescription className="space-y-2">
+                <span className="block">
+                  You&apos;re joining as a pre-formed group of {groupSize}. The group
+                  stays one unit in line and won&apos;t be split across different picks.
+                </span>
+                {rotationType !== "winners-stay" &&
+                eventTeamSize === 2 &&
+                Number.parseInt(groupSize) < 4 ? (
+                  <span className="block text-muted-foreground">
+                    Doubles needs four players on court. Your group will go up when the
+                    host assigns a full court (for example, you may wait for one or more
+                    other players from the queue).
+                  </span>
+                ) : null}
               </AlertDescription>
             </Alert>
           )}

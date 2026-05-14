@@ -74,6 +74,10 @@ async function routeQueueEmail(
       return sendUpNextEmail(emailData);
     case "court-assignment":
       return sendCourtAssignmentEmail(emailData);
+    default: {
+      const unreachable: never = notificationType;
+      throw new Error(`Unhandled queue email notification type: ${String(unreachable)}`);
+    }
   }
 }
 

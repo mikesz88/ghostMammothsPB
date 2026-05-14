@@ -11,8 +11,8 @@ import {
   updateEventTeamSize,
   updateEventCourtCount,
 } from "@/app/actions/test-helpers";
-import { adminTeamSizeShortLabel } from "@/lib/admin/admin-assign-next-copy";
 import { teamSizeDisplayLabel } from "@/lib/events/event-display-labels";
+import { maxJoinGroupSizeForEvent } from "@/lib/queue/max-join-group-size";
 
 import type { RotationType } from "@/lib/types";
 
@@ -81,22 +81,26 @@ export async function flowCourtCountChange(
   return false;
 }
 
-function toastGroupExceedsTeamSize(addGroupSize: number, currentTeamSize: number) {
-  const mode = adminTeamSizeShortLabel(currentTeamSize);
+function toastGroupExceedsMaxJoin(addGroupSize: number, maxJoinSize: number) {
   toast.error(
-    `Group size (${addGroupSize}) cannot exceed team size (${currentTeamSize})`,
-    { description: `For ${mode}, max group size is ${currentTeamSize}` },
+    `Group size (${addGroupSize}) is too large for this event format (max ${maxJoinSize}).`,
   );
 }
 
-export async function flowAddDummyToQueue(
-  eventId: string,
-  addGroupSize: number,
-  currentTeamSize: number,
-  onQueueUpdated?: () => void | Promise<void>,
-) {
-  if (addGroupSize > currentTeamSize) {
-    toastGroupExceedsTeamSize(addGroupSize, currentTeamSize);
+export type FlowAddDummyToQueueParams = {
+  eventId: string;
+  addGroupSize: number;
+  currentTeamSize: number;
+  currentRotationType: RotationType;
+  onQueueUpdated?: () => void | Promise<void>;
+};
+
+export async function flowAddDummyToQueue(p: FlowAddDummyToQueueParams) {
+  const { eventId, addGroupSize, currentTeamSize, currentRotationType, onQueueUpdated } =
+    p;
+  const maxJoin = maxJoinGroupSizeForEvent(currentTeamSize, currentRotationType);
+  if (addGroupSize > maxJoin) {
+    toastGroupExceedsMaxJoin(addGroupSize, maxJoin);
     return;
   }
   const result = await addDummyUsersToQueue(eventId, 1, addGroupSize);
