@@ -12,7 +12,7 @@ export async function GET(request: Request) {
   const code = searchParams.get("code");
   const token_hash = searchParams.get("token_hash");
   const type = searchParams.get("type") as EmailOtpType | null;
-  const next = searchParams.get("next") ?? "/membership";
+  const next = searchParams.get("next") ?? "/events";
 
   const cookieStore = await cookies();
   const redirectUrl = `${origin}${next}`;

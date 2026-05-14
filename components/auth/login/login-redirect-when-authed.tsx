@@ -14,7 +14,7 @@ export function LoginRedirectWhenAuthed({ user, authLoading }: Props) {
   const router = useRouter();
   useEffect(() => {
     if (!authLoading && user) {
-      router.replace("/membership");
+      router.replace("/events");
     }
   }, [authLoading, user, router]);
   return null;
