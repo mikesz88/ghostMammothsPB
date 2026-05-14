@@ -24,12 +24,13 @@ export function createTestControlQueueHandlers(
     handleAddDummyToQueue: (size?: number) =>
       run(
         () =>
-          flowAddDummyToQueue(
-            p.eventId,
-            size ?? f.groupSize,
-            p.currentTeamSize,
-            p.onQueueUpdated,
-          ),
+          flowAddDummyToQueue({
+            eventId: p.eventId,
+            addGroupSize: size ?? f.groupSize,
+            currentTeamSize: p.currentTeamSize,
+            currentRotationType: f.rotationType,
+            onQueueUpdated: p.onQueueUpdated,
+          }),
         "Error adding users",
       ),
     handleClearAll: () =>

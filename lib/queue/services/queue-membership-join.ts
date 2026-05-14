@@ -1,4 +1,5 @@
 import { sendQueueNotification } from "@/app/actions/notifications";
+import { joinGroupSizeValidationError } from "@/lib/queue/max-join-group-size";
 import { runQueueMaintenance } from "@/lib/queue/services/maintenance";
 import {
   nextQueuePosition,
@@ -44,6 +45,12 @@ async function assertJoinAllowed(
   const auth = await assertJoinUserMatches(supabase, input.userId);
   if (!auth.ok) return { ok: false as const, error: auth.error };
   const { eventRow, eventRotation } = await loadEventRotationRow(supabase, input.eventId);
+  const sizeErr = joinGroupSizeValidationError(
+    eventRow?.team_size,
+    input.groupSize,
+    eventRotation,
+  );
+  if (sizeErr) return { ok: false as const, error: sizeErr };
   const ruleErr = twoStayTwoOffValidationError(
     eventRotation,
     eventRow?.team_size,

@@ -35,7 +35,7 @@ async function navigateForAuthenticatedUser(user: User) {
     return;
   }
 
-  window.location.href = "/membership";
+  window.location.href = "/events";
 }
 
 export async function runAfterSignInNavigation(): Promise<void> {
@@ -46,13 +46,13 @@ export async function runAfterSignInNavigation(): Promise<void> {
     } = await supabase.auth.getUser();
 
     if (!user) {
-      window.location.href = "/membership";
+      window.location.href = "/events";
       return;
     }
 
     await navigateForAuthenticatedUser(user);
   } catch (redirectError) {
     console.error("Post-login redirect error:", redirectError);
-    window.location.href = "/membership";
+    window.location.href = "/events";
   }
 }

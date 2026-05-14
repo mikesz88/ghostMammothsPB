@@ -6,6 +6,7 @@ import {
   flowRotationTypeChange,
   flowTeamSizeChange,
 } from "@/lib/hooks/admin/test-controls/test-control-flows";
+import { maxJoinGroupSizeForEvent } from "@/lib/queue/max-join-group-size";
 
 import type { UseTestControlsArgs } from "@/lib/hooks/admin/test-controls/test-controls-types";
 import type { useTestControlFields } from "@/lib/hooks/admin/test-controls/use-test-control-fields";
@@ -30,6 +31,8 @@ function createTestControlRotationHandler(
   return (newType: RotationType) =>
     run(async () => {
       f.setRotationType(newType);
+      const maxJoin = maxJoinGroupSizeForEvent(f.teamSize, newType);
+      if (f.groupSize > maxJoin) f.setGroupSize(maxJoin);
       const ok = await flowRotationTypeChange(p.eventId, newType);
       if (!ok) f.setRotationType(p.currentRotationType);
     }, "Error updating rotation type");
@@ -44,7 +47,8 @@ function createTestControlTeamSizeHandler(
     run(async () => {
       const size = Number(newSize);
       f.setTeamSize(size);
-      if (f.groupSize > size) f.setGroupSize(size);
+      const maxJoin = maxJoinGroupSizeForEvent(size, f.rotationType);
+      if (f.groupSize > maxJoin) f.setGroupSize(maxJoin);
       const ok = await flowTeamSizeChange(p.eventId, size);
       if (!ok) f.setTeamSize(p.currentTeamSize);
     }, "Error updating team size");
